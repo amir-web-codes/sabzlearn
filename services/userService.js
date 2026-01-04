@@ -40,7 +40,7 @@ async function createTokens(user, rememberMe) {
 
     const tokens = await tokenModel.find({ userId: user._id }).sort({ createdAt: 1 })
 
-    const maximumTokens = 1
+    const maximumTokens = 2
 
     if (tokens.length >= maximumTokens) {
         await tokenModel.findByIdAndDelete(tokens[0]._id)
@@ -134,6 +134,36 @@ async function updateUser(user, username, email, password) {
     await user.save()
 }
 
+async function refreshAccessToken(token, rememberMe) {
+    try {
+        const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_KEY)
+        const foundUser = await findUserById(decoded.id)
+        const foundToken = await tokenModel.findOne({ userId: decoded.id })
+
+        const compareResult = await bcrypt.compare(token, foundToken.hashedToken)
+
+        if (!compareResult) {
+            const err = new Error("error")
+            err.status = 403
+            throw err
+        }
+
+        console.log(foundUser)
+        console.log(foundToken)
+
+        foundToken.revoked = true
+        await foundToken.save()
+
+        return await createTokens(foundUser, rememberMe)
+
+    } catch (err) {
+        err = new Error("invaild or expired token")
+        err.status = 403
+        throw err
+    }
+
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -144,5 +174,6 @@ module.exports = {
     banUser,
     unBanUser,
     deleteUser,
-    updateUser
+    updateUser,
+    refreshAccessToken
 }

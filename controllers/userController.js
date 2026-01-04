@@ -42,10 +42,7 @@ async function signUp(req, res) {
         const foundUser = await userService.findByEmail(email)
 
         if (foundUser) {
-            return res.status(409).json({
-                success: false,
-                message: "email already exists"
-            })
+            return sendError(409, "email already exists")
         }
 
         const createdUser = await userService.createUser(req.body)
@@ -59,7 +56,7 @@ async function signUp(req, res) {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            path: "/refresh-token",
+            path: "/users/refresh-token",
             maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
         })
 
@@ -92,7 +89,7 @@ async function login(req, res) {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "strict",
-                    path: "/refresh-token",
+                    path: "/users/refresh-token",
                     maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
                 })
 
@@ -104,10 +101,7 @@ async function login(req, res) {
             }
         }
 
-        res.status(401).json({
-            success: false,
-            message: "wrong email or password"
-        })
+        sendError(401, "wrong email or password")
 
     } catch (err) {
         sendError(err.status || 500, err.message)
@@ -223,6 +217,34 @@ async function updateUserProfile(req, res) {
     }
 }
 
+async function refreshToken(req, res) {
+    try {
+        const oldToken = req.cookies.refreshToken
+
+        if (!oldToken) {
+            sendError(403, "token not available or expired")
+        }
+
+        const { accessToken, refreshToken } = await userService.refreshAccessToken(oldToken, req.query.rememberMe)
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/users/refresh-token",
+            maxAge: req.query.rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
+        })
+
+        res.json({
+            success: true,
+            accessToken
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
+    }
+}
+
 module.exports = {
     getUserById,
     deleteUserById,
@@ -233,5 +255,6 @@ module.exports = {
     unBanUser,
     getUserProfile,
     deleteUserProfile,
-    updateUserProfile
+    updateUserProfile,
+    refreshToken
 }

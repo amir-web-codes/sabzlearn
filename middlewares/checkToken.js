@@ -13,7 +13,7 @@ function checkToken(req, res, next) {
 
     try {
 
-        const decoded = jwt.decode(token, process.env.ACCESS_TOKEN_KEY)
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_KEY)
         req.user = decoded
 
         if (!req.user) {
