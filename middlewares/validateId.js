@@ -5,11 +5,11 @@ const validateId = (req, res, next) => {
     const id = req.params.id
 
     if (!id) {
-        return sendError(res, 401, "no id provided")
+        return sendError(401, "no id provided")
     }
 
     if (!mongoose.Types.ObjectId.isValid(String(id))) {
-        return sendError(res, 400, "invalid id")
+        return sendError(400, "invalid id")
     }
 
     next()

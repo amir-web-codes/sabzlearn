@@ -15,6 +15,11 @@ function checkToken(req, res, next) {
 
         const decoded = jwt.decode(token, process.env.ACCESS_TOKEN_KEY)
         req.user = decoded
+
+        if (!req.user) {
+            throw err
+        }
+
         next()
     } catch (err) {
         res.status(401).json({

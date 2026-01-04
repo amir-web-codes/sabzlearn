@@ -19,7 +19,7 @@ function checkSelfUser(adminAllowed = false) {
         }
 
 
-        sendError(res, 403, "you don't have permission")
+        sendError(403, "you don't have permission")
     }
 }
 

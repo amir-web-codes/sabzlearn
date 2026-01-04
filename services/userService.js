@@ -2,14 +2,24 @@ const userModel = require("../models/userModel")
 const tokenModel = require("../models/tokenModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
+const { deleteUserById } = require("../Controllers/userController")
 
-async function findUserById(id) {
-    const data = await userModel.findById(id)
+async function findUserById(userId) {
+    const data = await userModel.findById(userId)
+
+    if (!data) {
+        const err = new Error("user not found")
+        err.status = 404
+        throw err
+    }
+
     return data
 }
 
 async function findByEmail(email) {
-    return await userModel.findOne({ email })
+    const data = await userModel.findOne({ email })
+
+    return data
 }
 
 async function createUser({ username, email, password }) {
@@ -28,7 +38,13 @@ async function createTokens(user) {
     const accessToken = jwt.sign({ id: user._id, role: user.role, isBanned: user.isBanned, banExpiresAt: user.banExpiresAt }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "15m" })
     const refreshToken = jwt.sign({ id: user._id, role: user.role }, process.env.REFRESH_TOKEN_KEY, { expiresIn: "15d" })
 
-    const token = await tokenModel.deleteOne({ userId: user._id })
+    const tokens = await tokenModel.find({ userId: user._id }).sort({ createdAt: 1 })
+
+    const maximumTokens = 1
+
+    if (tokens.length >= maximumTokens) {
+        await tokenModel.findByIdAndDelete(tokens[0]._id)
+    }
 
     const hashedToken = await bcrypt.hash(refreshToken, 12)
 
@@ -45,8 +61,55 @@ async function comparePasswords(password, dbPassword) {
     return await bcrypt.compare(password, dbPassword)
 }
 
-async function deleteToken(userId) {
+async function revokeUserToken(userId) {
+    const tokens = await tokenModel.find({ userId: userId })
 
+    tokens.forEach(async token => {
+        token.revoked = true
+        await token.save()
+    })
+
+    return
+}
+
+async function banUser(user, banDays, reason = "no reason") {
+    user.isBanned = true
+    user.banReason = reason
+
+    if (banDays !== undefined) {
+        user.banExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * banDays)
+    } else {
+        user.banExpiresAt = null
+    }
+
+    await user.save()
+}
+
+async function unBanUser(userId) {
+    const foundUser = await findUserById(userId)
+
+    foundUser.isBanned = false
+    foundUser.banReason = null
+    foundUser.banExpiresAt = null
+
+    await foundUser.save()
+
+    req.user.isBanned = false
+    req.user.banExpiresAt = null
+
+    return
+}
+
+async function deleteUser(userId) {
+    const deletedData = await userModel.deleteOne({ _id: userId })
+
+    if (deletedData.deletedCount === 0) {
+        const err = new Error("user not found")
+        err.status = 404
+        throw err
+    }
+
+    return deletedData
 }
 
 module.exports = {
@@ -55,5 +118,8 @@ module.exports = {
     createUser,
     createTokens,
     comparePasswords,
-    deleteToken
+    revokeUserToken,
+    banUser,
+    unBanUser,
+    deleteUser
 }

@@ -1,4 +1,3 @@
-const sendSuccess = require("../utils/sendSuccess")
 const sendError = require("../utils/sendError")
 
 const userService = require("../services/userService")
@@ -6,24 +5,17 @@ const userService = require("../services/userService")
 async function getUserById(req, res) {
     try {
 
-        const data = await userService.findUserById(req.params.id)
-
-        if (!data) {
-            return res.status(404).json({
-                success: false,
-                message: "user not found"
-            })
-        }
+        const foundUser = await userService.findUserById(req.params.id)
 
         res.json({
             success: true,
             message: "user found successfuly",
-            data
+            data: foundUser
         })
 
+
     } catch (err) {
-        console.log(`server error: ${err.stack}`)
-        sendError(res, 500, "internal server error")
+        sendError(err.status || 500, err.message)
     }
 }
 
@@ -61,8 +53,7 @@ async function signUp(req, res) {
         })
 
     } catch (err) {
-        console.log(`server error: ${err.stack}`)
-        sendError(res, 500, "internal server error")
+        sendError(err.status || 500, err.message)
     }
 }
 
@@ -100,20 +91,7 @@ async function login(req, res) {
         })
 
     } catch (err) {
-        console.log(`server error: ${err.stack}`)
-        sendError(res, 500, "internal server error")
-    }
-}
-
-async function logOut(req, res) {
-    try {
-
-    } catch (err) {
-        console.log(`server error: ${err.stack}`)
-        res.status(500).json({
-            success: false,
-            message: "internal server error"
-        })
+        sendError(err.status || 500, err.message)
     }
 }
 
@@ -122,47 +100,73 @@ async function banUser(req, res) {
 
         const foundUser = await userService.findUserById(req.params.id)
 
-        if (!foundUser) {
-            return res.status(404).json({
-                success: false,
-                message: "user not found"
-            })
-        }
-
         const banDays = req.body.banDays
 
         if (banDays !== undefined && (!Number.isInteger(Number(banDays)) || banDays < 0)) {
-            return res.status(422).json({
-                success: false,
-                message: "invalid ban days number"
-            })
+            return sendError(422, "invalid ban days")
         }
 
-        foundUser.isBanned = true
-        foundUser.banReason = req.body.banReason || "no reason"
+        await userService.banUser(foundUser, banDays, req.body.banReason)
 
-        if (banDays !== undefined) {
-            foundUser.banExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * banDays)
-        } else {
-            foundUser.banExpiresAt = null
-        }
-
-        await foundUser.save()
-
-        return sendSuccess(res, 200, "user banned successfuly")
+        return res.json({
+            success: true,
+            message: "user banned successfuly"
+        })
 
     } catch (err) {
-        console.log(`server error: ${err}`)
-        return sendError(res, 500, "internal server error")
+        sendError(err.status || 500, err.message)
+    }
+}
+
+async function getUserProfile(req, res) {
+    try {
+
+        const foundUser = await userService.findUserById(req.user.id)
+
+        res.json({
+            success: true,
+            data: foundUser
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
     }
 }
 
 async function deleteUserById(req, res) {
     try {
 
+        await userService.deleteUser(req.params.id)
+
+        res.json({
+            success: true,
+            message: "user deleted successfuly"
+        })
+
     } catch (err) {
-        console.log(`server error: ${err.stack}`)
-        sendError
+        sendError(err.status || 500, err.message)
+    }
+}
+
+async function logOut(req, res) {
+    try {
+
+        await userService.revokeUserToken(req.user.id)
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/refresh-token",
+        })
+
+        res.json({
+            success: true,
+            message: "user logged out successfuly"
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
     }
 }
 
@@ -170,7 +174,8 @@ module.exports = {
     getUserById,
     signUp,
     login,
-    logOut,
     banUser,
-    deleteUserById
+    getUserProfile,
+    deleteUserById,
+    logOut
 }

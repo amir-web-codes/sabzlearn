@@ -13,7 +13,7 @@ const checkRoles = (allowedRoles = ["user"]) => {
         if (allowedRoles.includes(req.user.role)) {
             next()
         } else {
-            return sendError(res, 403, "you don't have permission")
+            return sendError(403, "you don't have permission")
         }
     }
 }

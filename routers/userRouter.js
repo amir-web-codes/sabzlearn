@@ -5,20 +5,21 @@ const { validateId, checkToken, checkRoles, checkSelfUser, checkUserBan } = requ
 
 const userController = require("../controllers/userController")
 
+
+router.route("/me")
+    .get(checkToken, checkUserBan, userController.getUserProfile)
+//     .patch(checkToken, checkUserBan, userController.getUserById)
+// .delete(checkToken, checkUserBan, userController.deleteUserProfile)
+
 router.route("/:id")
     .get(validateId, checkToken, checkRoles(["admin"]), userController.getUserById)
     .delete(validateId, checkToken, checkRoles(["admin"]), userController.deleteUserById)
 
-// router.route("/me")
-//     .get(validateId, checkToken, checkUserBan, checkSelfUser(true), userController.getUserById)
-//     .patch(validateId, checkToken, checkUserBan, checkSelfUser(true), userController.getUserById)
-//     .delete(validateId, checkToken, checkUserBan, checkSelfUser(true), userController.getUserById)
-
-
 router.put("/:id/ban", validateId, checkToken, checkRoles(["admin"]), userController.banUser)
 
 
-router.post("/signup", userController.signUp)
-router.post("/login", userController.login)
+router.post("/auth/signup", userController.signUp)
+router.post("/auth/login", userController.login)
+router.post("/auth/logout", checkToken, userController.logOut)
 
 module.exports = router

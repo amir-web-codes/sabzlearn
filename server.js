@@ -20,6 +20,10 @@ app.use((req, res, next) => {
     })
 })
 
+const errorHandler = require("./middlewares/errorHandler")
+
+app.use(errorHandler)
+
 const port = process.env.PORT || 7000
 
 app.listen(port, () => {
