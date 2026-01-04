@@ -22,7 +22,7 @@ const checkUserBan = async (req, res, next) => {
 
         const foundUser = await userService.findUserById(id)
 
-        if (req.user.isBanned && now > expiresAt) {
+        if (foundUser.isBanned && now > expiresAt) {
             await userService.unBanUser(id)
         }
     }

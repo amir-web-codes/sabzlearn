@@ -7,7 +7,7 @@ const userController = require("../controllers/userController")
 
 
 router.route("/me")
-    .get(checkToken, checkUserBan, userController.getUserProfile)
+    .get(checkToken, userController.getUserProfile)
     .patch(checkToken, checkUserBan, userController.updateUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
 
@@ -22,5 +22,7 @@ router.patch("/:id/unban", validateId, checkToken, checkRoles(["admin"]), userCo
 router.post("/auth/signup", userController.signUp)
 router.post("/auth/login", userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
+
+
 
 module.exports = router
