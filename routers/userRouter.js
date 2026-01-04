@@ -8,7 +8,7 @@ const userController = require("../controllers/userController")
 
 router.route("/me")
     .get(checkToken, checkUserBan, userController.getUserProfile)
-    //     .patch(checkToken, checkUserBan, userController.getUserById)
+    .patch(checkToken, checkUserBan, userController.updateUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
 
 router.route("/:id")

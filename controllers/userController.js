@@ -19,6 +19,21 @@ async function getUserById(req, res) {
     }
 }
 
+async function deleteUserById(req, res) {
+    try {
+
+        await userService.deleteUser(req.params.id)
+
+        res.json({
+            success: true,
+            message: "user deleted successfuly"
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
+    }
+}
+
 async function signUp(req, res) {
     try {
 
@@ -95,6 +110,28 @@ async function login(req, res) {
     }
 }
 
+async function logOut(req, res) {
+    try {
+
+        await userService.revokeUserToken(req.user.id)
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/refresh-token",
+        })
+
+        res.json({
+            success: true,
+            message: "user logged out successfuly"
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
+    }
+}
+
 async function banUser(req, res) {
     try {
 
@@ -133,43 +170,6 @@ async function getUserProfile(req, res) {
     }
 }
 
-async function deleteUserById(req, res) {
-    try {
-
-        await userService.deleteUser(req.params.id)
-
-        res.json({
-            success: true,
-            message: "user deleted successfuly"
-        })
-
-    } catch (err) {
-        sendError(err.status || 500, err.message)
-    }
-}
-
-async function logOut(req, res) {
-    try {
-
-        await userService.revokeUserToken(req.user.id)
-
-        res.clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            path: "/refresh-token",
-        })
-
-        res.json({
-            success: true,
-            message: "user logged out successfuly"
-        })
-
-    } catch (err) {
-        sendError(err.status || 500, err.message)
-    }
-}
-
 async function deleteUserProfile(req, res) {
     try {
 
@@ -185,13 +185,33 @@ async function deleteUserProfile(req, res) {
     }
 }
 
+async function updateUserProfile(req, res) {
+    try {
+
+        const { username, email, password } = req.body
+
+        const foundUser = await userService.findUserById(req.user.id)
+
+        await userService.updateUser(foundUser, username, email, password)
+
+        res.json({
+            success: true,
+            message: "user updated successfuly"
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
+    }
+}
+
 module.exports = {
     getUserById,
+    deleteUserById,
     signUp,
     login,
     logOut,
     banUser,
     getUserProfile,
-    deleteUserById,
-    deleteUserProfile
+    deleteUserProfile,
+    updateUserProfile
 }

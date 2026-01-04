@@ -2,7 +2,8 @@ const userModel = require("../models/userModel")
 const tokenModel = require("../models/tokenModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
-const { deleteUserById } = require("../Controllers/userController")
+
+const saltRounds = 12
 
 async function findUserById(userId) {
     const data = await userModel.findById(userId)
@@ -23,7 +24,6 @@ async function findByEmail(email) {
 }
 
 async function createUser({ username, email, password }) {
-    const saltRounds = 12
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     return await userModel.create({
@@ -46,7 +46,7 @@ async function createTokens(user) {
         await tokenModel.findByIdAndDelete(tokens[0]._id)
     }
 
-    const hashedToken = await bcrypt.hash(refreshToken, 12)
+    const hashedToken = await bcrypt.hash(refreshToken, saltRounds)
 
     await tokenModel.create({
         hashedToken,
@@ -112,6 +112,27 @@ async function deleteUser(userId) {
     return deletedData
 }
 
+async function updateUser(user, username, email, password) {
+
+    const foundEmail = await findByEmail(email)
+
+    if (foundEmail && email !== user.email) {
+        const err = new Error("email already exists")
+        err.status = 403
+        throw err
+    }
+
+    if (password) {
+        const hashedPassword = await bcrypt.hash(password, saltRounds)
+        user.password = hashedPassword || user.password
+    }
+
+    user.username = username || user.username
+    user.email = email || user.email
+
+    await user.save()
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -121,5 +142,6 @@ module.exports = {
     revokeUserToken,
     banUser,
     unBanUser,
-    deleteUser
+    deleteUser,
+    updateUser
 }
