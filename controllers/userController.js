@@ -50,7 +50,9 @@ async function signUp(req, res) {
 
         const createdUser = await userService.createUser(req.body)
 
-        const { accessToken, refreshToken } = await userService.createTokens(createdUser)
+        const rememberMe = req.body.rememberMe
+
+        const { accessToken, refreshToken } = await userService.createTokens(createdUser, rememberMe)
 
 
         res.cookie("refreshToken", refreshToken, {
@@ -58,7 +60,7 @@ async function signUp(req, res) {
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
             path: "/refresh-token",
-            maxAge: 1000 * 60 * 60 * 24 * 15
+            maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
         })
 
         res.status(201).json({
@@ -82,6 +84,8 @@ async function login(req, res) {
 
             if (result) {
 
+                const rememberMe = req.body.rememberMe
+
                 const { accessToken, refreshToken } = await userService.createTokens(foundUser)
 
                 res.cookie("refreshToken", refreshToken, {
@@ -89,7 +93,7 @@ async function login(req, res) {
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "strict",
                     path: "/refresh-token",
-                    maxAge: 1000 * 60 * 60 * 24 * 15
+                    maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
                 })
 
                 return res.status(201).json({

@@ -34,9 +34,9 @@ async function createUser({ username, email, password }) {
     })
 }
 
-async function createTokens(user) {
+async function createTokens(user, rememberMe) {
     const accessToken = jwt.sign({ id: user._id, role: user.role, isBanned: user.isBanned, banExpiresAt: user.banExpiresAt }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "15m" })
-    const refreshToken = jwt.sign({ id: user._id, role: user.role }, process.env.REFRESH_TOKEN_KEY, { expiresIn: "15d" })
+    const refreshToken = jwt.sign({ id: user._id, role: user.role }, process.env.REFRESH_TOKEN_KEY, { expiresIn: rememberMe ? "15d" : "1d" })
 
     const tokens = await tokenModel.find({ userId: user._id }).sort({ createdAt: 1 })
 
