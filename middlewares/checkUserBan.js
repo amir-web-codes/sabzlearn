@@ -20,7 +20,9 @@ const checkUserBan = async (req, res, next) => {
             return sendError(403, `you are temporary banned until: ${new Date(banExpiresAt).toISOString()}`)
         }
 
-        if (now > expiresAt) {
+        const foundUser = await userService.findUserById(id)
+
+        if (req.user.isBanned && now > expiresAt) {
             await userService.unBanUser(id)
         }
     }

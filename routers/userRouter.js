@@ -15,7 +15,8 @@ router.route("/:id")
     .get(validateId, checkToken, checkRoles(["admin"]), userController.getUserById)
     .delete(validateId, checkToken, checkRoles(["admin"]), userController.deleteUserById)
 
-router.put("/:id/ban", validateId, checkToken, checkRoles(["admin"]), userController.banUser)
+router.patch("/:id/ban", validateId, checkToken, checkRoles(["admin"]), userController.banUser)
+router.patch("/:id/unban", validateId, checkToken, checkRoles(["admin"]), userController.unBanUser)
 
 
 router.post("/auth/signup", userController.signUp)

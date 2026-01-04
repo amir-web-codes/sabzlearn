@@ -159,6 +159,21 @@ async function banUser(req, res) {
     }
 }
 
+async function unBanUser(req, res) {
+    try {
+
+        await userService.unBanUser(req.params.id)
+
+        res.json({
+            success: true,
+            message: "user unbanned successfuly"
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
+    }
+}
+
 async function getUserProfile(req, res) {
     try {
 
@@ -215,6 +230,7 @@ module.exports = {
     login,
     logOut,
     banUser,
+    unBanUser,
     getUserProfile,
     deleteUserProfile,
     updateUserProfile

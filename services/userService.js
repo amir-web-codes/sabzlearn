@@ -35,7 +35,7 @@ async function createUser({ username, email, password }) {
 }
 
 async function createTokens(user, rememberMe) {
-    const accessToken = jwt.sign({ id: user._id, role: user.role, isBanned: user.isBanned, banExpiresAt: user.banExpiresAt }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "15m" })
+    const accessToken = jwt.sign({ id: user._id, role: user.role, isBanned: user.isBanned, banExpiresAt: user.banExpiresAt }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "5m" })
     const refreshToken = jwt.sign({ id: user._id, role: user.role }, process.env.REFRESH_TOKEN_KEY, { expiresIn: rememberMe ? "15d" : "1d" })
 
     const tokens = await tokenModel.find({ userId: user._id }).sort({ createdAt: 1 })
@@ -88,16 +88,17 @@ async function banUser(user, banDays, reason = "no reason") {
 async function unBanUser(userId) {
     const foundUser = await findUserById(userId)
 
+    if (!foundUser.isBanned) {
+        const err = new Error("this user wasn't ban")
+        err.status = 409
+        throw err
+    }
+
     foundUser.isBanned = false
     foundUser.banReason = null
     foundUser.banExpiresAt = null
 
     await foundUser.save()
-
-    req.user.isBanned = false
-    req.user.banExpiresAt = null
-
-    return
 }
 
 async function deleteUser(userId) {
