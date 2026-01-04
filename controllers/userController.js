@@ -170,12 +170,28 @@ async function logOut(req, res) {
     }
 }
 
+async function deleteUserProfile(req, res) {
+    try {
+
+        await userService.deleteUser(req.user.id)
+
+        res.json({
+            success: true,
+            message: "user deleted successfuly"
+        })
+
+    } catch (err) {
+        sendError(err.status || 500, err.message)
+    }
+}
+
 module.exports = {
     getUserById,
     signUp,
     login,
+    logOut,
     banUser,
     getUserProfile,
     deleteUserById,
-    logOut
+    deleteUserProfile
 }
