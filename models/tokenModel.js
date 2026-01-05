@@ -13,6 +13,16 @@ const tokenSchema = new mongoose.Schema({
     revoked: {
         type: Boolean,
         required: true
+    },
+    deviceId: {
+        type: String,
+        required: true
+    },
+    userAgent: {
+        type: String
+    },
+    expiresAt: {
+        type: Date
     }
 }, { timestamps: true })
 

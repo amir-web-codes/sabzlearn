@@ -22,7 +22,7 @@ router.patch("/:id/unban", validateId, checkToken, checkRoles(["admin"]), userCo
 router.post("/auth/signup", userController.signUp)
 router.post("/auth/login", userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
-router.post("/refresh-token", userController.refreshToken)
+router.post("/refresh-token", checkToken, userController.refreshToken)
 
 
 

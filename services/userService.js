@@ -34,26 +34,49 @@ async function createUser({ username, email, password }) {
     })
 }
 
-async function createTokens(user, rememberMe) {
+async function createTokens(user, rememberMe, deviceId, userAgent) {
     const accessToken = jwt.sign({ id: user._id, role: user.role, isBanned: user.isBanned, banExpiresAt: user.banExpiresAt }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "5m" })
-    const refreshToken = jwt.sign({ id: user._id, role: user.role }, process.env.REFRESH_TOKEN_KEY, { expiresIn: rememberMe ? "15d" : "1d" })
+    const refreshToken = jwt.sign({ id: user._id, role: user.role, deviceId }, process.env.REFRESH_TOKEN_KEY, { expiresIn: rememberMe ? "15d" : "1d" })
 
     const tokens = await tokenModel.find({ userId: user._id }).sort({ createdAt: 1 })
-
-    const maximumTokens = 4
+    const maximumTokens = 5
 
     if (tokens.length >= maximumTokens) {
         await tokenModel.findByIdAndDelete(tokens[0]._id)
     }
 
-    await revokeUserToken(user._id)
+    const deviceTokens = await tokenModel.find({ userId: user._id, deviceId }).sort({ createdAt: 1 })
+    // maximum tokens per device
+    const maximumDeviceTokens = 2
+
+    if (deviceTokens.length >= maximumDeviceTokens) {
+        await tokenModel.findByIdAndDelete(deviceTokens[0]._id)
+    }
+
 
     const hashedToken = await bcrypt.hash(refreshToken, saltRounds)
+
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * (rememberMe ? 15 : 1))
+
+    // const userAgentToken = await tokenModel.findOne({ userId: user._id, deviceId })
+    // let deviceId;
+
+    // if (userAgentToken) {
+    //     deviceId = userAgentToken.deviceId
+    // } else {
+    //     // new device logged in
+    //     deviceId = crypto.randomUUID()
+    // }
+
+    await revokeUserToken(user._id, deviceId)
 
     await tokenModel.create({
         hashedToken,
         userId: user._id,
-        revoked: false
+        revoked: false,
+        deviceId: String(deviceId),
+        userAgent,
+        expiresAt
     })
 
     return { accessToken, refreshToken }
@@ -63,8 +86,8 @@ async function comparePasswords(password, dbPassword) {
     return await bcrypt.compare(password, dbPassword)
 }
 
-async function revokeUserToken(userId) {
-    await tokenModel.updateMany({ userId }, { revoked: true })
+async function revokeUserToken(userId, deviceId) {
+    await tokenModel.updateMany({ userId, deviceId }, { revoked: true })
 
     return
 }
@@ -133,16 +156,16 @@ async function updateUser(user, username, email, password) {
     await user.save()
 }
 
-async function refreshAccessToken(token, rememberMe) {
+async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
     try {
         const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_KEY)
         const foundUser = await findUserById(decoded.id)
-        const foundTokens = await tokenModel.find({ userId: decoded.id }).sort({ createdAt: -1 })
+        const foundTokens = await tokenModel.find({ userId: decoded.id, deviceId }).sort({ createdAt: -1 })
 
         if (!foundTokens.length || foundTokens[0].revoked) {
-            revokeUserToken(foundUser._id)
+            revokeUserToken(foundUser._id, deviceId)
             const err = new Error("faked refresh token")
-            err.status = 403
+            err.status = 401
             throw err
         }
 
@@ -152,21 +175,21 @@ async function refreshAccessToken(token, rememberMe) {
 
         if (!compareResult) {
             const err = new Error("faked refresh token")
-            err.status = 403
+            err.status = 401
             throw err
         }
 
         foundTokens[0].revoked = true
         await foundTokens[0].save()
 
-        return await createTokens(foundUser, rememberMe)
+        return await createTokens(foundUser, rememberMe, deviceId, userAgent)
 
     } catch (err) {
-        if (err.status === 403) {
+        if (err.status === 401) {
             throw err
         } else {
             err = new Error("invaild or expired token")
-            err.status = 403
+            err.status = 401
             throw err
         }
     }
