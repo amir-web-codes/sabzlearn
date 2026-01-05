@@ -40,11 +40,13 @@ async function createTokens(user, rememberMe) {
 
     const tokens = await tokenModel.find({ userId: user._id }).sort({ createdAt: 1 })
 
-    const maximumTokens = 2
+    const maximumTokens = 4
 
     if (tokens.length >= maximumTokens) {
         await tokenModel.findByIdAndDelete(tokens[0]._id)
     }
+
+    await revokeUserToken(user._id)
 
     const hashedToken = await bcrypt.hash(refreshToken, saltRounds)
 
@@ -62,12 +64,7 @@ async function comparePasswords(password, dbPassword) {
 }
 
 async function revokeUserToken(userId) {
-    const tokens = await tokenModel.find({ userId: userId })
-
-    tokens.forEach(async token => {
-        token.revoked = true
-        await token.save()
-    })
+    await tokenModel.updateMany({ userId }, { revoked: true })
 
     return
 }
@@ -140,28 +137,38 @@ async function refreshAccessToken(token, rememberMe) {
     try {
         const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_KEY)
         const foundUser = await findUserById(decoded.id)
-        const foundToken = await tokenModel.findOne({ userId: decoded.id })
+        const foundTokens = await tokenModel.find({ userId: decoded.id }).sort({ createdAt: -1 })
 
-        const compareResult = await bcrypt.compare(token, foundToken.hashedToken)
-
-        if (!compareResult) {
-            const err = new Error("error")
+        if (!foundTokens.length || foundTokens[0].revoked) {
+            revokeUserToken(foundUser._id)
+            const err = new Error("faked refresh token")
             err.status = 403
             throw err
         }
 
-        console.log(foundUser)
-        console.log(foundToken)
 
-        foundToken.revoked = true
-        await foundToken.save()
+        const compareResult = await bcrypt.compare(token, foundTokens[0].hashedToken)
+
+
+        if (!compareResult) {
+            const err = new Error("faked refresh token")
+            err.status = 403
+            throw err
+        }
+
+        foundTokens[0].revoked = true
+        await foundTokens[0].save()
 
         return await createTokens(foundUser, rememberMe)
 
     } catch (err) {
-        err = new Error("invaild or expired token")
-        err.status = 403
-        throw err
+        if (err.status === 403) {
+            throw err
+        } else {
+            err = new Error("invaild or expired token")
+            err.status = 403
+            throw err
+        }
     }
 
 }
