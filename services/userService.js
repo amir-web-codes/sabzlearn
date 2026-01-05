@@ -110,6 +110,8 @@ async function deleteUser(userId) {
         throw err
     }
 
+    await tokenModel.deleteMany({ userId: userId })
+
     return deletedData
 }
 
