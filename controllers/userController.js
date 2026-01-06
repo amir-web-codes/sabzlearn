@@ -267,14 +267,14 @@ async function refreshToken(req, res) {
             sendError(403, "you're not logged in")
         }
 
-        const { accessToken, refreshToken } = await userService.refreshAccessToken(oldToken, req.query.rememberMe, req.headers["user-agent"], deviceId)
+        const { accessToken, refreshToken } = await userService.refreshAccessToken(oldToken, req.body.rememberMe, req.headers["user-agent"], deviceId)
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
             path: "/users/refresh-token",
-            maxAge: req.query.rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
+            maxAge: req.body.rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
         })
 
         res.json({

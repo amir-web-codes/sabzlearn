@@ -9,7 +9,8 @@ const tokenSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: true,
+        index: true
     },
     revoked: {
         type: Boolean,
@@ -17,13 +18,16 @@ const tokenSchema = new mongoose.Schema({
     },
     deviceId: {
         type: String,
-        required: true
+        required: true,
+        index: true
     },
     userAgent: {
         type: String
     },
     expiresAt: {
-        type: Date
+        type: Date,
+        required: true,
+        index: { expires: 0 }
     }
 }, { timestamps: true })
 
