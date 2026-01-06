@@ -54,16 +54,6 @@ async function createTokens(user, rememberMe, deviceId, userAgent) {
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * (rememberMe ? 15 : 1))
 
-    // const userAgentToken = await tokenModel.findOne({ userId: user._id, deviceId })
-    // let deviceId;
-
-    // if (userAgentToken) {
-    //     deviceId = userAgentToken.deviceId
-    // } else {
-    //     // new device logged in
-    //     deviceId = crypto.randomUUID()
-    // }
-
     await revokeUserToken(user._id, deviceId)
 
     await tokenModel.create({
@@ -83,7 +73,12 @@ async function comparePasswords(password, dbPassword) {
 }
 
 async function revokeUserToken(userId, deviceId) {
-    await tokenModel.updateMany({ userId, deviceId }, { revoked: true })
+
+    if (!deviceId) {
+        await tokenModel.updateMany({ userId }, { revoked: true })
+    } else {
+        await tokenModel.updateMany({ userId, deviceId }, { revoked: true })
+    }
 
     return
 }
@@ -141,10 +136,6 @@ async function updateUser(user, username, email, password) {
         throw err
     }
 
-    if (password) {
-        user.password = password || user.password
-    }
-
     user.username = username || user.username
     user.email = email || user.email
 
@@ -191,6 +182,14 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
 
 }
 
+async function changePassword(user, password) {
+    revokeUserToken(user._id)
+
+    user.password = password
+
+    await user.save()
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -202,5 +201,6 @@ module.exports = {
     unBanUser,
     deleteUser,
     updateUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changePassword
 }

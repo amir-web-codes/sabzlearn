@@ -120,13 +120,7 @@ async function logOut(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/refresh-token",
-    })
-
-    res.clearCookie("deviceId", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        path: "/users/refresh-token",
     })
 
     res.json({
@@ -184,7 +178,7 @@ async function updateUserProfile(req, res) {
 
     const foundUser = await userService.findUserById(req.user.id)
 
-    await userService.updateUser(foundUser, username, email, password)
+    await userService.updateUser(foundUser, username, email)
 
     res.json({
         success: true,
@@ -221,6 +215,24 @@ async function refreshToken(req, res) {
     })
 }
 
+async function changeUserPassword(req, res) {
+    const foundUser = await userService.findUserById(req.user.id)
+
+    await userService.changePassword(foundUser, req.body.password)
+
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/users/refresh-token"
+    })
+
+    res.json({
+        success: true,
+        message: "password changed successfuly, please Login again",
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -232,5 +244,6 @@ module.exports = {
     getUserProfile: asyncWrapper(getUserProfile),
     deleteUserProfile: asyncWrapper(deleteUserProfile),
     updateUserProfile: asyncWrapper(updateUserProfile),
-    refreshToken: asyncWrapper(refreshToken)
+    refreshToken: asyncWrapper(refreshToken),
+    changeUserPassword: asyncWrapper(changeUserPassword)
 }
