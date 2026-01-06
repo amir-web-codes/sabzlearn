@@ -158,7 +158,7 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
         const foundTokens = await tokenModel.find({ userId: decoded.id, deviceId }).sort({ createdAt: -1 })
 
         if (!foundTokens.length || foundTokens[0].revoked) {
-            revokeUserToken(foundUser._id, deviceId)
+            await revokeUserToken(foundUser._id, deviceId)
             const err = new Error("faked refresh token")
             err.status = 401
             throw err
