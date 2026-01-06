@@ -24,12 +24,11 @@ async function findByEmail(email) {
 }
 
 async function createUser({ username, email, password }) {
-    const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     return await userModel.create({
         username,
         email,
-        password: hashedPassword,
+        password: password,
         role: "user"
     })
 }
@@ -53,9 +52,6 @@ async function createTokens(user, rememberMe, deviceId, userAgent) {
         await tokenModel.findByIdAndDelete(deviceTokens[0]._id)
     }
 
-
-    const hashedToken = await bcrypt.hash(refreshToken, saltRounds)
-
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * (rememberMe ? 15 : 1))
 
     // const userAgentToken = await tokenModel.findOne({ userId: user._id, deviceId })
@@ -71,7 +67,7 @@ async function createTokens(user, rememberMe, deviceId, userAgent) {
     await revokeUserToken(user._id, deviceId)
 
     await tokenModel.create({
-        hashedToken,
+        hashedToken: refreshToken,
         userId: user._id,
         revoked: false,
         deviceId: String(deviceId),
@@ -146,8 +142,7 @@ async function updateUser(user, username, email, password) {
     }
 
     if (password) {
-        const hashedPassword = await bcrypt.hash(password, saltRounds)
-        user.password = hashedPassword || user.password
+        user.password = password || user.password
     }
 
     user.username = username || user.username

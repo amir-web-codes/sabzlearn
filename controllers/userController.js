@@ -77,6 +77,7 @@ async function signUp(req, res) {
         })
 
     } catch (err) {
+        console.log(err.stack)
         sendError(err.status || 500, err.message)
     }
 }
