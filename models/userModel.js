@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
     banExpiresAt: {
         type: Date,
         default: null
+    },
+    lastLogin: {
+        type: Date,
+        required: true
     }
 }, { timestamps: true })
 

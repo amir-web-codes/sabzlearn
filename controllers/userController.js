@@ -79,7 +79,7 @@ async function login(req, res) {
                 deviceId = randomUUID()
             }
 
-            const { accessToken, refreshToken } = await userService.createTokens(foundUser, rememberMe, deviceId, userAgent)
+            const { accessToken, refreshToken } = await userService.createTokens(foundUser, rememberMe, deviceId, userAgent, true)
 
             res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,

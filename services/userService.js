@@ -25,15 +25,18 @@ async function findByEmail(email) {
 
 async function createUser({ username, email, password }) {
 
+    const today = new Date(Date.now())
+
     return await userModel.create({
         username,
         email,
         password: password,
-        role: "user"
+        role: "user",
+        lastLogin: today
     })
 }
 
-async function createTokens(user, rememberMe, deviceId, userAgent) {
+async function createTokens(user, rememberMe, deviceId, userAgent, isLogin) {
     const accessToken = jwt.sign({ id: user._id, role: user.role, isBanned: user.isBanned, banExpiresAt: user.banExpiresAt }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "5m" })
     const refreshToken = jwt.sign({ id: user._id, role: user.role, deviceId }, process.env.REFRESH_TOKEN_KEY, { expiresIn: rememberMe ? "15d" : "1d" })
 
@@ -50,6 +53,16 @@ async function createTokens(user, rememberMe, deviceId, userAgent) {
 
     if (deviceTokens.length >= maximumDeviceTokens) {
         await tokenModel.findByIdAndDelete(deviceTokens[0]._id)
+    }
+
+
+
+    // if it's a login request, add lastLogin Date
+    if (isLogin) {
+        const today = new Date(Date.now())
+
+        user.lastLogin = today
+        await user.save()
     }
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * (rememberMe ? 15 : 1))
