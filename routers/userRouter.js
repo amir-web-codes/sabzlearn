@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const { validateId, checkToken, checkRoles, checkSelfUser, checkUserBan } = require("../middlewares")
+const { validateId, checkToken, checkRoles, checkSelfUser, checkUserBan, loginLimiter, adminLimiter } = require("../middlewares")
 
 const userController = require("../controllers/userController")
 
@@ -12,15 +12,15 @@ router.route("/me")
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
 
 router.route("/:id")
-    .get(validateId, checkToken, checkRoles(["admin"]), userController.getUserById)
-    .delete(validateId, checkToken, checkRoles(["admin"]), userController.deleteUserById)
+    .get(validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.getUserById)
+    .delete(validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.deleteUserById)
 
-router.patch("/:id/ban", validateId, checkToken, checkRoles(["admin"]), userController.banUser)
-router.patch("/:id/unban", validateId, checkToken, checkRoles(["admin"]), userController.unBanUser)
+router.patch("/:id/ban", validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.banUser)
+router.patch("/:id/unban", validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.unBanUser)
 
 
-router.post("/auth/signup", userController.signUp)
-router.post("/auth/login", userController.login)
+router.post("/auth/signup", loginLimiter, userController.signUp)
+router.post("/auth/login", loginLimiter, userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
 router.post("/refresh-token", checkToken, userController.refreshToken)
 
