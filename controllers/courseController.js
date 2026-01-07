@@ -20,7 +20,17 @@ async function createCourse(req, res) {
     })
 }
 
+async function deleteCourse(req, res) {
+    await courseService.removeCourseFromDb(req.params.slug)
+
+    res.json({
+        success: true,
+        message: "course deleted successfuly"
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
-    createCourse: asyncWrapper(createCourse)
+    createCourse: asyncWrapper(createCourse),
+    deleteCourse: asyncWrapper(deleteCourse)
 }

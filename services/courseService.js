@@ -55,7 +55,12 @@ async function createCourse({ title, description, price, level, language }, user
     })
 }
 
+async function removeCourseFromDb(slug) {
+    return await courseModel.findOneAndDelete({ slug })
+}
+
 module.exports = {
     findCourseBySlug,
-    createCourse
+    createCourse,
+    removeCourseFromDb
 }

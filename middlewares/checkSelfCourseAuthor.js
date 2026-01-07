@@ -5,7 +5,6 @@ function checkSelfCourseAuthor(adminAllowed = false) {
         const foundCourse = await courseService.findCourseBySlug(req.params.slug, "instructor")
 
         if (foundCourse.instructor.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {
-            req.course = course
             return next()
         }
 
