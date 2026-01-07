@@ -193,13 +193,16 @@ async function refreshToken(req, res) {
         sendError(403, "token not available or expired")
     }
 
+
     const deviceId = req.cookies.deviceId
+    const rememberMe = req.body.rememberMe
+    const userAgent = req.headers["user-agent"]
 
     if (!deviceId) {
         sendError(403, "you're not logged in")
     }
 
-    const { accessToken, refreshToken } = await userService.refreshAccessToken(oldToken, req.body.rememberMe, req.headers["user-agent"], deviceId)
+    const { accessToken, refreshToken } = await userService.refreshAccessToken(oldToken, rememberMe, userAgent, deviceId)
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,

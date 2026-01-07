@@ -10,8 +10,10 @@ middlewares(app)
 require("./configs/db")()
 
 const userRouter = require("./routers/userRouter")
+const courseRouter = require("./routers/courseRouter")
 
 app.use("/users", userRouter)
+app.use("/courses", courseRouter)
 
 app.use((req, res, next) => {
     res.status(404).json({
