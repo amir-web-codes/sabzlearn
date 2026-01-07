@@ -11,6 +11,16 @@ async function getCourseBySlug(req, res) {
     })
 }
 
+async function createCourse(req, res) {
+    await courseService.createCourse(req.body, req.user.id)
+
+    res.status(201).json({
+        success: true,
+        message: "course created successfuly"
+    })
+}
+
 module.exports = {
-    getCourseBySlug: asyncWrapper(getCourseBySlug)
+    getCourseBySlug: asyncWrapper(getCourseBySlug),
+    createCourse: asyncWrapper(createCourse)
 }

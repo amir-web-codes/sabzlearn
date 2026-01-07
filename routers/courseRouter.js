@@ -9,6 +9,8 @@ const { validateId, checkToken, checkRoles, checkUserBan, loginLimiter, adminLim
 router.route("/:slug")
     .get(checkToken, courseController.getCourseBySlug)
 // .patch()
-// .delete()
+// .delete(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkCourseAuthor)
+
+router.post("/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 
 module.exports = router
