@@ -9,7 +9,7 @@ async function getUserById(req, res) {
 
     res.json({
         success: true,
-        message: "user found successfuly",
+        message: "user found successfully",
         data: foundUser
     })
 }
@@ -19,7 +19,7 @@ async function deleteUserById(req, res) {
 
     res.json({
         success: true,
-        message: "user deleted successfuly"
+        message: "user deleted successfully"
     })
 }
 
@@ -58,7 +58,7 @@ async function signUp(req, res) {
 
     res.status(201).json({
         success: true,
-        message: "user signed up successfuly",
+        message: "user signed up successfully",
         accessToken
     })
 }
@@ -125,7 +125,7 @@ async function logOut(req, res) {
 
     res.json({
         success: true,
-        message: "user logged out successfuly"
+        message: "user logged out successfully"
     })
 }
 
@@ -142,7 +142,7 @@ async function banUser(req, res) {
 
     return res.json({
         success: true,
-        message: "user banned successfuly"
+        message: "user banned successfully"
     })
 }
 
@@ -151,7 +151,7 @@ async function unBanUser(req, res) {
 
     res.json({
         success: true,
-        message: "user unbanned successfuly"
+        message: "user unbanned successfully"
     })
 }
 
@@ -169,7 +169,7 @@ async function deleteUserProfile(req, res) {
 
     res.json({
         success: true,
-        message: "user deleted successfuly"
+        message: "user deleted successfully"
     })
 }
 
@@ -182,7 +182,7 @@ async function updateUserProfile(req, res) {
 
     res.json({
         success: true,
-        message: "user updated successfuly"
+        message: "user updated successfully"
     })
 }
 
@@ -232,7 +232,7 @@ async function changeUserPassword(req, res) {
 
     res.json({
         success: true,
-        message: "password changed successfuly, please Login again",
+        message: "password changed successfully, please Login again",
     })
 }
 

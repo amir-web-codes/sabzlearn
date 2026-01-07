@@ -6,7 +6,7 @@ async function getCourseBySlug(req, res) {
 
     res.json({
         success: true,
-        message: "course found successfuly",
+        message: "course found successfully",
         data: course
     })
 }
@@ -16,7 +16,7 @@ async function createCourse(req, res) {
 
     res.status(201).json({
         success: true,
-        message: "course created successfuly"
+        message: "course created successfully"
     })
 }
 
@@ -25,7 +25,7 @@ async function deleteCourse(req, res) {
 
     res.json({
         success: true,
-        message: "course deleted successfuly"
+        message: "course deleted successfully"
     })
 }
 
