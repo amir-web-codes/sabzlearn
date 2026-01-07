@@ -8,7 +8,7 @@ const { validateId, checkToken, checkRoles, checkUserBan, checkSelfCourseAuthor 
 
 router.route("/:slug")
     .get(checkToken, courseController.getCourseBySlug)
-    // .patch()
+    .patch(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.editCourseDetails)
     .delete(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.deleteCourse)
 
 router.post("/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)

@@ -22,11 +22,11 @@ async function generateUniqueSlug(title) {
     return slug
 }
 
-async function findCourseBySlug(slug, selectField) {
+async function findCourseBySlug(slug, select) {
     let data;
 
-    if (selectField) {
-        data = await courseModel.findOne({ slug }).select(selectField)
+    if (select) {
+        data = await courseModel.findOne({ slug }).select(select)
     } else {
         data = await courseModel.findOne({ slug })
     }
@@ -59,8 +59,27 @@ async function removeCourseFromDb(slug) {
     return await courseModel.findOneAndDelete({ slug })
 }
 
+async function updateCourse({ title, description, price, level, language }, slug) {
+
+    const foundCourse = await courseModel.findOne({ slug })
+
+    if (title !== undefined && title.trim() !== foundCourse.title) {
+        foundCourse.title = title
+        const sluged = await generateUniqueSlug(title)
+        foundCourse.slug = sluged
+    }
+
+    if (description !== undefined) foundCourse.description = description
+    if (price !== undefined) foundCourse.price = price
+    if (level !== undefined) foundCourse.level = level
+    if (language !== undefined) foundCourse.language = language
+
+    await foundCourse.save()
+}
+
 module.exports = {
     findCourseBySlug,
     createCourse,
-    removeCourseFromDb
+    removeCourseFromDb,
+    updateCourse
 }

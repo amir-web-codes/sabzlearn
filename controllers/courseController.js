@@ -29,8 +29,18 @@ async function deleteCourse(req, res) {
     })
 }
 
+async function editCourseDetails(req, res) {
+    await courseService.updateCourse(req.body, req.params.slug)
+
+    res.json({
+        success: true,
+        message: "course edited successfully"
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
     createCourse: asyncWrapper(createCourse),
-    deleteCourse: asyncWrapper(deleteCourse)
+    deleteCourse: asyncWrapper(deleteCourse),
+    editCourseDetails: asyncWrapper(editCourseDetails)
 }
