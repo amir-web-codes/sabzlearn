@@ -15,7 +15,7 @@ async function generateUniqueSlug(title) {
     let counter = 1
 
     while (await courseModel.exists({ slug })) {
-        slug = baseSlug + counter
+        slug = `${baseSlug}-${counter}`
         counter++
     }
 
@@ -23,9 +23,9 @@ async function generateUniqueSlug(title) {
 }
 
 async function findCourseBySlug(slug) {
-    const data = await courseModel.find({ slug })
+    const data = await courseModel.findOne({ slug })
 
-    if (!data.length) {
+    if (!data) {
         const err = new Error("course not found")
         err.status = 404
         throw err
