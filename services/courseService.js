@@ -22,8 +22,14 @@ async function generateUniqueSlug(title) {
     return slug
 }
 
-async function findCourseBySlug(slug) {
-    const data = await courseModel.findOne({ slug })
+async function findCourseBySlug(slug, selectField) {
+    let data;
+
+    if (selectField) {
+        data = await courseModel.findOne({ slug }).select(selectField)
+    } else {
+        data = await courseModel.findOne({ slug })
+    }
 
     if (!data) {
         const err = new Error("course not found")

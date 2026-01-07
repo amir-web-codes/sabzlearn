@@ -2,7 +2,7 @@ const courseService = require("../services/courseService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
 async function getCourseBySlug(req, res) {
-    const course = await courseService.findCourseBySlug(req.slug)
+    const course = await courseService.findCourseBySlug(req.params.slug)
 
     res.json({
         success: true,

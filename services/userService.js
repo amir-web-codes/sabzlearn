@@ -3,8 +3,6 @@ const tokenModel = require("../models/tokenModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-const saltRounds = 12
-
 async function findUserById(userId) {
     const data = await userModel.findById(userId)
 
