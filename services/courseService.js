@@ -64,7 +64,7 @@ async function createCourse({ title, description, price, level, language }, user
         instructor: userId,
         level,
         language,
-        studentCount: 0,
+        studentsCount: 0,
     })
 }
 
@@ -116,6 +116,11 @@ async function enrollUserCourse(slug, userId) {
         enrolledAt: today,
         lastAccessedAt: today
     })
+
+    const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id })
+
+    foundCourse.studentsCount = totalNumber
+    await foundCourse.save()
 }
 
 async function cancelEnrollStatus(slug, userId) {
@@ -127,10 +132,10 @@ async function cancelEnrollStatus(slug, userId) {
 }
 
 async function findCourseStudents(slug, page = 1, limit = 20) {
-    const foundCourse = await findCourseBySlug(slug)
+    const foundCourse = await findCourseBySlug(slug, "studentsCount")
 
-    const data = await enrollmentModel.find({ courseId: foundCourse._id }).select("courseId userId").populate("userId", "username email").skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id })
+    const data = await enrollmentModel.find({ courseId: foundCourse._id }).select("userId").populate("userId", "username email").skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = foundCourse.studentsCount
     return { data, totalNumber }
 }
 

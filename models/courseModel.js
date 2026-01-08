@@ -43,7 +43,8 @@ const courseSchema = new mongoose.Schema({
         default: "fa"
     },
     studentsCount: {
-        type: Number
+        type: Number,
+        default: 0
     },
     // thumbnail: {
     //     type: String
