@@ -5,6 +5,7 @@ const courseController = require("../controllers/courseController")
 
 const { validateId, checkToken, checkRoles, checkUserBan, checkSelfCourseAuthor } = require("../middlewares")
 
+router.get("/getAll", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.getAllCourses)
 
 router.route("/:slug")
     .get(checkToken, courseController.getCourseBySlug)

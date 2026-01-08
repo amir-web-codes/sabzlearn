@@ -1,3 +1,4 @@
+const courseModel = require("../models/courseModel")
 const courseService = require("../services/courseService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
@@ -38,9 +39,19 @@ async function editCourseDetails(req, res) {
     })
 }
 
+async function getAllCourses(req, res) {
+    const data = await courseService.getAllCourses()
+
+    res.json({
+        success: true,
+        data
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
     createCourse: asyncWrapper(createCourse),
     deleteCourse: asyncWrapper(deleteCourse),
-    editCourseDetails: asyncWrapper(editCourseDetails)
+    editCourseDetails: asyncWrapper(editCourseDetails),
+    getAllCourses: asyncWrapper(getAllCourses)
 }

@@ -77,9 +77,14 @@ async function updateCourse({ title, description, price, level, language }, slug
     await foundCourse.save()
 }
 
+async function getAllCourses() {
+    return await courseModel.find().lean()
+}
+
 module.exports = {
     findCourseBySlug,
     createCourse,
     removeCourseFromDb,
-    updateCourse
+    updateCourse,
+    getAllCourses
 }
