@@ -42,7 +42,15 @@ async function findCourseBySlug(slug, select) {
 }
 
 async function findEnrollment(courseId, userId) {
-    return await enrollmentModel.findOne({ courseId, userId })
+    const foundEnrollment = await enrollmentModel.findOne({ courseId, userId })
+
+    if (!foundEnrollment) {
+        const err = new Error("user not registered in this course")
+        err.status = 404
+        throw err
+    }
+
+    return foundEnrollment
 }
 
 async function createCourse({ title, description, price, level, language }, userId) {
@@ -91,7 +99,7 @@ async function enrollUserCourse(slug, userId) {
 
     const today = new Date()
 
-    const foundEnrollment = await findEnrollment(foundCourse._id, userId)
+    const foundEnrollment = await enrollmentModel.findOne({ courseId: foundCourse._id, userId })
 
     if (foundEnrollment) {
         foundEnrollment.status = "active"
@@ -111,12 +119,6 @@ async function enrollUserCourse(slug, userId) {
 async function cancelEnrollStatus(slug, userId) {
     const foundCourse = await findCourseBySlug(slug)
     const foundEnrollment = await findEnrollment(foundCourse._id, userId)
-
-    if (!foundEnrollment) {
-        const err = new Error("user not registered in this course")
-        err.status = 404
-        throw err
-    }
 
     foundEnrollment.status = "cancelled"
     await foundEnrollment.save()

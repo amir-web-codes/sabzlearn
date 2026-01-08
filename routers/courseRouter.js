@@ -3,7 +3,7 @@ const router = express.Router()
 
 const courseController = require("../controllers/courseController")
 
-const { validateId, checkToken, checkRoles, checkUserBan, checkSelfCourseAuthor } = require("../middlewares")
+const { checkToken, checkRoles, checkUserBan, checkSelfCourseAuthor, enrollLimiter } = require("../middlewares")
 
 router.get("/getAll", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.getAllCourses)
 
@@ -14,7 +14,7 @@ router.route("/:slug")
 
 router.post("/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 
-router.post("/:slug/enroll", checkToken, checkUserBan, courseController.registerUserInCourse)
-router.post("/:slug/cancel-enroll", checkToken, checkUserBan, courseController.cancelEnrollment) // limiter
+router.post("/:slug/enroll", checkToken, checkUserBan, enrollLimiter, courseController.registerUserInCourse)
+router.post("/:slug/cancel-enroll", checkToken, checkUserBan, enrollLimiter, courseController.cancelEnrollment)
 
 module.exports = router
