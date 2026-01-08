@@ -15,5 +15,6 @@ router.route("/:slug")
 router.post("/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 
 router.post("/:slug/enroll", checkToken, checkUserBan, courseController.registerUserInCourse)
+router.post("/:slug/cancel-enroll", checkToken, checkUserBan, courseController.cancelEnrollment) // limiter
 
 module.exports = router

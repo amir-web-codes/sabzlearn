@@ -57,11 +57,21 @@ async function registerUserInCourse(req, res) {
     })
 }
 
+async function cancelEnrollment(req, res) {
+    await courseService.cancelEnrollStatus(req.params.slug, req.user.id)
+
+    res.json({
+        success: true,
+        message: "enrollment cancelled successfully"
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
     createCourse: asyncWrapper(createCourse),
     deleteCourse: asyncWrapper(deleteCourse),
     editCourseDetails: asyncWrapper(editCourseDetails),
     getAllCourses: asyncWrapper(getAllCourses),
-    registerUserInCourse: asyncWrapper(registerUserInCourse)
+    registerUserInCourse: asyncWrapper(registerUserInCourse),
+    cancelEnrollment: asyncWrapper(cancelEnrollment)
 }

@@ -18,10 +18,6 @@ const enrollmentSchema = new mongoose.Schema({
         enum: ["active", "completed", "cancelled"],
         default: "active"
     },
-    progress: {
-        type: String,
-        default: 0
-    },
     lastAccessedAt: {
         type: Date,
         default: Date.now
