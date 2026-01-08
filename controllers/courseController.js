@@ -39,11 +39,20 @@ async function editCourseDetails(req, res) {
 }
 
 async function getAllCourses(req, res) {
-    const data = await courseService.getAllCourses()
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 20
+
+    const { data, totalNumber } = await courseService.getAllCourses(page, limit)
 
     res.json({
         success: true,
-        data
+        data,
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
     })
 }
 
@@ -66,6 +75,27 @@ async function cancelEnrollment(req, res) {
     })
 }
 
+async function getCourseStudents(req, res) {
+
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 20
+
+    const { data, totalNumber } = await courseService.findCourseStudents(req.params.slug, page, limit)
+    const students = data.map(object => object.userId)
+
+
+    res.json({
+        success: true,
+        data: students.length ? students : "no student found",
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
     createCourse: asyncWrapper(createCourse),
@@ -73,5 +103,6 @@ module.exports = {
     editCourseDetails: asyncWrapper(editCourseDetails),
     getAllCourses: asyncWrapper(getAllCourses),
     registerUserInCourse: asyncWrapper(registerUserInCourse),
-    cancelEnrollment: asyncWrapper(cancelEnrollment)
+    cancelEnrollment: asyncWrapper(cancelEnrollment),
+    getCourseStudents: asyncWrapper(getCourseStudents)
 }

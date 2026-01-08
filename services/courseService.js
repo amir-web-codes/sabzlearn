@@ -90,8 +90,10 @@ async function updateCourse({ title, description, price, level, language }, slug
     await foundCourse.save()
 }
 
-async function getAllCourses() {
-    return await courseModel.find().lean()
+async function getAllCourses(page = 1, limit = 20) {
+    const data = await courseModel.find().skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = await courseModel.countDocuments()
+    return { data, totalNumber }
 }
 
 async function enrollUserCourse(slug, userId) {
@@ -124,6 +126,14 @@ async function cancelEnrollStatus(slug, userId) {
     await foundEnrollment.save()
 }
 
+async function findCourseStudents(slug, page = 1, limit = 20) {
+    const foundCourse = await findCourseBySlug(slug)
+
+    const data = await enrollmentModel.find({ courseId: foundCourse._id }).select("courseId userId").populate("userId", "username email").skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id })
+    return { data, totalNumber }
+}
+
 module.exports = {
     findCourseBySlug,
     createCourse,
@@ -131,5 +141,6 @@ module.exports = {
     updateCourse,
     getAllCourses,
     enrollUserCourse,
-    cancelEnrollStatus
+    cancelEnrollStatus,
+    findCourseStudents
 }

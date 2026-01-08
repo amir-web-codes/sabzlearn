@@ -19,7 +19,8 @@ const courseSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        required: true
+        required: true,
+        default: 0
     },
     discountPrice: {
         type: Number
@@ -32,12 +33,14 @@ const courseSchema = new mongoose.Schema({
     level: {
         type: String,
         required: true,
-        enum: ["beginner", "intermediate", "advanced"]
+        enum: ["beginner", "intermediate", "advanced"],
+        default: "beginner"
     },
     language: {
         type: String,
         required: true,
-        enum: ["en", "fa"]
+        enum: ["en", "fa"],
+        default: "fa"
     },
     studentsCount: {
         type: Number
