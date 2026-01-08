@@ -1,4 +1,5 @@
 const courseModel = require("../models/courseModel")
+const enrollmentModel = require("../models/enrollmentModel")
 const slugify = require("slugify")
 
 function generateSlug(title) {
@@ -81,10 +82,33 @@ async function getAllCourses() {
     return await courseModel.find().lean()
 }
 
+async function enrollUserCourse(slug, userId) {
+    const foundCourse = await findCourseBySlug(slug)
+
+    const today = new Date()
+
+    const foundEnrollment = await enrollmentModel.findOne({ courseId: foundCourse._id, userId })
+
+    if (foundEnrollment) {
+        foundEnrollment.status = "active"
+        foundEnrollment.lastAccessedAt = today
+        return await foundEnrollment.save()
+    }
+
+    await enrollmentModel.create({
+        userId,
+        courseId: foundCourse._id,
+        status: "active",
+        enrolledAt: today,
+        lastAccessedAt: today
+    })
+}
+
 module.exports = {
     findCourseBySlug,
     createCourse,
     removeCourseFromDb,
     updateCourse,
-    getAllCourses
+    getAllCourses,
+    enrollUserCourse
 }
