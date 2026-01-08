@@ -1,5 +1,6 @@
 const userModel = require("../models/userModel")
 const tokenModel = require("../models/tokenModel")
+const enrollmentModel = require("../models/enrollmentModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
@@ -201,6 +202,12 @@ async function changePassword(user, password) {
     await user.save()
 }
 
+async function findUserCourses(userId, page, limit) {
+    const data = await enrollmentModel.find({ userId }).select("courseId").populate("courseId", "title slug price").skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = await enrollmentModel.countDocuments({ userId })
+    return { data, totalNumber }
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -213,5 +220,6 @@ module.exports = {
     deleteUser,
     updateUser,
     refreshAccessToken,
-    changePassword
+    changePassword,
+    findUserCourses
 }

@@ -236,6 +236,25 @@ async function changeUserPassword(req, res) {
     })
 }
 
+async function getUserCourses(req, res) {
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 20
+
+    const { data, totalNumber } = await userService.findUserCourses(req.user.id, page, limit)
+    const students = data.map(object => object.courseId)
+
+    res.json({
+        success: true,
+        data: students.length ? students : "no course found",
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -248,5 +267,6 @@ module.exports = {
     deleteUserProfile: asyncWrapper(deleteUserProfile),
     updateUserProfile: asyncWrapper(updateUserProfile),
     refreshToken: asyncWrapper(refreshToken),
-    changeUserPassword: asyncWrapper(changeUserPassword)
+    changeUserPassword: asyncWrapper(changeUserPassword),
+    getUserCourses: asyncWrapper(getUserCourses)
 }

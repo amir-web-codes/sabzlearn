@@ -12,6 +12,7 @@ router.route("/me")
     .patch(checkToken, checkUserBan, userController.updateUserProfile)
 
 
+router.get("/me/get-courses", checkToken, userController.getUserCourses)
 
 router.patch("/change-password", checkToken, userController.changeUserPassword)
 
