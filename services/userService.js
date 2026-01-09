@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
 async function findUserById(userId) {
-    const data = await userModel.findById(userId)
+    const data = await userModel.findById(userId).select("-password")
 
     if (!data) {
         const err = new Error("user not found")

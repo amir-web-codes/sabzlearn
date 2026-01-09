@@ -160,7 +160,11 @@ async function getUserProfile(req, res) {
 
     res.json({
         success: true,
-        data: foundUser
+        data: foundUser,
+        meta: {
+            signUpDate: foundUser.createdAt,
+            lastLogin: foundUser.lastLogin
+        }
     })
 }
 
