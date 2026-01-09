@@ -6,7 +6,7 @@ async function getCourseBySlug(req, res) {
 
     res.json({
         success: true,
-        message: "course found successfully",
+        message: "course fetched successfully",
         data: course
     })
 }
@@ -46,6 +46,7 @@ async function getAllCourses(req, res) {
 
     res.json({
         success: true,
+        message: "courses fetched successfully",
         data,
         meta: {
             totalNumber,
@@ -86,6 +87,7 @@ async function getCourseStudents(req, res) {
 
     res.json({
         success: true,
+        message: "users fetched successfully",
         data: students.length ? students : "no student found",
         meta: {
             totalNumber,

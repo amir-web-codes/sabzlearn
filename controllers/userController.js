@@ -9,7 +9,7 @@ async function getUserById(req, res) {
 
     res.json({
         success: true,
-        message: "user found successfully",
+        message: "user fetched successfully",
         data: foundUser
     })
 }
@@ -125,7 +125,7 @@ async function logOut(req, res) {
 
     res.json({
         success: true,
-        message: "user logged out successfully"
+        message: "user logged out successfully, please remove access token"
     })
 }
 
@@ -160,6 +160,7 @@ async function getUserProfile(req, res) {
 
     res.json({
         success: true,
+        message: "user fetched successfully",
         data: foundUser,
         meta: {
             signUpDate: foundUser.createdAt,
@@ -218,6 +219,7 @@ async function refreshToken(req, res) {
 
     res.json({
         success: true,
+        message: "token fetched successfully",
         accessToken
     })
 }
@@ -249,6 +251,7 @@ async function getUserCourses(req, res) {
 
     res.json({
         success: true,
+        message: "courses fetched successfully",
         data: students.length ? students : "no course found",
         meta: {
             totalNumber,
