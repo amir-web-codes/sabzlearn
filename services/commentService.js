@@ -6,6 +6,19 @@ async function findUserComments(userId, page, limit) {
     return { data, totalNumber }
 }
 
+async function findCommentById(id) {
+    const data = await commentModel.findById(id)
+
+    if (!data) {
+        const err = new Error("comment not found")
+        err.status = 404
+        throw err
+    }
+
+    return data
+}
+
 module.exports = {
-    findUserComments
+    findUserComments,
+    findCommentById
 }
