@@ -3,7 +3,7 @@ const router = express.Router()
 
 const commentController = require("../controllers/commentController.js")
 
-const { validateId, adminLimiter, checkRoles, checkToken, checkUserBan, } = require("../middlewares")
+const { validateId, adminLimiter, checkRoles, checkToken, checkUserBan, checkSelfCommentAuthor } = require("../middlewares")
 
 router.get("/me", checkToken, commentController.getUserComments)
 

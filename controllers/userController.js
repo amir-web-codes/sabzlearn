@@ -219,7 +219,7 @@ async function refreshToken(req, res) {
 
     res.json({
         success: true,
-        message: "token fetched successfully",
+        message: "token refreshed successfully",
         accessToken
     })
 }

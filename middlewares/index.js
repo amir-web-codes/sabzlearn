@@ -7,6 +7,7 @@ const loginLimiter = require("./loginLimiter")
 const adminLimiter = require("./adminLimiter")
 const checkSelfCourseAuthor = require("./checkSelfCourseAuthor")
 const enrollLimiter = require("./enrollLimiter")
+const checkSelfCommentAuthor = require("./checkSelfCommentAuthor")
 
 module.exports = {
     validateId,
@@ -17,5 +18,6 @@ module.exports = {
     loginLimiter,
     adminLimiter,
     checkSelfCourseAuthor,
-    enrollLimiter
+    enrollLimiter,
+    checkSelfCommentAuthor
 }
