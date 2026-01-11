@@ -18,7 +18,12 @@ async function findCommentById(id) {
     return data
 }
 
+async function deleteCommentById(id) {
+    await commentModel.findByIdAndDelete(id)
+}
+
 module.exports = {
     findUserComments,
-    findCommentById
+    findCommentById,
+    deleteCommentById
 }

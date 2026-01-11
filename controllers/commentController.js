@@ -29,7 +29,18 @@ async function getCommentById(req, res) {
     })
 }
 
+async function deleteCommentById(req, res) {
+    await commentService.deleteCommentById(req.params.id)
+
+    res.json({
+        success: true,
+        message: "comment deleted successfully"
+    })
+}
+
+
 module.exports = {
     getUserComments: asyncWrapper(getUserComments),
-    getCommentById: asyncWrapper(getCommentById)
+    getCommentById: asyncWrapper(getCommentById),
+    deleteCommentById: asyncWrapper(deleteCommentById)
 }
