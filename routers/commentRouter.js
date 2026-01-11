@@ -12,6 +12,6 @@ router.route("/:id")
     .patch(validateId, checkToken, checkUserBan, checkSelfCommentAuthor(false), commentController.editCommentById)
     .delete(validateId, checkToken, checkUserBan, checkSelfCommentAuthor(true), commentController.deleteCommentById)
 
-router.post("/:slug/create", checkToken, checkUserBan, commentController.createNewComment)
+router.post("/:slug/create", commentLimiter, checkToken, checkUserBan, commentController.createNewComment)
 
 module.exports = router
