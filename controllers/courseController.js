@@ -81,7 +81,7 @@ async function getCourseStudents(req, res) {
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 20
 
-    const { data, totalNumber } = await courseService.findCourseStudents(req.params.slug, page, limit)
+    const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit)
     const students = data.map(object => object.userId)
 
 
@@ -89,6 +89,25 @@ async function getCourseStudents(req, res) {
         success: true,
         message: "users fetched successfully",
         data: students.length ? students : "no student found",
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
+async function getCourseComments(req, res) {
+    const page = Number(req.params.page) || 1
+    const limit = Number(req.params.limit) || 20
+
+    const { data, totalNumber } = await courseService.findCourseComments(req.course, page, limit)
+
+    res.json({
+        success: true,
+        message: "comments fetched successfully",
+        data: data.length ? data : "no comment found",
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
@@ -106,5 +125,6 @@ module.exports = {
     getAllCourses: asyncWrapper(getAllCourses),
     registerUserInCourse: asyncWrapper(registerUserInCourse),
     cancelEnrollment: asyncWrapper(cancelEnrollment),
-    getCourseStudents: asyncWrapper(getCourseStudents)
+    getCourseStudents: asyncWrapper(getCourseStudents),
+    getCourseComments: asyncWrapper(getCourseComments)
 }

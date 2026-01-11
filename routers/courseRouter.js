@@ -7,6 +7,7 @@ const { checkToken, checkRoles, checkUserBan, checkSelfCourseAuthor, enrollLimit
 
 router.get("/getAll", courseController.getAllCourses)
 router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.getCourseStudents)
+router.get("/:slug/get-comments", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.getCourseComments)
 
 router.route("/:slug")
     .get(checkToken, courseController.getCourseBySlug)

@@ -1,3 +1,4 @@
+const commentModel = require("../models/commentModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const slugify = require("slugify")
@@ -131,11 +132,16 @@ async function cancelEnrollStatus(slug, userId) {
     await foundEnrollment.save()
 }
 
-async function findCourseStudents(slug, page = 1, limit = 20) {
-    const foundCourse = await findCourseBySlug(slug, "studentsCount")
+async function findCourseStudents(course, page = 1, limit = 20) {
 
-    const data = await enrollmentModel.find({ courseId: foundCourse._id }).select("userId").populate("userId", "username email").skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = foundCourse.studentsCount
+    const data = await enrollmentModel.find({ courseId: course._id }).select("userId").populate("userId", "username email").skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = course.studentsCount
+    return { data, totalNumber }
+}
+
+async function findCourseComments(course, page = 1, limit = 20) {
+    const data = await commentModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = data.length
     return { data, totalNumber }
 }
 
@@ -147,5 +153,6 @@ module.exports = {
     getAllCourses,
     enrollUserCourse,
     cancelEnrollStatus,
-    findCourseStudents
+    findCourseStudents,
+    findCourseComments
 }
