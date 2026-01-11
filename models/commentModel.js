@@ -25,8 +25,8 @@ const commentSchema = new mongoose.Schema({
     },
     rating: {
         type: String,
-        enum: ["very bad", "bad", "medium", "good", "very good"],
-        default: "medium"
+        enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"],
+        default: "Medium"
     }
 })
 

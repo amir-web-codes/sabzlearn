@@ -2,7 +2,7 @@ const courseService = require("../services/courseService")
 
 function checkSelfCourseAuthor(adminAllowed = false) {
     return async (req, res, next) => {
-        const foundCourse = await courseService.findCourseBySlug(req.params.slug, "instructor studentsCount")
+        const foundCourse = await courseService.findCourseBySlug(req.params.slug, "instructor studentsCount rating")
 
         if (foundCourse.instructor.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {
             req.course = foundCourse

@@ -42,6 +42,34 @@ async function findCourseBySlug(slug, select) {
     return data
 }
 
+async function findCourseById(id) {
+    const data = await courseModel.findById(id)
+
+    if (!data) {
+        const err = new Error("course not found")
+        err.status = 404
+        throw err
+    }
+
+    return data
+}
+
+async function updateCourseRating(id, ratingNumber, commentsCount, isDeleting) {
+    const foundCourse = await findCourseById(id)
+    let average;
+
+    if (isDeleting) {
+        average = (foundCourse.rating.average - ratingNumber) / commentsCount
+    } else {
+        average = (foundCourse.rating.average + ratingNumber) / commentsCount
+    }
+
+    foundCourse.rating.count = commentsCount
+    foundCourse.rating.average = average
+
+    await foundCourse.save()
+}
+
 async function findEnrollment(courseId, userId) {
     const foundEnrollment = await enrollmentModel.findOne({ courseId, userId })
 
@@ -56,12 +84,19 @@ async function findEnrollment(courseId, userId) {
 
 async function createCourse({ title, description, price, level, language }, userId) {
     const slug = await generateUniqueSlug(title)
+    let selectedPrice;
+
+    if (price) {
+        selectedPrice = Number(price)
+    } else {
+        selectedPrice = 0
+    }
 
     await courseModel.create({
         title,
         slug,
         description,
-        price: Number(price),
+        price: selectedPrice,
         instructor: userId,
         level,
         language,
@@ -154,5 +189,6 @@ module.exports = {
     enrollUserCourse,
     cancelEnrollStatus,
     findCourseStudents,
-    findCourseComments
+    findCourseComments,
+    updateCourseRating
 }

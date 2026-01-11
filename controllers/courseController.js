@@ -84,12 +84,12 @@ async function getCourseStudents(req, res) {
     const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit)
     const students = data.map(object => object.userId)
 
-
     res.json({
         success: true,
         message: "users fetched successfully",
         data: students.length ? students : "no student found",
         meta: {
+            rating: req.course.rating,
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
             page,
@@ -109,6 +109,7 @@ async function getCourseComments(req, res) {
         message: "comments fetched successfully",
         data: data.length ? data : "no comment found",
         meta: {
+            rating: req.course.rating,
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
             page,
