@@ -18,6 +18,11 @@ const commentSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+    courseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+        required: true
+    },
     rating: {
         type: String,
         enum: ["very bad", "bad", "medium", "good", "very good"],

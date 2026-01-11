@@ -1,4 +1,5 @@
 const commentModel = require("../models/commentModel")
+const courseService = require("./courseService")
 
 async function findUserComments(userId, page, limit) {
     const data = await commentModel.find({ authorId: userId }).skip((page - 1) * limit).limit(limit).lean()
@@ -29,7 +30,7 @@ async function updateCommentById(comment, id, { title, text, rating }) {
     if (avaiableRatings.includes(rating)) {
         newRating = rating
     } else {
-        rating = comment.rating
+        newRating = comment.rating
     }
 
     await commentModel.findByIdAndUpdate(id, {
@@ -41,9 +42,32 @@ async function updateCommentById(comment, id, { title, text, rating }) {
     })
 }
 
+async function createComment(slug, userId, { title, text, rating }) {
+    const foundCourse = await courseService.findCourseBySlug(slug)
+
+    let selectedRating;
+    const avaiableRatings = ["very bad", "bad", "medium", "good", "very good"]
+
+
+    if (avaiableRatings.includes(rating)) {
+        selectedRating = rating
+    } else {
+        selectedRating = "medium"
+    }
+
+    await commentModel.create({
+        title,
+        text,
+        authorId: userId,
+        courseId: foundCourse._id,
+        rating: selectedRating
+    })
+}
+
 module.exports = {
     findUserComments,
     findCommentById,
     deleteCommentById,
-    updateCommentById
+    updateCommentById,
+    createComment
 }

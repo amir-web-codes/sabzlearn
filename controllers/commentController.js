@@ -47,9 +47,19 @@ async function editCommentById(req, res) {
     })
 }
 
+async function createNewComment(req, res) {
+    await commentService.createComment(req.params.slug, req.user.id, req.body)
+
+    res.status(201).json({
+        success: true,
+        message: "comment created successfully"
+    })
+}
+
 module.exports = {
     getUserComments: asyncWrapper(getUserComments),
     getCommentById: asyncWrapper(getCommentById),
     deleteCommentById: asyncWrapper(deleteCommentById),
-    editCommentById: asyncWrapper(editCommentById)
+    editCommentById: asyncWrapper(editCommentById),
+    createNewComment: asyncWrapper(createNewComment)
 }
