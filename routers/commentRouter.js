@@ -9,7 +9,7 @@ router.get("/:id/comments", validateId, checkToken, adminLimiter, checkRoles(["a
 
 router.route("/:id")
     .get(validateId, checkToken, checkUserBan, checkSelfCommentAuthor(true), commentController.getCommentById)
-    // .patch()
+    .patch(validateId, checkToken, checkUserBan, checkSelfCommentAuthor(false), commentController.editCommentById)
     .delete(validateId, checkToken, checkUserBan, checkSelfCommentAuthor(true), commentController.deleteCommentById)
 
 module.exports = router

@@ -22,8 +22,28 @@ async function deleteCommentById(id) {
     await commentModel.findByIdAndDelete(id)
 }
 
+async function updateCommentById(comment, id, { title, text, rating }) {
+    let newRating;
+    const avaiableRatings = ["very bad", "bad", "medium", "good", "very good"]
+
+    if (avaiableRatings.includes(rating)) {
+        newRating = rating
+    } else {
+        rating = comment.rating
+    }
+
+    await commentModel.findByIdAndUpdate(id, {
+        $set: {
+            title,
+            text,
+            rating: newRating
+        }
+    })
+}
+
 module.exports = {
     findUserComments,
     findCommentById,
-    deleteCommentById
+    deleteCommentById,
+    updateCommentById
 }
