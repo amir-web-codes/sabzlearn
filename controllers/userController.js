@@ -262,6 +262,25 @@ async function getUserCourses(req, res) {
     })
 }
 
+async function getUserComments(req, res) {
+    const page = Number(req.params.page) || 1
+    const limit = Number(req.params.limit) || 20
+
+    const { data, totalNumber } = await userService.findUserComments(req.user.id, page, limit)
+
+    res.json({
+        success: true,
+        message: "comments fetched successfully",
+        data,
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -275,5 +294,6 @@ module.exports = {
     updateUserProfile: asyncWrapper(updateUserProfile),
     refreshToken: asyncWrapper(refreshToken),
     changeUserPassword: asyncWrapper(changeUserPassword),
-    getUserCourses: asyncWrapper(getUserCourses)
+    getUserCourses: asyncWrapper(getUserCourses),
+    getUserComments: asyncWrapper(getUserComments)
 }

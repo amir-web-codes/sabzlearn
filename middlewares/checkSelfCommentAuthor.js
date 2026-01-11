@@ -5,6 +5,7 @@ async function checkSelfCommentAuthor(adminAllowed = false) {
         const foundComment = commentService.findCommentById(req.params.id)
 
         if (req.user.id === foundComment.authorId || adminAllowed) {
+            req.comment = foundComment
             return next()
         }
 

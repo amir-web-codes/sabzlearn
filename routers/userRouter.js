@@ -13,6 +13,7 @@ router.route("/me")
 
 
 router.get("/me/get-courses", checkToken, userController.getUserCourses)
+router.get("/me/get-comments", checkToken, userController.getUserComments)
 
 router.patch("/change-password", checkToken, userController.changeUserPassword)
 
