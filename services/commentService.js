@@ -19,23 +19,17 @@ async function findCommentById(id) {
     return data
 }
 
-async function updateRating(courseId, newRating, isDeleting = false) {
-    const commentsCount = await commentModel.countDocuments({ courseId })
-    let ratingNumber;
+async function updateRating(courseId) {
+    const courseComments = await commentModel.find({ courseId }).select("rating").lean()
 
-    if (newRating === "Very Bad") ratingNumber = 1
-    else if (newRating === "Bad") ratingNumber = 2
-    else if (newRating === "Medium") ratingNumber = 3
-    else if (newRating === "Good") ratingNumber = 4
-    else if (newRating === "Very Good") ratingNumber = 5
-    else ratingNumber = 3
-
-    await courseService.updateCourseRating(courseId, ratingNumber, commentsCount, isDeleting)
+    if (courseComments.length) {
+        await courseService.updateCourseRating(courseId, courseComments)
+    }
 }
 
 async function deleteCommentById(id) {
     const result = await commentModel.findByIdAndDelete(id)
-    await updateRating(result.courseId, result.rating, true)
+    await updateRating(result.courseId)
 }
 
 async function updateCommentById(comment, id, { title, text, rating }) {
@@ -56,7 +50,7 @@ async function updateCommentById(comment, id, { title, text, rating }) {
         }
     })
 
-    await updateRating(result.courseId, newRating)
+    await updateRating(result.courseId)
 }
 
 async function createComment(slug, userId, { title, text, rating }) {
@@ -80,7 +74,7 @@ async function createComment(slug, userId, { title, text, rating }) {
         rating: selectedRating
     })
 
-    await updateRating(foundCourse._id, selectedRating)
+    await updateRating(foundCourse._id)
 }
 
 module.exports = {

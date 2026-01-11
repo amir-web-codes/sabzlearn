@@ -54,18 +54,20 @@ async function findCourseById(id) {
     return data
 }
 
-async function updateCourseRating(id, ratingNumber, commentsCount, isDeleting) {
-    const foundCourse = await findCourseById(id)
-    let average;
+async function updateCourseRating(id, comments) {
+    const foundCourse = await courseModel.findById(id)
 
-    if (isDeleting) {
-        average = (foundCourse.rating.average - ratingNumber) / commentsCount
-    } else {
-        average = (foundCourse.rating.average + ratingNumber) / commentsCount
-    }
+    let ratesNumber = 0;
+    comments.forEach(comment => {
+        if (comment.rating === "Very Bad") ratesNumber += 1
+        else if (comment.rating === "Bad") ratesNumber += 2
+        else if (comment.rating === "Medium") ratesNumber += 3
+        else if (comment.rating === "Good") ratesNumber += 4
+        else if (comment.rating === "Very Good") ratesNumber += 5
+    })
 
-    foundCourse.rating.count = commentsCount
-    foundCourse.rating.average = average
+    foundCourse.rating.average = ratesNumber / comments.length
+    foundCourse.rating.count = comments.length
 
     await foundCourse.save()
 }
