@@ -7,5 +7,9 @@ const { validateId, adminLimiter, checkRoles, checkToken, checkUserBan, checkSel
 
 router.get("/:id/comments", validateId, checkToken, adminLimiter, checkRoles(["admin"]), checkUserBan, commentController.getUserComments)
 
+router.route("/:id")
+    .get(validateId, checkToken, checkUserBan, checkSelfCommentAuthor(true), commentController.getCommentById)
+// .patch()
+// .delete()
 
 module.exports = router

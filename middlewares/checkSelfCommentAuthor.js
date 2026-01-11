@@ -1,10 +1,10 @@
 const commentService = require("../services/commentService")
 
-async function checkSelfCommentAuthor(adminAllowed = false) {
-    return (req, res, next) => {
-        const foundComment = commentService.findCommentById(req.params.id)
+function checkSelfCommentAuthor(adminAllowed = false) {
+    return async (req, res, next) => {
+        const foundComment = await commentService.findCommentById(req.params.id)
 
-        if (req.user.id === foundComment.authorId || adminAllowed) {
+        if (foundComment.authorId.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {
             req.comment = foundComment
             return next()
         }

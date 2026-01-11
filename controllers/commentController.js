@@ -21,6 +21,15 @@ async function getUserComments(req, res) {
     })
 }
 
+async function getCommentById(req, res) {
+    res.json({
+        success: true,
+        message: "comment fetched successfully",
+        data: req.comment
+    })
+}
+
 module.exports = {
-    getUserComments: asyncWrapper(getUserComments)
+    getUserComments: asyncWrapper(getUserComments),
+    getCommentById: asyncWrapper(getCommentById)
 }
