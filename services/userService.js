@@ -320,6 +320,13 @@ async function rejectRequest(adminId, requestId) {
     await foundRequest.save()
 }
 
+async function getAllRequests(page, limit) {
+    const data = await requestModel.find().skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = await requestModel.countDocuments()
+
+    return { data, totalNumber }
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -339,5 +346,6 @@ module.exports = {
     requestRole,
     findPendingRequests,
     acceptRequest,
-    rejectRequest
+    rejectRequest,
+    getAllRequests
 }

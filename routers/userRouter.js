@@ -17,7 +17,8 @@ router.get("/me/get-comments", checkToken, userController.getUserComments)
 
 
 
-router.get("/admin/get-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequests)
+router.get("/admin/get-pending-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getPendingRequests)
+router.get("/admin/get-all-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
 
 router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
 
