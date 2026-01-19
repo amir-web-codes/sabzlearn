@@ -245,14 +245,24 @@ async function requestRole(userId, role) {
 
     if (availableRoles.includes(role)) {
 
-        const userRequests = requestModel.find({ userId })
+        const userRequests = await requestModel.find({ userId }).sort({ createdAt: -1 })
 
-        return await requestModel.create({
-            userId,
-            requestedRole: role,
-            status: "pending"
+        if (userRequests.length >= 3) {
+            await requestModel.findByIdAndDelete(userRequests[0]._id)
+        }
 
-        })
+        const isExists = await requestModel.exists({ userId, status: "pending" })
+        if (!isExists) {
+            return await requestModel.create({
+                userId,
+                requestedRole: role,
+                status: "pending"
+            })
+        } else {
+            const err = new Error("you already have a pending request")
+            err.status = 403
+            throw err
+        }
 
     } else {
         const err = new Error("requested role not available")
