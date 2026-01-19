@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const { validateId, checkToken, checkRoles, checkSelfUser, checkUserBan, loginLimiter, adminLimiter } = require("../middlewares")
+const { validateId, checkToken, checkRoles, checkSelfUser, checkUserBan, limiters } = require("../middlewares")
 
 const userController = require("../controllers/userController")
 
@@ -18,17 +18,17 @@ router.get("/me/get-comments", checkToken, userController.getUserComments)
 router.patch("/change-password", checkToken, userController.changeUserPassword)
 
 router.route("/:id")
-    .get(validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.getUserById)
-    .delete(validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.deleteUserById)
+    .get(validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getUserById)
+    .delete(validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.deleteUserById)
 
-router.patch("/:id/ban", validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.banUser)
-router.patch("/:id/unban", validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.unBanUser)
+router.patch("/:id/ban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.banUser)
+router.patch("/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
 
-router.patch("/:id/change-role", validateId, checkToken, adminLimiter, checkRoles(["admin"]), userController.changeUserRole)
+router.patch("/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 
 
-router.post("/auth/signup", loginLimiter, userController.signUp)
-router.post("/auth/login", loginLimiter, userController.login)
+router.post("/auth/signup", limiters.loginLimiter, userController.signUp)
+router.post("/auth/login", limiters.loginLimiter, userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
 router.post("/refresh-token", userController.refreshToken)
 
