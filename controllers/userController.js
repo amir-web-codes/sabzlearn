@@ -290,6 +290,22 @@ async function changeUserRole(req, res) {
     })
 }
 
+async function requestNewRole(req, res) {
+
+    const newRole = req.body.newRole || "teacher"
+
+    if (req.user.role === newRole) {
+        return sendError(409, "user already have this role")
+    }
+
+    await userService.requestRole(req.user.id, newRole)
+
+    res.json({
+        success: true,
+        message: "request sent successfully"
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -305,5 +321,6 @@ module.exports = {
     changeUserPassword: asyncWrapper(changeUserPassword),
     getUserCourses: asyncWrapper(getUserCourses),
     getUserComments: asyncWrapper(getUserComments),
-    changeUserRole: asyncWrapper(changeUserRole)
+    changeUserRole: asyncWrapper(changeUserRole),
+    requestNewRole: asyncWrapper(requestNewRole)
 }

@@ -1,9 +1,11 @@
 const userModel = require("../models/userModel")
 const tokenModel = require("../models/tokenModel")
 const enrollmentModel = require("../models/enrollmentModel")
+const commentModel = require("../models/commentModel")
+const requestModel = require("../models/requestModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
-const commentModel = require("../models/commentModel")
+
 
 async function findUserById(userId) {
     const data = await userModel.findById(userId).select("-password")
@@ -218,9 +220,7 @@ async function findUserComments(userId, page, limit) {
 async function changeRole(userId, role) {
     const user = await findUserById(userId)
 
-    const availableRoles = ["admin", "teacher", "user"]
-
-    console.log(availableRoles.includes(role))
+    const availableRoles = ["user", "teacher", "admin"]
 
     if (availableRoles.includes(role)) {
         if (user.role === "admin") {
@@ -240,6 +240,27 @@ async function changeRole(userId, role) {
     return user
 }
 
+async function requestRole(userId, role) {
+    const availableRoles = ["user", "teacher"]
+
+    if (availableRoles.includes(role)) {
+
+        const userRequests = requestModel.find({ userId })
+
+        return await requestModel.create({
+            userId,
+            requestedRole: role,
+            status: "pending"
+
+        })
+
+    } else {
+        const err = new Error("requested role not available")
+        err.status = 422
+        throw err
+    }
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -255,5 +276,6 @@ module.exports = {
     changePassword,
     findUserCourses,
     findUserComments,
-    changeRole
+    changeRole,
+    requestRole
 }

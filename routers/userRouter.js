@@ -25,6 +25,7 @@ router.patch("/:id/ban", validateId, checkToken, limiters.adminChangeLimiter, ch
 router.patch("/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
 
 router.patch("/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
+router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
 
 
 router.post("/auth/signup", limiters.loginLimiter, userController.signUp)

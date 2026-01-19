@@ -28,7 +28,7 @@ const commentSchema = new mongoose.Schema({
         enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"],
         default: "Medium"
     }
-})
+}, { timestamps: true })
 
 const commentModel = mongoose.model("Comment", commentSchema)
 
