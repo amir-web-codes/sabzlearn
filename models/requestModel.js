@@ -7,12 +7,12 @@ const requestSchema = new mongoose.Schema({
         index: true,
         required: true
     },
-    acceptedBy: {
+    processedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: null
     },
-    acceptedAt: {
+    processedAt: {
         type: Date,
         default: null
     },
@@ -28,7 +28,7 @@ const requestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "accepted", "cancelled"],
+        enum: ["pending", "accepted", "rejected"],
         default: "pending"
     }
 }, { timestamps: true })

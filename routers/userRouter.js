@@ -22,7 +22,7 @@ router.get("/admin/get-requests", checkToken, limiters.adminLimiter, checkRoles(
 router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
 
 router.patch("/admin/:id/accept", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.acceptRequest)
-// router.patch("/admin/:id/accept")
+router.patch("/admin/:id/reject", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.rejectRequest)
 
 
 

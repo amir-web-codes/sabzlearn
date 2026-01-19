@@ -297,16 +297,27 @@ async function checkPendingRequest(requestId) {
     return foundRequest
 }
 
-async function acceptRequest(requestId) {
+async function acceptRequest(adminId, requestId) {
     const foundRequest = await checkPendingRequest(requestId)
     const foundUser = await findUserById(foundRequest.userId)
 
     foundRequest.status = "accepted"
+    foundRequest.processedBy = adminId
+    foundRequest.processedAt = new Date()
     await foundRequest.save()
 
     foundUser.role = foundRequest.requestedRole
     await foundUser.save()
 
+}
+
+async function rejectRequest(adminId, requestId) {
+    const foundRequest = await checkPendingRequest(requestId)
+
+    foundRequest.status = "rejected"
+    foundRequest.processedBy = adminId
+    foundRequest.processedAt = new Date()
+    await foundRequest.save()
 }
 
 module.exports = {
@@ -327,5 +338,6 @@ module.exports = {
     changeRole,
     requestRole,
     findPendingRequests,
-    acceptRequest
+    acceptRequest,
+    rejectRequest
 }

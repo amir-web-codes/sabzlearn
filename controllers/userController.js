@@ -326,11 +326,20 @@ async function getRequests(req, res) {
 }
 
 async function acceptRequest(req, res) {
-    await userService.acceptRequest(req.params.id)
+    await userService.acceptRequest(req.user.id, req.params.id)
 
     res.json({
         success: true,
         message: "request accepted successfully"
+    })
+}
+
+async function rejectRequest(req, res) {
+    await userService.rejectRequest(req.user.id, req.params.id)
+
+    res.json({
+        success: true,
+        message: "request rejected successfully"
     })
 }
 
@@ -352,5 +361,6 @@ module.exports = {
     changeUserRole: asyncWrapper(changeUserRole),
     requestNewRole: asyncWrapper(requestNewRole),
     getRequests: asyncWrapper(getRequests),
-    acceptRequest: asyncWrapper(acceptRequest)
+    acceptRequest: asyncWrapper(acceptRequest),
+    rejectRequest: asyncWrapper(rejectRequest)
 }
