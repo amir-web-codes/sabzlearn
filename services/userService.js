@@ -215,6 +215,31 @@ async function findUserComments(userId, page, limit) {
     return { data, totalNumber }
 }
 
+async function changeRole(userId, role) {
+    const user = await findUserById(userId)
+
+    const availableRoles = ["admin", "teacher", "user"]
+
+    console.log(availableRoles.includes(role))
+
+    if (availableRoles.includes(role)) {
+        if (user.role === "admin") {
+            const err = new Error("you can't change another admin role")
+            err.status = 403
+            throw err
+        }
+
+        user.role = role
+        await user.save()
+    } else {
+        const err = new Error("role is not available")
+        err.status = 422
+        throw err
+    }
+
+    return user
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -229,5 +254,6 @@ module.exports = {
     refreshAccessToken,
     changePassword,
     findUserCourses,
-    findUserComments
+    findUserComments,
+    changeRole
 }

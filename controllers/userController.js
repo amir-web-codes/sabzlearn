@@ -281,6 +281,15 @@ async function getUserComments(req, res) {
     })
 }
 
+async function changeUserRole(req, res) {
+    const foundUser = await userService.changeRole(req.params.id, req.body.newRole)
+
+    res.status(201).json({
+        success: true,
+        message: `user "${foundUser.username}: ${foundUser.email}" role changed to "${foundUser.role}" successfully`
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -295,5 +304,6 @@ module.exports = {
     refreshToken: asyncWrapper(refreshToken),
     changeUserPassword: asyncWrapper(changeUserPassword),
     getUserCourses: asyncWrapper(getUserCourses),
-    getUserComments: asyncWrapper(getUserComments)
+    getUserComments: asyncWrapper(getUserComments),
+    changeUserRole: asyncWrapper(changeUserRole)
 }

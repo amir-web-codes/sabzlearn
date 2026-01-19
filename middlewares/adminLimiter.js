@@ -4,7 +4,7 @@ const adminLimiter = rateLimit({
     windowMs: 1000 * 60 * 20,
     max: 250,
     headers: true,
-    keyGenerator: (req) => req.user.role,
+    keyGenerator: (req) => req.user.id,
     handler: (req, res, next) => {
         res.status(429).json({
             success: false,
