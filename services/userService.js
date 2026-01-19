@@ -271,6 +271,13 @@ async function requestRole(userId, role) {
     }
 }
 
+async function findPendingRequests(page, limit) {
+    const data = await requestModel.find({ status: "pending" }).skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = await requestModel.countDocuments({ status: "pending" })
+
+    return { data, totalNumber }
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -287,5 +294,6 @@ module.exports = {
     findUserCourses,
     findUserComments,
     changeRole,
-    requestRole
+    requestRole,
+    findPendingRequests
 }

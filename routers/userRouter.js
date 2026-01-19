@@ -15,16 +15,19 @@ router.route("/me")
 router.get("/me/get-courses", checkToken, userController.getUserCourses)
 router.get("/me/get-comments", checkToken, userController.getUserComments)
 
+
+router.get("/admin/get-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequests)
+
 router.patch("/change-password", checkToken, userController.changeUserPassword)
 
-router.route("/:id")
+router.route("/admin/:id")
     .get(validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getUserById)
     .delete(validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.deleteUserById)
 
-router.patch("/:id/ban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.banUser)
-router.patch("/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
+router.patch("/admin/:id/ban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.banUser)
+router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
 
-router.patch("/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
+router.patch("/admin/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
 
 

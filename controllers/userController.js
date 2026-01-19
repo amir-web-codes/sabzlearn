@@ -306,6 +306,25 @@ async function requestNewRole(req, res) {
     })
 }
 
+async function getRequests(req, res) {
+
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 20
+    const { data, totalNumber } = await userService.findPendingRequests(page, limit)
+
+    res.json({
+        success: true,
+        message: "requests fetched successfully",
+        data: data.length ? data : "no request found",
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -322,5 +341,6 @@ module.exports = {
     getUserCourses: asyncWrapper(getUserCourses),
     getUserComments: asyncWrapper(getUserComments),
     changeUserRole: asyncWrapper(changeUserRole),
-    requestNewRole: asyncWrapper(requestNewRole)
+    requestNewRole: asyncWrapper(requestNewRole),
+    getRequests: asyncWrapper(getRequests)
 }
