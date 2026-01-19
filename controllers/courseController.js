@@ -7,7 +7,11 @@ async function getCourseBySlug(req, res) {
     res.json({
         success: true,
         message: "course fetched successfully",
-        data: course
+        data: course,
+        meta: {
+            totalStudents: course.studentsCount,
+            rating: course.rating.average
+        }
     })
 }
 

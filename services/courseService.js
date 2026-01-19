@@ -66,7 +66,7 @@ async function updateCourseRating(id, comments) {
         else if (comment.rating === "Very Good") ratesNumber += 5
     })
 
-    foundCourse.rating.average = ratesNumber / comments.length
+    foundCourse.rating.average = ratesNumber / comments.length || 0
     foundCourse.rating.count = comments.length
 
     await foundCourse.save()
@@ -188,6 +188,7 @@ module.exports = {
     removeCourseFromDb,
     updateCourse,
     getAllCourses,
+    findCourseById,
     enrollUserCourse,
     cancelEnrollStatus,
     findCourseStudents,

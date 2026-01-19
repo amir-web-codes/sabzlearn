@@ -22,9 +22,7 @@ async function findCommentById(id) {
 async function updateRating(courseId) {
     const courseComments = await commentModel.find({ courseId }).select("rating").lean()
 
-    if (courseComments.length) {
-        await courseService.updateCourseRating(courseId, courseComments)
-    }
+    await courseService.updateCourseRating(courseId, courseComments)
 }
 
 async function deleteCommentById(id) {
