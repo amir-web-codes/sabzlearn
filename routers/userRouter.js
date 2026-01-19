@@ -16,7 +16,15 @@ router.get("/me/get-courses", checkToken, userController.getUserCourses)
 router.get("/me/get-comments", checkToken, userController.getUserComments)
 
 
+
 router.get("/admin/get-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequests)
+
+router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
+
+router.patch("/admin/:id/accept", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.acceptRequest)
+// router.patch("/admin/:id/accept")
+
+
 
 router.patch("/change-password", checkToken, userController.changeUserPassword)
 
@@ -28,7 +36,6 @@ router.patch("/admin/:id/ban", validateId, checkToken, limiters.adminChangeLimit
 router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
 
 router.patch("/admin/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
-router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
 
 
 router.post("/auth/signup", limiters.loginLimiter, userController.signUp)

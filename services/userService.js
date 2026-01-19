@@ -240,7 +240,7 @@ async function changeRole(userId, role) {
     return user
 }
 
-async function requestRole(userId, role) {
+async function requestRole(userId, currentRole, role) {
     const availableRoles = ["user", "teacher"]
 
     if (availableRoles.includes(role)) {
@@ -256,6 +256,7 @@ async function requestRole(userId, role) {
             return await requestModel.create({
                 userId,
                 requestedRole: role,
+                currentRole,
                 status: "pending"
             })
         } else {
@@ -278,6 +279,36 @@ async function findPendingRequests(page, limit) {
     return { data, totalNumber }
 }
 
+async function checkPendingRequest(requestId) {
+    const foundRequest = await requestModel.findById(requestId)
+
+    if (!foundRequest) {
+        const err = new Error("request not found")
+        err.status = 404
+        throw err
+    }
+
+    if (foundRequest.status !== "pending") {
+        const err = new Error("this request has already been processed")
+        err.status = 403
+        throw err
+    }
+
+    return foundRequest
+}
+
+async function acceptRequest(requestId) {
+    const foundRequest = await checkPendingRequest(requestId)
+    const foundUser = await findUserById(foundRequest.userId)
+
+    foundRequest.status = "accepted"
+    await foundRequest.save()
+
+    foundUser.role = foundRequest.requestedRole
+    await foundUser.save()
+
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -295,5 +326,6 @@ module.exports = {
     findUserComments,
     changeRole,
     requestRole,
-    findPendingRequests
+    findPendingRequests,
+    acceptRequest
 }

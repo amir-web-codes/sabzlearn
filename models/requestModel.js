@@ -4,6 +4,7 @@ const requestSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+        index: true,
         required: true
     },
     acceptedBy: {
@@ -19,6 +20,11 @@ const requestSchema = new mongoose.Schema({
         type: String,
         enum: ["user", "teacher"],
         default: "teacher"
+    },
+    currentRole: {
+        type: String,
+        enum: ["user", "teacher", "admin"],
+        required: true
     },
     status: {
         type: String,

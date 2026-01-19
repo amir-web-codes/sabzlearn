@@ -298,7 +298,7 @@ async function requestNewRole(req, res) {
         return sendError(409, "user already have this role")
     }
 
-    await userService.requestRole(req.user.id, newRole)
+    await userService.requestRole(req.user.id, req.user.role, newRole)
 
     res.json({
         success: true,
@@ -325,6 +325,15 @@ async function getRequests(req, res) {
     })
 }
 
+async function acceptRequest(req, res) {
+    await userService.acceptRequest(req.params.id)
+
+    res.json({
+        success: true,
+        message: "request accepted successfully"
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -342,5 +351,6 @@ module.exports = {
     getUserComments: asyncWrapper(getUserComments),
     changeUserRole: asyncWrapper(changeUserRole),
     requestNewRole: asyncWrapper(requestNewRole),
-    getRequests: asyncWrapper(getRequests)
+    getRequests: asyncWrapper(getRequests),
+    acceptRequest: asyncWrapper(acceptRequest)
 }
