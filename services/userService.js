@@ -99,6 +99,13 @@ async function revokeUserToken(userId, deviceId) {
 }
 
 async function banUser(user, banDays, reason = "no reason") {
+
+    if (user.role === "admin") {
+        const err = new Error("you can't ban an admin")
+        err.status = 403
+        throw err
+    }
+
     user.isBanned = true
     user.banReason = reason
 
