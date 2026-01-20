@@ -36,7 +36,7 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/tickets/me?limit=1", {
+fetch("http://localhost:7000/tickets/696fed78af92537dd8ffef65", {
     method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),

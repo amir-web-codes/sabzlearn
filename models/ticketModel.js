@@ -15,6 +15,7 @@ const ticketSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+        index: true,
         required: true
     },
     assignedTo: {
@@ -35,6 +36,7 @@ const ticketSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ["open", "pending", "closed"],
+        index: true,
         default: "open"
     },
     replies: [

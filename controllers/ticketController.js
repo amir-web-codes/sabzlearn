@@ -30,7 +30,18 @@ async function getUserTickets(req, res) {
     })
 }
 
+async function getTicketById(req, res) {
+    const data = await ticketService.findTicketById(req.params.id)
+
+    res.json({
+        success: true,
+        message: "ticket fetched successfully",
+        data
+    })
+}
+
 module.exports = {
     createNewTicket: asyncWrapper(createNewTicket),
-    getUserTickets: asyncWrapper(getUserTickets)
+    getUserTickets: asyncWrapper(getUserTickets),
+    getTicketById: asyncWrapper(getTicketById)
 }

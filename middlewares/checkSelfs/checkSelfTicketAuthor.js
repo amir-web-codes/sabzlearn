@@ -3,7 +3,7 @@ const ticketService = require("../../services/ticketService")
 function checkSelfTicketAuthor(adminAllowed = false) {
     return async (req, res, next) => {
 
-        const foundTicket = await ticketService.findById(req.params.id)
+        const foundTicket = await ticketService.findTicketById(req.params.id)
 
         if (foundTicket.userId.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {
             req.ticket = foundTicket

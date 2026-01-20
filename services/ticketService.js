@@ -17,7 +17,20 @@ async function findUserTickets(userId, page, limit) {
     return { data, totalNumber }
 }
 
+async function findTicketById(ticketId) {
+    const ticket = await ticketModel.findById(ticketId)
+
+    if (!ticket) {
+        const err = new error("ticket not found")
+        err.status = 404
+        throw err
+    }
+
+    return ticket
+}
+
 module.exports = {
     createTicket,
-    findUserTickets
+    findUserTickets,
+    findTicketById
 }
