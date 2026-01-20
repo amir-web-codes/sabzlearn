@@ -26,7 +26,21 @@ async function createLesson(userId, courseId, { title, description, duration, or
     })
 }
 
+async function editLesson(lessonId, { title, description, duration, order }) {
+    const data = await findById(lessonId)
+
+    if (title !== undefined) data.title = title
+    if (description !== undefined) data.description = description
+    if (duration !== undefined) data.duration = duration
+    if (order !== undefined) data.order = order
+
+    await data.save()
+
+    return data
+}
+
 module.exports = {
     findById,
-    createLesson
+    createLesson,
+    editLesson
 }

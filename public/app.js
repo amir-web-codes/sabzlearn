@@ -36,17 +36,17 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/lessons/courses/vue/create", {
-    method: "POST",
+fetch("http://localhost:7000/lessons/696f5c1e02c28063d76eb0ba", {
+    method: "PATCH",
     headers: {
         "authorization": localStorage.getItem("token"),
         "Content-Type": "application/json"
     },
     body: JSON.stringify({
-        title: "new lesson",
-        description: "hello",
-        // order: 112,
-        duration: 10
+        // title: "new lesson",
+        description: "hi",
+        order: 1,
+        duration: 5
     })
 })
     .then(res => res.json())

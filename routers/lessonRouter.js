@@ -9,5 +9,9 @@ router.post("/courses/:slug/create", checkToken, checkUserBan, checkRoles(["admi
 
 router.route("/:id")
     .get(validateId, checkToken, checkUserBan, lessonController.getLessonById)
+    .patch(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), lessonController.editLesson)
 
 module.exports = router
+
+
+// check lesson author middleware
