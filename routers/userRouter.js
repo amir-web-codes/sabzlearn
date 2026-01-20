@@ -5,7 +5,6 @@ const { validateId, checkToken, checkRoles, checkSelfUser, checkUserBan, limiter
 
 const userController = require("../controllers/userController")
 
-
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)

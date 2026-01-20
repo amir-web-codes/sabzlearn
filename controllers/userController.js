@@ -272,7 +272,7 @@ async function getUserComments(req, res) {
     res.json({
         success: true,
         message: "comments fetched successfully",
-        data,
+        data: data.length ? data : "you don't have any comment",
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),

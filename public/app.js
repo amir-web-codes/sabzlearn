@@ -36,7 +36,7 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/courses/vue?lessonsIncluded=true", {
+fetch("http://localhost:7000/users/me/get-comments", {
     method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),
