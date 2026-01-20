@@ -1,4 +1,4 @@
-const courseService = require("../services/courseService")
+const courseService = require("../../services/courseService")
 
 function checkSelfCourseAuthor(adminAllowed = false) {
     return async (req, res, next) => {

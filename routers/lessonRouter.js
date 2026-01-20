@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfLessonAuthor } = require("../middlewares")
+const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfs } = require("../middlewares")
 
 const lessonController = require("../controllers/lessonController")
 
@@ -11,8 +11,8 @@ router.post("/courses/:slug/create", checkToken, checkUserBan, checkRoles(["admi
 
 router.route("/:id")
     .get(validateId, checkToken, checkUserBan, lessonController.getLessonById)
-    .patch(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfLessonAuthor(false), lessonController.editLesson)
-    .delete(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfLessonAuthor(true), lessonController.deleteLesson)
+    .patch(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(false), lessonController.editLesson)
+    .delete(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(true), lessonController.deleteLesson)
 
 
 

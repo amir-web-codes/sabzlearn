@@ -1,4 +1,4 @@
-const commentService = require("../services/commentService")
+const commentService = require("../../services/commentService")
 
 function checkSelfCommentAuthor(adminAllowed = false) {
     return async (req, res, next) => {

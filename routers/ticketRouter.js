@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const { checkRoles, checkToken, checkUserBan, validateId, limiters } = require("../middlewares")
+const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfs } = require("../middlewares")
 
 const ticketController = require("../controllers/ticketController")
 

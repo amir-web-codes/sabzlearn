@@ -1,4 +1,4 @@
-const sendError = require("../utils/sendError")
+const sendError = require("../../utils/sendError")
 
 function checkSelfUser(adminAllowed = false) {
     return (req, res, next) => {

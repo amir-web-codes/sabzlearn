@@ -3,16 +3,16 @@ const router = express.Router()
 
 const courseController = require("../controllers/courseController")
 
-const { checkToken, checkRoles, checkUserBan, checkSelfCourseAuthor, limiters } = require("../middlewares")
+const { checkToken, checkRoles, checkUserBan, checkSelfs, limiters } = require("../middlewares")
 
 router.get("/getAll", courseController.getAllCourses)
-router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.getCourseStudents)
-router.get("/:slug/get-comments", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.getCourseComments)
+router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
+router.get("/:slug/get-comments", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
 
 router.route("/:slug")
     .get(checkToken, courseController.getCourseBySlug)
-    .patch(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(false), courseController.editCourseDetails)
-    .delete(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfCourseAuthor(true), courseController.deleteCourse)
+    .patch(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), courseController.editCourseDetails)
+    .delete(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse)
 
 router.post("/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 
