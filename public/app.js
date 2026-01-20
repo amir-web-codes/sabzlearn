@@ -36,17 +36,17 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/tickets/create", {
-    method: "POST",
+fetch("http://localhost:7000/tickets/me?limit=1", {
+    method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),
         "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-        title: "for react",
-        message: "ticket",
-        teacherId: "695e3bb93e159fe946b7c45e"
-    })
+    // body: JSON.stringify({
+    //     title: "for react",
+    //     message: "ticket",
+    //     teacherId: "695e3bb93e159fe946b7c45e"
+    // })
 })
     .then(res => res.json())
     .then(async data => {
