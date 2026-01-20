@@ -1,0 +1,35 @@
+const mongoose = require("mongoose")
+
+const lessonSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        minlength: 10,
+        maxlength: 150,
+        required: true
+    },
+    description: {
+        type: String
+    },
+    courseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Course",
+        required: true
+    },
+    publisherId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+    order: {
+        type: Number,
+        required: true
+    },
+    duration: {
+        type: Number,
+        default: 0
+    }
+}, { timestamps: true })
+
+const lessonModel = mongoose.model("Lesson", lessonSchema)
+
+module.exports = lessonModel

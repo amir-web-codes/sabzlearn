@@ -14,6 +14,7 @@ require("./configs/db")()
 const userRouter = require("./routers/userRouter")
 const courseRouter = require("./routers/courseRouter")
 const commentRouter = require("./routers/commentRouter")
+const lessonRouter = require("./routers/lessonRouter")
 
 app.get('/home', (req, res) => {
     res.sendFile(path.join(__dirname, "/public/index.html"))
@@ -22,6 +23,8 @@ app.get('/home', (req, res) => {
 app.use("/users", userRouter)
 app.use("/courses", courseRouter)
 app.use("/comments", commentRouter)
+app.use("/lessons", lessonRouter)
+
 
 app.use((req, res, next) => {
     res.status(404).json({

@@ -316,7 +316,7 @@ async function getPendingRequests(req, res) {
     res.json({
         success: true,
         message: "requests fetched successfully",
-        data: data.length ? data : "no request found",
+        data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
@@ -330,12 +330,12 @@ async function getAllRequests(req, res) {
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 20
 
-    const { data, totalNumber } = await userService.getAllRequests(page, limiters)
+    const { data, totalNumber } = await userService.getAllRequests(page, limit)
 
     res.json({
         success: true,
         message: "requests fetched successfully",
-        data: data.length ? data : "no request found",
+        data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),

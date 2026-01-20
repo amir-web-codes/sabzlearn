@@ -245,7 +245,7 @@ async function requestRole(userId, currentRole, role) {
 
     if (availableRoles.includes(role)) {
 
-        const userRequests = await requestModel.find({ userId }).sort({ createdAt: -1 })
+        const userRequests = await requestModel.find({ userId }).sort({ createdAt: 1 })
 
         if (userRequests.length >= 3) {
             await requestModel.findByIdAndDelete(userRequests[0]._id)
