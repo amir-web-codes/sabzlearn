@@ -95,7 +95,7 @@ async function createCourse({ title, description, price, level, language }, user
         selectedPrice = 0
     }
 
-    await courseModel.create({
+    return await courseModel.create({
         title,
         slug,
         description,

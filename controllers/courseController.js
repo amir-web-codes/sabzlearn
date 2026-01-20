@@ -23,11 +23,12 @@ async function getCourseBySlug(req, res) {
 }
 
 async function createCourse(req, res) {
-    await courseService.createCourse(req.body, req.user.id)
+    const data = await courseService.createCourse(req.body, req.user.id)
 
     res.status(201).json({
         success: true,
-        message: "course created successfully"
+        message: "course created successfully",
+        data
     })
 }
 

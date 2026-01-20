@@ -3,7 +3,6 @@ const asyncWrapper = require("../utils/asyncWrapper")
 const { randomUUID } = require("crypto")
 
 const userService = require("../services/userService")
-const { limiters } = require("../middlewares")
 
 async function getUserById(req, res) {
     const foundUser = await userService.findUserById(req.params.id)

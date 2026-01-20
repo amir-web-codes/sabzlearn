@@ -15,6 +15,7 @@ const userRouter = require("./routers/userRouter")
 const courseRouter = require("./routers/courseRouter")
 const commentRouter = require("./routers/commentRouter")
 const lessonRouter = require("./routers/lessonRouter")
+const ticketRouter = require("./routers/ticketRouter")
 
 app.get('/home', (req, res) => {
     res.sendFile(path.join(__dirname, "/public/index.html"))
@@ -24,6 +25,7 @@ app.use("/users", userRouter)
 app.use("/courses", courseRouter)
 app.use("/comments", commentRouter)
 app.use("/lessons", lessonRouter)
+app.use("/tickets", ticketRouter)
 
 
 app.use((req, res, next) => {
