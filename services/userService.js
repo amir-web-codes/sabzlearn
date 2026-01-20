@@ -327,6 +327,12 @@ async function getAllRequests(page, limit) {
     return { data, totalNumber }
 }
 
+async function findRequestById(requestId) {
+    const data = requestModel.findById(requestId).populate("processedBy userId", "username email").lean()
+
+    return data
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -347,5 +353,6 @@ module.exports = {
     findPendingRequests,
     acceptRequest,
     rejectRequest,
-    getAllRequests
+    getAllRequests,
+    findRequestById
 }

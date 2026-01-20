@@ -16,13 +16,14 @@ router.get("/me/get-comments", checkToken, userController.getUserComments)
 
 
 
-router.get("/admin/get-pending-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getPendingRequests)
-router.get("/admin/get-all-requests", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
+router.get("/admin/requests/get-pending", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getPendingRequests)
+router.get("/admin/requests/get-all", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
+router.get("/admin/requests/:id", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequestById)
 
 router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
 
-router.patch("/admin/:id/accept", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.acceptRequest)
-router.patch("/admin/:id/reject", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.rejectRequest)
+router.patch("/admin/requests/:id/accept", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.acceptRequest)
+router.patch("/admin/requests/:id/reject", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.rejectRequest)
 
 
 

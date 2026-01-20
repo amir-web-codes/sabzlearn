@@ -36,7 +36,7 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/users/me/get-comments", {
+fetch("http://localhost:7000/users/admin/requests/696eacc603ebade41dc42147", {
     method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),

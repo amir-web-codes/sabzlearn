@@ -363,6 +363,16 @@ async function rejectRequest(req, res) {
     })
 }
 
+async function getRequestById(req, res) {
+    const data = await userService.findRequestById(req.params.id)
+
+    res.json({
+        success: true,
+        message: "request fetched successfully",
+        data
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -383,5 +393,6 @@ module.exports = {
     getPendingRequests: asyncWrapper(getPendingRequests),
     getAllRequests: asyncWrapper(getAllRequests),
     acceptRequest: asyncWrapper(acceptRequest),
-    rejectRequest: asyncWrapper(rejectRequest)
+    rejectRequest: asyncWrapper(rejectRequest),
+    getRequestById: asyncWrapper(getRequestById)
 }
