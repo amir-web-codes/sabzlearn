@@ -26,7 +26,7 @@ async function createLesson(userId, courseId, { title, description, duration, or
     })
 }
 
-async function editLesson(lessonId, { title, description, duration, order }) {
+async function editById(lessonId, { title, description, duration, order }) {
     const data = await findById(lessonId)
 
     if (title !== undefined) data.title = title
@@ -39,8 +39,19 @@ async function editLesson(lessonId, { title, description, duration, order }) {
     return data
 }
 
+async function deleteById(lessonId) {
+    const result = await lessonModel.findByIdAndDelete(lessonId)
+
+    if (!result) {
+        const err = new Error("lesson not found")
+        err.status = 404
+        throw err
+    }
+}
+
 module.exports = {
     findById,
     createLesson,
-    editLesson
+    editById,
+    deleteById
 }

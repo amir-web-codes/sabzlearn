@@ -36,8 +36,8 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/lessons/696f5c1e02c28063d76eb0ba", {
-    method: "PATCH",
+fetch("http://localhost:7000/lessons/696f5c2302c28063d76eb0be", {
+    method: "DELETE",
     headers: {
         "authorization": localStorage.getItem("token"),
         "Content-Type": "application/json"

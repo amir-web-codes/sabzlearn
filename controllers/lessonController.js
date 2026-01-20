@@ -27,7 +27,7 @@ async function createNewLesson(req, res) {
 }
 
 async function editLesson(req, res) {
-    const data = await lessonService.editLesson(req.params.id, req.body)
+    const data = await lessonService.editById(req.params.id, req.body)
 
     res.status(201).json({
         success: true,
@@ -36,8 +36,18 @@ async function editLesson(req, res) {
     })
 }
 
+async function deleteLesson(req, res) {
+    await lessonService.deleteById(req.params.id)
+
+    res.json({
+        success: true,
+        message: "lesson deleted successfully"
+    })
+}
+
 module.exports = {
     getLessonById: asyncWrapper(getLessonById),
     createNewLesson: asyncWrapper(createNewLesson),
-    editLesson: asyncWrapper(editLesson)
+    editLesson: asyncWrapper(editLesson),
+    deleteLesson: asyncWrapper(deleteLesson)
 }
