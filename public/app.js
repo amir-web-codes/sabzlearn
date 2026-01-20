@@ -36,15 +36,15 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/lessons/get-all?page=2&limit=1", {
+fetch("http://localhost:7000/courses/vue?lessonsIncluded=true", {
     method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),
         "Content-Type": "application/json"
     },
     // body: JSON.stringify({
-    //     title: "new lesson",
-    //     description: "hi",
+    //     title: "for react",
+    //     description: "react",
     //     order: 1,
     //     duration: 5
     // })

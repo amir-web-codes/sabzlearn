@@ -3,7 +3,7 @@ const mongoose = require("mongoose")
 const lessonSchema = new mongoose.Schema({
     title: {
         type: String,
-        minlength: 10,
+        minlength: 5,
         maxlength: 150,
         required: true
     },

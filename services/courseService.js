@@ -1,6 +1,7 @@
 const commentModel = require("../models/commentModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
+const lessonModel = require("../models/lessonModel")
 const slugify = require("slugify")
 
 function generateSlug(title) {
@@ -182,6 +183,21 @@ async function findCourseComments(course, page = 1, limit = 20) {
     return { data, totalNumber }
 }
 
+async function getCourseDetails(slug, lessonsIncluded = true) {
+    const foundCourse = await findCourseBySlug(slug)
+
+    if (lessonsIncluded === "true") {
+        const foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
+
+        let totalDuration = 0
+        foundLessons.map(lesson => totalDuration += lesson.duration)
+
+        return { foundCourse, foundLessons, totalDuration }
+    }
+
+    return { foundCourse }
+}
+
 module.exports = {
     findCourseBySlug,
     createCourse,
@@ -193,5 +209,6 @@ module.exports = {
     cancelEnrollStatus,
     findCourseStudents,
     findCourseComments,
-    updateCourseRating
+    updateCourseRating,
+    getCourseDetails
 }

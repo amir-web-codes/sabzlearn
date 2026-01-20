@@ -2,17 +2,24 @@ const courseService = require("../services/courseService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
 async function getCourseBySlug(req, res) {
-    const course = await courseService.findCourseBySlug(req.params.slug)
+
+
+    const { foundCourse, foundLessons, totalDuration } = await courseService.getCourseDetails(req.params.slug, req.query.lessonsIncluded)
 
     res.json({
         success: true,
         message: "course fetched successfully",
-        data: course,
+        data: {
+            foundCourse,
+            lessons: foundLessons,
+        },
         meta: {
-            totalStudents: course.studentsCount,
-            rating: course.rating.average
+            totalStudents: foundCourse.studentsCount,
+            rating: foundCourse.rating.average,
+            duration: `${totalDuration} minutes`
         }
     })
+
 }
 
 async function createCourse(req, res) {
