@@ -6,8 +6,8 @@ async function login() {
             "authorization": localStorage.getItem("token")
         },
         body: JSON.stringify({
-            email: "hamid@gmail.com",
-            password: "hamid1234"
+            email: "teacher@gmail.com",
+            password: "teacher1234"
         })
     })
         .then(res => res.json())
@@ -36,18 +36,18 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/users/admin/requests/696eacc603ebade41dc42147", {
-    method: "GET",
+fetch("http://localhost:7000/lessons/696f62f011c1b19faa920089", {
+    method: "PATCH",
     headers: {
         "authorization": localStorage.getItem("token"),
         "Content-Type": "application/json"
     },
-    // body: JSON.stringify({
-    //     title: "for react",
-    //     description: "react",
-    //     order: 1,
-    //     duration: 5
-    // })
+    body: JSON.stringify({
+        title: "for react",
+        description: "react",
+        order: 10,
+        duration: 50
+    })
 })
     .then(res => res.json())
     .then(async data => {

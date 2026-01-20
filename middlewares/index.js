@@ -5,6 +5,7 @@ const checkSelfUser = require("./checkSelfUser")
 const checkUserBan = require("./checkUserBan")
 const checkSelfCourseAuthor = require("./checkSelfCourseAuthor")
 const checkSelfCommentAuthor = require("./checkSelfCommentAuthor")
+const checkSelfLessonAuthor = require("./checkSelfLessonAuthor")
 const limiters = require("./Limiters")
 
 
@@ -16,5 +17,6 @@ module.exports = {
     checkUserBan,
     checkSelfCourseAuthor,
     checkSelfCommentAuthor,
+    checkSelfLessonAuthor,
     limiters
 }

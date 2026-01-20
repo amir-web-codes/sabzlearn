@@ -11,7 +11,7 @@ function checkSelfCourseAuthor(adminAllowed = false) {
 
         res.status(403).json({
             success: false,
-            message: "you don't have permission to this course"
+            message: "you don't have access to this course"
         })
     }
 }
