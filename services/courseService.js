@@ -178,7 +178,7 @@ async function findCourseStudents(course, page = 1, limit = 20) {
 
 async function findCourseComments(course, page = 1, limit = 20) {
     const data = await commentModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = data.length
+    const totalNumber = await commentModel.countDocuments({ courseId: course._id })
     return { data, totalNumber }
 }
 

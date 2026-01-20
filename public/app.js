@@ -36,18 +36,18 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/lessons/696f5c2302c28063d76eb0be", {
-    method: "DELETE",
+fetch("http://localhost:7000/lessons/get-all?page=2&limit=1", {
+    method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),
         "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-        // title: "new lesson",
-        description: "hi",
-        order: 1,
-        duration: 5
-    })
+    // body: JSON.stringify({
+    //     title: "new lesson",
+    //     description: "hi",
+    //     order: 1,
+    //     duration: 5
+    // })
 })
     .then(res => res.json())
     .then(async data => {
