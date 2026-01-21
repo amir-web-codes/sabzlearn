@@ -1,4 +1,3 @@
-const ticketModel = require("../models/ticketModel")
 const ticketService = require("../services/ticketService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
@@ -32,7 +31,7 @@ async function getUserTickets(req, res) {
 }
 
 async function getTicketById(req, res) {
-    const data = await ticketModel.findById(req.params.id).populate("userId responsedBy assignedTo").select("username email").lean()
+    const data = await ticketService.findTicketWithPopulate(req.params.id)
 
     res.json({
         success: true,
@@ -50,6 +49,26 @@ async function addTicketReply(req, res) {
         data
     })
 }
+
+// async function getAllTickets(req, res) {
+//     const page = Number(req.query.page) || 1
+//     const limit = Number(req.query.limit) || 20
+//     const availableOnly = req.query.availableOnly === "true"
+
+//     const { data, totalNumber } = await ticketService.findAllTickets(req.user, availableOnly, page, limit)
+
+//     res.json({
+//         success: true,
+//         message: "tickets fetched successfully",
+//         data,
+//         meta: {
+//             totalNumber,
+//             totalPages: Math.ceil(totalNumber / limit),
+//             page,
+//             limit
+//         }
+//     })
+// }
 
 module.exports = {
     createNewTicket: asyncWrapper(createNewTicket),

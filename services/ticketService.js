@@ -57,9 +57,41 @@ async function createReply(user, ticketId, { message }) {
     return foundTicket
 }
 
+async function findTicketWithPopulate(ticketId) {
+    const data = ticketModel.findById(ticketId).populate("userId responsedBy assignedTo", "username email").lean()
+
+    if (!data) {
+        const err = new Error("ticket not found")
+        err.status = 404
+        throw err
+    }
+
+    return data
+}
+
+// async function findAllTickets(user, availableOnly, page, limit) {
+//     let query
+
+//     if (availableOnly) {
+//         query.status !== "closed"
+//     }
+
+//     if (user.role === "teacher") {
+//         const data = await ticketModel.find({ query, for: "teacher", assignedTo: user.id }).skip((page - 1) * limit).limit(limit).lean()
+//         const totalNumber = await ticketModel.countDocuments({ query, for: "teacher", assignedTo: user.id })
+
+//         return { data, totalNumber }
+//     }
+
+//     const data = await ticketModel.find({ query, for: user.role }).skip((page - 1) * limit).limit(limit).lean()
+//     const totalNumber = await ticketModel.countDocuments({})
+//     return { data, totalNumber }
+// }
+
 module.exports = {
     createTicket,
     findUserTickets,
     findTicketById,
-    createReply
+    createReply,
+    findTicketWithPopulate
 }

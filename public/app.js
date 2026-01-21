@@ -6,8 +6,8 @@ async function login() {
             "authorization": localStorage.getItem("token")
         },
         body: JSON.stringify({
-            email: "hamid@gmail.com",
-            password: "hamid1234"
+            email: "reza@gmail.com",
+            password: "reza1234"
         })
     })
         .then(res => res.json())
@@ -36,7 +36,7 @@ async function refreshToken() {
 
 // login()
 
-fetch("http://localhost:7000/tickets/6970a5ff65885adc7364776d", {
+fetch("http://localhost:7000/tickets/get-all", {
     method: "GET",
     headers: {
         "authorization": localStorage.getItem("token"),
