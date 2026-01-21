@@ -1,3 +1,4 @@
+const ticketModel = require("../models/ticketModel")
 const ticketService = require("../services/ticketService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
@@ -31,7 +32,7 @@ async function getUserTickets(req, res) {
 }
 
 async function getTicketById(req, res) {
-    const data = await ticketService.findTicketById(req.params.id)
+    const data = await ticketModel.findById(req.params.id).populate("userId responsedBy assignedTo").select("username email").lean()
 
     res.json({
         success: true,
@@ -40,8 +41,19 @@ async function getTicketById(req, res) {
     })
 }
 
+async function addTicketReply(req, res) {
+    const data = await ticketService.createReply(req.user, req.params.id, req.body)
+
+    res.status(201).json({
+        success: true,
+        message: "reply created successfully",
+        data
+    })
+}
+
 module.exports = {
     createNewTicket: asyncWrapper(createNewTicket),
     getUserTickets: asyncWrapper(getUserTickets),
-    getTicketById: asyncWrapper(getTicketById)
+    getTicketById: asyncWrapper(getTicketById),
+    addTicketReply: asyncWrapper(addTicketReply)
 }
