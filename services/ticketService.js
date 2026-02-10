@@ -57,8 +57,17 @@ async function createReply(user, ticketId, { message }) {
     return foundTicket
 }
 
-async function findTicketWithPopulate(ticketId) {
-    const data = ticketModel.findById(ticketId).populate("userId responsedBy assignedTo", "username email").lean()
+async function findTicketWithPopulate(userId, ticketId) {
+    const data = await ticketModel.findById(ticketId).populate("userId responsedBy assignedTo", "username email")
+
+    console.log(data.userId._id)
+    console.log(userId)
+
+    if (data.userId._id != userId && data.status === "open") {
+        data.status = "pending"
+        data.save()
+        console.log("hi")
+    }
 
     if (!data) {
         const err = new Error("ticket not found")
@@ -69,29 +78,41 @@ async function findTicketWithPopulate(ticketId) {
     return data
 }
 
-// async function findAllTickets(user, availableOnly, page, limit) {
-//     let query
+async function findAllTickets(user, availableOnly, page, limit) {
 
-//     if (availableOnly) {
-//         query.status !== "closed"
-//     }
+    let query = {};
 
-//     if (user.role === "teacher") {
-//         const data = await ticketModel.find({ query, for: "teacher", assignedTo: user.id }).skip((page - 1) * limit).limit(limit).lean()
-//         const totalNumber = await ticketModel.countDocuments({ query, for: "teacher", assignedTo: user.id })
+    if (user.role === "teacher") {
 
-//         return { data, totalNumber }
-//     }
+        query.assignedTo = user.id
 
-//     const data = await ticketModel.find({ query, for: user.role }).skip((page - 1) * limit).limit(limit).lean()
-//     const totalNumber = await ticketModel.countDocuments({})
-//     return { data, totalNumber }
-// }
+    } else if (user.role === "admin") {
+
+        query.for = "admin"
+    }
+
+
+    if (availableOnly) {
+        query.status = { $ne: "closed" }
+    }
+
+    const data = await ticketModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await ticketModel.countDocuments(query)
+
+    return { data, totalNumber }
+}
 
 module.exports = {
     createTicket,
     findUserTickets,
     findTicketById,
     createReply,
-    findTicketWithPopulate
+    findTicketWithPopulate,
+    findAllTickets
 }

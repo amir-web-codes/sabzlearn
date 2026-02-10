@@ -200,7 +200,7 @@ async function refreshToken(req, res) {
 
 
     const deviceId = req.cookies.deviceId
-    const rememberMe = req.body.rememberMe
+    const rememberMe = req.body.rememberMe ?? false
     const userAgent = req.headers["user-agent"]
 
     if (!deviceId) {

@@ -17,10 +17,6 @@ const commentRouter = require("./routers/commentRouter")
 const lessonRouter = require("./routers/lessonRouter")
 const ticketRouter = require("./routers/ticketRouter")
 
-app.get('/home', (req, res) => {
-    res.sendFile(path.join(__dirname, "/public/index.html"))
-})
-
 app.use("/users", userRouter)
 app.use("/courses", courseRouter)
 app.use("/comments", commentRouter)
@@ -39,8 +35,4 @@ const errorHandler = require("./middlewares/errorHandler")
 
 app.use(errorHandler)
 
-const port = process.env.PORT || 7000
-
-app.listen(port, () => {
-    console.log(`server is running on port ${port}`)
-})
+module.exports = app
