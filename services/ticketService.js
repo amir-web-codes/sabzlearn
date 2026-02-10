@@ -31,7 +31,6 @@ async function findTicketById(ticketId) {
 
 async function createReply(user, ticketId, { message }) {
     const foundTicket = await findTicketById(ticketId)
-    console.log(user)
 
     if (foundTicket.status === "closed") {
         const err = new Error("this ticket is closed")
@@ -59,15 +58,6 @@ async function createReply(user, ticketId, { message }) {
 
 async function findTicketWithPopulate(userId, ticketId) {
     const data = await ticketModel.findById(ticketId).populate("userId responsedBy assignedTo", "username email")
-
-    console.log(data.userId._id)
-    console.log(userId)
-
-    if (data.userId._id != userId && data.status === "open") {
-        data.status = "pending"
-        data.save()
-        console.log("hi")
-    }
 
     if (!data) {
         const err = new Error("ticket not found")
@@ -108,11 +98,55 @@ async function findAllTickets(user, availableOnly, page, limit) {
     return { data, totalNumber }
 }
 
+async function changeStatus(user, ticketId, newStatus) {
+    const availableStatuses = ["pending", "closed"]
+
+    if (!availableStatuses.includes(newStatus)) {
+        const err = new Error("status not available")
+        err.status = 400
+        throw err
+    }
+
+    const foundTicket = await findTicketById(ticketId)
+
+    if (newStatus === foundTicket.status) {
+        const err = new Error("ticket already has this status")
+        err.status = 400
+        throw err
+    }
+
+    const isAdmin = user.role === "admin" && foundTicket.for === "admin"
+    const isTeacher = user.role === "teacher" && foundTicket.assignedTo && foundTicket.assignedTo.equals(user.id)
+
+    console.log(isAdmin)
+    console.log(isTeacher)
+
+    if (!isAdmin && !isTeacher) {
+        const err = new Error("you don't have permission to change this ticket")
+        err.status = 403
+        throw err
+    } else {
+
+        if (foundTicket.status === "closed" && user.role !== "admin") {
+
+            const err = new Error("you can't reopen ticket")
+            err.status = 403
+            throw err
+        }
+
+
+        foundTicket.status = newStatus
+        return await foundTicket.save()
+    }
+
+}
+
 module.exports = {
     createTicket,
     findUserTickets,
     findTicketById,
     createReply,
     findTicketWithPopulate,
-    findAllTickets
+    findAllTickets,
+    changeStatus
 }
