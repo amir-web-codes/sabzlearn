@@ -23,6 +23,11 @@ app.use("/comments", commentRouter)
 app.use("/lessons", lessonRouter)
 app.use("/tickets", ticketRouter)
 
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        success: true
+    })
+})
 
 app.use((req, res, next) => {
     res.status(404).json({
