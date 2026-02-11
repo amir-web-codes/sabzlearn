@@ -138,7 +138,7 @@ async function banUser(req, res) {
         return sendError(422, "invalid ban days")
     }
 
-    await userService.banUser(foundUser, banDays, req.body.banReason)
+    await userService.banUser(foundUser, banDays, req.body.banReason, req.user.id)
 
     return res.json({
         success: true,

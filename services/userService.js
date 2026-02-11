@@ -8,7 +8,7 @@ const bcrypt = require("bcrypt")
 
 
 async function findUserById(userId) {
-    const data = await userModel.findById(userId).select("-password")
+    const data = await userModel.findById(userId).select("-password").populate("bannedBy", "username email")
 
     if (!data) {
         const err = new Error("user not found")
@@ -98,7 +98,7 @@ async function revokeUserToken(userId, deviceId) {
     return
 }
 
-async function banUser(user, banDays, reason = "no reason") {
+async function banUser(user, banDays, reason = "no reason", userId) {
 
     if (user.role === "admin") {
         const err = new Error("you can't ban an admin")
@@ -108,6 +108,7 @@ async function banUser(user, banDays, reason = "no reason") {
 
     user.isBanned = true
     user.banReason = reason
+    user.bannedBy = userId
 
     if (banDays !== undefined) {
         user.banExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * banDays)
@@ -118,8 +119,8 @@ async function banUser(user, banDays, reason = "no reason") {
     await user.save()
 }
 
-async function unBanUser(userId) {
-    const foundUser = await findUserById(userId)
+async function unBanUser(bannedId) {
+    const foundUser = await findUserById(bannedId)
 
     if (!foundUser.isBanned) {
         const err = new Error("this user wasn't ban")
@@ -130,6 +131,7 @@ async function unBanUser(userId) {
     foundUser.isBanned = false
     foundUser.banReason = null
     foundUser.banExpiresAt = null
+    foundUser.bannedBy = null
 
     await foundUser.save()
 }

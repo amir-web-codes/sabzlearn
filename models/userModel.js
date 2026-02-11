@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    bannedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
     banExpiresAt: {
         type: Date,
         default: null
