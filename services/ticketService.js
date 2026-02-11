@@ -38,9 +38,16 @@ async function createReply(user, ticketId, { message }) {
         throw err
     }
 
+    if (foundTicket.assignedTo && !foundTicket.assignedTo.equals(user.id)) {
+        const err = new Error("you don't have permission to this ticket")
+        err.status = 403
+        throw err
+    }
+
     if (!foundTicket.userId.equals(user.id)) {
         // if user didn't send the reply
         foundTicket.responsedBy = user.id
+        foundTicket.assignedTo = user.id
         foundTicket.status = "pending"
     }
 
