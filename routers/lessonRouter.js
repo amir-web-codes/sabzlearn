@@ -6,6 +6,7 @@ const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfs }
 const lessonController = require("../controllers/lessonController")
 
 router.get("/get-all", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, lessonController.getAllLessons)
+router.get("/:slug/get-lessons", checkToken, checkUserBan, lessonController.getCourseLessons)
 
 router.post("/courses/:slug/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), lessonController.createNewLesson)
 

@@ -4,7 +4,7 @@ const asyncWrapper = require("../utils/asyncWrapper")
 async function getCourseBySlug(req, res) {
 
 
-    const { foundCourse, foundLessons, totalDuration } = await courseService.getCourseDetails(req.params.slug, req.query.lessonsIncluded)
+    const { foundCourse, foundLessons, totalDuration } = await courseService.getCourseDetails(req.params.slug.toLowerCase().trim(), req.query.lessonsIncluded)
 
     res.json({
         success: true,
@@ -33,7 +33,7 @@ async function createCourse(req, res) {
 }
 
 async function deleteCourse(req, res) {
-    await courseService.removeCourseFromDb(req.params.slug)
+    await courseService.removeCourseFromDb(req.params.slug.toLowerCase().trim())
 
     res.json({
         success: true,
@@ -42,7 +42,7 @@ async function deleteCourse(req, res) {
 }
 
 async function editCourseDetails(req, res) {
-    await courseService.updateCourse(req.body, req.params.slug)
+    await courseService.updateCourse(req.body, req.params.slug.toLowerCase().trim())
 
     res.json({
         success: true,
@@ -71,7 +71,7 @@ async function getAllCourses(req, res) {
 
 async function registerUserInCourse(req, res) {
 
-    await courseService.enrollUserCourse(req.params.slug, req.user.id)
+    await courseService.enrollUserCourse(req.params.slug.toLowerCase().trim(), req.user.id)
 
     res.status(201).json({
         success: true,
@@ -80,7 +80,7 @@ async function registerUserInCourse(req, res) {
 }
 
 async function cancelEnrollment(req, res) {
-    await courseService.cancelEnrollStatus(req.params.slug, req.user.id)
+    await courseService.cancelEnrollStatus(req.params.slug.toLowerCase().trim(), req.user.id)
 
     res.json({
         success: true,

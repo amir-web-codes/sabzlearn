@@ -65,10 +65,32 @@ async function getAllLessons(req, res) {
     })
 }
 
+async function getCourseLessons(req, res) {
+    const page = Number(req.params.page) || 1
+    const limit = Number(req.params.limit) || 20
+
+    const foundCourse = await courseService.findCourseBySlug(req.params.slug)
+
+    const { data, totalNumber } = await lessonService.findCourseLessons(foundCourse, page, limit)
+
+    res.json({
+        success: true,
+        message: "course lessons fetched successfully",
+        data,
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getLessonById: asyncWrapper(getLessonById),
     createNewLesson: asyncWrapper(createNewLesson),
     editLesson: asyncWrapper(editLesson),
     deleteLesson: asyncWrapper(deleteLesson),
-    getAllLessons: asyncWrapper(getAllLessons)
+    getAllLessons: asyncWrapper(getAllLessons),
+    getCourseLessons: asyncWrapper(getCourseLessons)
 }

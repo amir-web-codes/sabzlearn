@@ -55,10 +55,18 @@ async function findAll(page = 1, limit = 20) {
     return { data, totalNumber }
 }
 
+async function findCourseLessons(course, page, limit) {
+    const data = await lessonModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
+    const totalNumber = await lessonModel.countDocuments({ courseId: course._id })
+
+    return { data, totalNumber }
+}
+
 module.exports = {
     findById,
     createLesson,
     editById,
     deleteById,
-    findAll
+    findAll,
+    findCourseLessons
 }
