@@ -5,6 +5,9 @@ const { validateId, checkToken, checkRoles, checkUserBan, limiters } = require("
 
 const userController = require("../controllers/userController")
 
+const validator = require("../middlewares/validator")
+// const userValidations = require("../middlewares/validations/user.validation")
+
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)

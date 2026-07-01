@@ -9,7 +9,11 @@ const path = require("path")
 const middlewares = require("./configs/middlewares")
 middlewares(app)
 
-require("./configs/db")()
+async function callDB() {
+    await require("./configs/db")()
+}
+
+callDB()
 
 const userRouter = require("./routers/userRouter")
 const courseRouter = require("./routers/courseRouter")
@@ -40,4 +44,8 @@ const errorHandler = require("./middlewares/errorHandler")
 
 app.use(errorHandler)
 
-module.exports = app
+const port = process.env.PORT || 7000
+
+app.listen(port, () => {
+    console.log(`server is running on port ${port}`)
+})
