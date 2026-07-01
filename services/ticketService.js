@@ -1,6 +1,26 @@
 const ticketModel = require("../models/ticketModel")
+const userModel = require("../models/userModel")
 
 async function createTicket(userId, { title, message, teacherId }) {
+
+    if (teacherId) {
+        const foundUser = await userModel.findById(teacherId).select("-password").lean()
+
+        if (!foundUser) {
+            const err = new Error("user not found")
+            err.status = 404
+            throw err
+        }
+    }
+
+    const ticketsNumber = await ticketModel.countDocuments({ userId })
+
+    if (ticketsNumber > 2) {
+        const err = new Error("maximum 3 tickets")
+        err.status = 400
+        throw err
+    }
+
     return await ticketModel.create({
         title,
         message,
@@ -39,7 +59,7 @@ async function createReply(user, ticketId, { message }) {
     }
 
     if (foundTicket.assignedTo && !foundTicket.assignedTo.equals(user.id)) {
-        const err = new Error("you don't have permission to this ticket")
+        const err = new Error("you don't have access to this ticket")
         err.status = 403
         throw err
     }
@@ -124,9 +144,6 @@ async function changeStatus(user, ticketId, newStatus) {
 
     const isAdmin = user.role === "admin" && foundTicket.for === "admin"
     const isTeacher = user.role === "teacher" && foundTicket.assignedTo && foundTicket.assignedTo.equals(user.id)
-
-    console.log(isAdmin)
-    console.log(isTeacher)
 
     if (!isAdmin && !isTeacher) {
         const err = new Error("you don't have permission to change this ticket")

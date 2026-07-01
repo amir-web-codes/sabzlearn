@@ -179,7 +179,7 @@ async function deleteUserProfile(req, res) {
 }
 
 async function updateUserProfile(req, res) {
-    const { username, email, password } = req.body
+    const { username, email } = req.body
 
     const foundUser = await userService.findUserById(req.user.id)
 

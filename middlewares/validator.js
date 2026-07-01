@@ -5,9 +5,11 @@ function validator(schema) {
         if (!result.success) {
             const err = new Error("validation failed")
             err.status = 400
+            err.errors = result.error.issues
             throw err
         }
 
+        req.body = result.data
         next()
     }
 }

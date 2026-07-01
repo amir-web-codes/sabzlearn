@@ -11,7 +11,7 @@ const userValidations = require("../middlewares/validations/user.validation")
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
-    .patch(checkToken, checkUserBan, userController.updateUserProfile)
+    .patch(validator(userValidations.updateUserSchema), checkToken, checkUserBan, userController.updateUserProfile)
 
 
 router.get("/me/get-courses", checkToken, userController.getUserCourses)
@@ -23,27 +23,27 @@ router.get("/admin/requests/get-pending", checkToken, limiters.adminLimiter, che
 router.get("/admin/requests/get-all", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
 router.get("/admin/requests/:id", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequestById)
 
-router.patch("/request-role", checkToken, limiters.requestLimiter, userController.requestNewRole)
+router.patch("/request-role", limiters.requestLimiter, validator(userValidations.requestRoleSchema), checkToken, userController.requestNewRole)
 
 router.patch("/admin/requests/:id/accept", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.acceptRequest)
 router.patch("/admin/requests/:id/reject", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.rejectRequest)
 
 
 
-router.patch("/change-password", checkToken, userController.changeUserPassword)
+router.patch("/change-password", validator(userValidations.changePasswordSchema), checkToken, userController.changeUserPassword)
 
 router.route("/admin/:id")
     .get(validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getUserById)
     .delete(validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.deleteUserById)
 
-router.patch("/admin/:id/ban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.banUser)
+router.patch("/admin/:id/ban", validateId, validator(userValidations.banUserSchema), checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.banUser)
 router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
 
 router.patch("/admin/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 
 
-router.post("/auth/signup", limiters.loginLimiter, userController.signUp)
-router.post("/auth/login", limiters.loginLimiter, userController.login)
+router.post("/auth/signup", limiters.loginLimiter, validator(userValidations.signUpSchema), userController.signUp)
+router.post("/auth/login", limiters.loginLimiter, validator(userValidations.loginSchema), userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
 router.post("/refresh-token", userController.refreshToken)
 
