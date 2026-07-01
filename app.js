@@ -29,16 +29,19 @@ app.use("/tickets", ticketRouter)
 
 app.get("/health", (req, res) => {
     res.status(200).json({
-        success: true
+        success: true,
+        status: "ok"
     })
 })
 
-app.use((req, res, next) => {
-    res.status(404).json({
-        success: false,
-        message: "route not found"
-    })
-})
+function notFound(req, res, next) {
+    const err = new Error(`route ${req.originalUrl} not found`)
+    err.status = 404
+
+    next(err)
+}
+
+app.use(notFound)
 
 const errorHandler = require("./middlewares/errorHandler")
 
