@@ -5,6 +5,9 @@ const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfs }
 
 const lessonController = require("../controllers/lessonController")
 
+const validator = require("../middlewares/validator")
+const lessonValidations = require("../middlewares/validations/lesson.validation")
+
 router.get("/get-all", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, lessonController.getAllLessons)
 router.get("/:slug/get-lessons", checkToken, checkUserBan, lessonController.getCourseLessons)
 
@@ -12,7 +15,7 @@ router.post("/courses/:slug/create", checkToken, checkUserBan, checkRoles(["admi
 
 router.route("/:id")
     .get(validateId, checkToken, checkUserBan, lessonController.getLessonById)
-    .patch(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(false), lessonController.editLesson)
+    .patch(validateId, validator(lessonValidations.editSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(false), lessonController.editLesson)
     .delete(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(true), lessonController.deleteLesson)
 
 

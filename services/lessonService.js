@@ -16,6 +16,7 @@ async function createLesson(userId, courseId, { title, description, duration, or
     const lastOrder = await lessonModel.find({ courseId }).sort({ order: -1 }).limit(1)
     const newOrder = lastOrder.length ? lastOrder[0].order + 100 : 100
 
+
     return await lessonModel.create({
         title,
         description,
@@ -50,7 +51,7 @@ async function deleteById(lessonId) {
 }
 
 async function findAll(page = 1, limit = 20) {
-    const data = await lessonModel.find().skip((page - 1) * limit).limit(limit).lean()
+    const data = await lessonModel.find().skip((page - 1) * limit).limit(limit).sort({ order: 1 }).lean()
     const totalNumber = await lessonModel.countDocuments()
     return { data, totalNumber }
 }

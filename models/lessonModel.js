@@ -26,7 +26,8 @@ const lessonSchema = new mongoose.Schema({
     },
     duration: {
         type: Number,
-        default: 0
+        default: 0,
+        required: true
     }
 }, { timestamps: true })
 
