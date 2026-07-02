@@ -281,6 +281,16 @@ async function getUserComments(req, res) {
     })
 }
 
+async function getUserDashboard(req, res) {
+    const dashboard = await userService.getUserDashboard(req.user.id)
+
+    res.json({
+        success: true,
+        message: "dashboard fetched successfully",
+        data: dashboard
+    })
+}
+
 async function changeUserRole(req, res) {
     const foundUser = await userService.changeRole(req.params.id, req.body.newRole)
 
@@ -387,6 +397,7 @@ module.exports = {
     changeUserPassword: asyncWrapper(changeUserPassword),
     getUserCourses: asyncWrapper(getUserCourses),
     getUserComments: asyncWrapper(getUserComments),
+    getUserDashboard: asyncWrapper(getUserDashboard),
     changeUserRole: asyncWrapper(changeUserRole),
     requestNewRole: asyncWrapper(requestNewRole),
     getPendingRequests: asyncWrapper(getPendingRequests),

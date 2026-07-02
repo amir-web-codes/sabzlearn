@@ -15,7 +15,9 @@ router.route("/me")
 
 
 router.get("/me/get-courses", checkToken, userController.getUserCourses)
+router.get("/me/get-enrolled-courses", checkToken, userController.getUserCourses)
 router.get("/me/get-comments", checkToken, userController.getUserComments)
+router.get("/me/dashboard", checkToken, userController.getUserDashboard)
 
 
 

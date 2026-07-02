@@ -226,6 +226,43 @@ async function findUserComments(userId, page, limit) {
     return { data, totalNumber }
 }
 
+async function getUserDashboard(userId) {
+    const foundUser = await userModel.findById(userId).select("username email role isBanned lastLogin createdAt").lean()
+
+    if (!foundUser) {
+        const err = new Error("user not found")
+        err.status = 404
+        throw err
+    }
+
+    const [enrolledCoursesCount, commentsCount, pendingRequestsCount] = await Promise.all([
+        enrollmentModel.countDocuments({ userId }),
+        commentModel.countDocuments({ authorId: userId }),
+        requestModel.countDocuments({ userId, status: "pending" })
+    ])
+
+    return {
+        user: {
+            id: foundUser._id,
+            username: foundUser.username,
+            email: foundUser.email,
+            role: foundUser.role,
+            isBanned: foundUser.isBanned,
+            lastLogin: foundUser.lastLogin,
+            memberSince: foundUser.createdAt
+        },
+        stats: {
+            enrolledCourses: enrolledCoursesCount,
+            commentsCount,
+            pendingRequests: pendingRequestsCount
+        },
+        overview: {
+            accountStatus: foundUser.isBanned ? "banned" : "active",
+            hasPendingRoleRequest: pendingRequestsCount > 0
+        }
+    }
+}
+
 async function changeRole(userId, role) {
     const user = await findUserById(userId)
 
@@ -357,6 +394,7 @@ module.exports = {
     changePassword,
     findUserCourses,
     findUserComments,
+    getUserDashboard,
     changeRole,
     requestRole,
     findPendingRequests,
