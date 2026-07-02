@@ -1,16 +1,16 @@
 const express = require("express")
 const helmet = require("helmet")
-const cors = require("cors")
 const path = require("path")
 const morgan = require("morgan")
 const cookieParser = require("cookie-parser")
 const rateLimit = require("express-rate-limit")
+const { corsMiddleware, corsErrorHandler } = require("./cors")
 
 function middlewares(app) {
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
     app.use(helmet())
-    app.use(cors())
+    app.use(corsMiddleware)
     app.use(cookieParser())
 
     const globalRateLimiter = rateLimit({

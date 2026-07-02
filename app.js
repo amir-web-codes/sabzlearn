@@ -7,6 +7,7 @@ const path = require("path")
 
 
 const middlewares = require("./configs/middlewares")
+const { corsErrorHandler } = require("./configs/cors")
 middlewares(app)
 
 async function callDB() {
@@ -26,6 +27,8 @@ app.use("/courses", courseRouter)
 app.use("/comments", commentRouter)
 app.use("/lessons", lessonRouter)
 app.use("/tickets", ticketRouter)
+
+app.use(corsErrorHandler)
 
 app.get("/health", (req, res) => {
     res.status(200).json({
