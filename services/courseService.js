@@ -91,7 +91,7 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, level, language }, userId) {
+async function createCourse({ title, description, price, level, language, status }, userId) {
     const slug = await generateUniqueSlug(title)
     let selectedPrice;
 
@@ -109,6 +109,7 @@ async function createCourse({ title, description, price, level, language }, user
         instructor: userId,
         level,
         language,
+        status,
         studentsCount: 0,
     })
 }
@@ -117,7 +118,7 @@ async function removeCourseFromDb(slug) {
     return await courseModel.findOneAndDelete({ slug })
 }
 
-async function updateCourse({ title, description, price, level, language }, slug) {
+async function updateCourse({ title, description, price, level, language, status }, slug) {
 
     const foundCourse = await courseModel.findOne({ slug })
 
@@ -131,8 +132,11 @@ async function updateCourse({ title, description, price, level, language }, slug
     if (price !== undefined) foundCourse.price = price
     if (level !== undefined) foundCourse.level = level
     if (language !== undefined) foundCourse.language = language
+    if (status !== undefined) foundCourse.status = status
 
     await foundCourse.save()
+
+    return foundCourse
 }
 
 async function getAllCourses(page = 1, limit = 20) {

@@ -42,11 +42,12 @@ async function deleteCourse(req, res) {
 }
 
 async function editCourseDetails(req, res) {
-    await courseService.updateCourse(req.body, req.params.slug.toLowerCase().trim())
+    const data = await courseService.updateCourse(req.body, req.params.slug.toLowerCase().trim())
 
     res.json({
         success: true,
-        message: "course edited successfully"
+        message: "course edited successfully",
+        data
     })
 }
 
