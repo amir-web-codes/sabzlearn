@@ -31,15 +31,52 @@ function createLevelLogger(level, filePath, bindings = {}) {
 }
 
 function normalizePayload(payload, message) {
+    const baseMessage = typeof payload === "string"
+        ? payload
+        : message || payload?.message || "log entry"
+
+    const normalized = {
+        message: baseMessage,
+        context: {}
+    }
+
     if (typeof payload === "string") {
-        return { message: payload, ...(message ? { details: message } : {}) }
+        return normalized
     }
 
     if (payload && typeof payload === "object") {
-        return message ? { ...payload, message } : payload
+        Object.entries(payload).forEach(([key, value]) => {
+            if (key === "message") {
+                return
+            }
+
+            if (key === "err" || key === "error") {
+                if (value instanceof Error) {
+                    normalized.error = {
+                        message: value.message,
+                        stack: value.stack
+                    }
+                } else if (value && typeof value === "object") {
+                    normalized.error = {
+                        ...(value.message ? { message: value.message } : {}),
+                        ...(value.stack ? { stack: value.stack } : {})
+                    }
+                }
+
+                return
+            }
+
+            if (key === "stack") {
+                normalized.error = normalized.error || {}
+                normalized.error.stack = value
+                return
+            }
+
+            normalized.context[key] = value
+        })
     }
 
-    return { message: String(payload || "") }
+    return normalized
 }
 
 function createLogger(options = {}) {
@@ -80,7 +117,6 @@ function createLogger(options = {}) {
         }
     }
 }
-
 const logger = createLogger()
 
 module.exports = logger
