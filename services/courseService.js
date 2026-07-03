@@ -91,7 +91,7 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, level, language, status }, userId) {
+async function createCourse({ title, description, price, discountPrice, level, language, status }, userId) {
     const slug = await generateUniqueSlug(title)
     let selectedPrice;
 
@@ -106,6 +106,7 @@ async function createCourse({ title, description, price, level, language, status
         slug,
         description,
         price: selectedPrice,
+        discountPrice: discountPrice || 0,
         instructor: userId,
         level,
         language,
@@ -199,8 +200,15 @@ async function getCourseDetails(slug, lessonsIncluded = true) {
     if (lessonsIncluded === "true") {
         const foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
 
+        console.log(totalDuration)
+        console.log(foundLessons.length)
+        console.log("foundLessons")
+
         let totalDuration = 0
-        foundLessons.map(lesson => totalDuration += lesson.duration)
+        if (foundLessons.length > 0) {
+            foundLessons.map(lesson => totalDuration += lesson.duration)
+        }
+
 
         return { foundCourse, foundLessons, totalDuration }
     }

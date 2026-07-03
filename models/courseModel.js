@@ -23,7 +23,10 @@ const courseSchema = new mongoose.Schema({
         default: 0
     },
     discountPrice: {
-        type: Number
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0
     },
     instructor: {
         type: mongoose.Schema.Types.ObjectId,

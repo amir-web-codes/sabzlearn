@@ -8,7 +8,21 @@ const path = require("path")
 
 const middlewares = require("./configs/middlewares")
 const { corsErrorHandler } = require("./configs/cors")
+const requestLogger = require("./middlewares/requestLogger")
+const logger = require("./utils/logger")
 middlewares(app)
+
+app.use(requestLogger)
+
+process.on("uncaughtException", (error) => {
+    logger.fatal({ error }, "uncaught exception")
+    process.exit(1)
+})
+
+process.on("unhandledRejection", (reason) => {
+    logger.fatal({ error: reason }, "unhandled rejection")
+    process.exit(1)
+})
 
 async function callDB() {
     await require("./configs/db")()
@@ -53,5 +67,5 @@ app.use(errorHandler)
 const port = process.env.PORT || 7000
 
 app.listen(port, () => {
-    console.log(`server is running on port ${port}`)
+    logger.info({ port }, "server started successfully")
 })

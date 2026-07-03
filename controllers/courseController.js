@@ -16,7 +16,7 @@ async function getCourseBySlug(req, res) {
         meta: {
             totalStudents: foundCourse.studentsCount,
             rating: foundCourse.rating.average,
-            duration: `${totalDuration} minutes`
+            duration: `${totalDuration || 0} minutes`
         }
     })
 
