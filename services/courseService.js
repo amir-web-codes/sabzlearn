@@ -194,26 +194,21 @@ async function findCourseComments(course, page = 1, limit = 20) {
     return { data, totalNumber }
 }
 
-async function getCourseDetails(slug, lessonsIncluded = true) {
+async function getCourseDetails(slug, lessonsIncluded = "true") {
     const foundCourse = await findCourseBySlug(slug)
 
+    const foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
+
+    let totalDuration = 0
+    if (foundLessons.length > 0) {
+        foundLessons.map(lesson => totalDuration += lesson.duration)
+    }
+
     if (lessonsIncluded === "true") {
-        const foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
-
-        console.log(totalDuration)
-        console.log(foundLessons.length)
-        console.log("foundLessons")
-
-        let totalDuration = 0
-        if (foundLessons.length > 0) {
-            foundLessons.map(lesson => totalDuration += lesson.duration)
-        }
-
-
         return { foundCourse, foundLessons, totalDuration }
     }
 
-    return { foundCourse }
+    return { foundCourse, totalDuration }
 }
 
 module.exports = {

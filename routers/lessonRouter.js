@@ -11,7 +11,7 @@ const lessonValidations = require("../middlewares/validations/lesson.validation"
 router.get("/get-all", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, lessonController.getAllLessons)
 router.get("/:slug/get-lessons", checkToken, checkUserBan, lessonController.getCourseLessons)
 
-router.post("/courses/:slug/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), lessonController.createNewLesson)
+router.post("/courses/:slug/create", validator(lessonValidations.createSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), lessonController.createNewLesson)
 
 router.route("/:id")
     .get(validateId, checkToken, checkUserBan, lessonController.getLessonById)

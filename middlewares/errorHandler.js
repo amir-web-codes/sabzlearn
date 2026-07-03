@@ -13,6 +13,10 @@ const errorHandler = (err, req, res, next) => {
     }
 
     if (status >= 500) {
+        if (process.env.NODE_ENV === "development") {
+            console.log(`server error: ${err.stack}`)
+        }
+
         logger.error(context, "server error")
         err.message = "internal server error"
     } else if (status >= 400) {
