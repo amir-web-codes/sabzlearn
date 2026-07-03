@@ -12,58 +12,54 @@ const logFiles = {
     fatal: path.join(logDirectory, "fatal.log")
 }
 
-function writeToFile(level, payload, message) {
-    const entry = {
-        timestamp: new Date().toISOString(),
-        level,
-        ...payload,
-        ...(message ? { message } : {})
-    }
+Object.values(logFiles).forEach((filePath) => {
+    fs.closeSync(fs.openSync(filePath, "a"))
+})
 
-    fs.appendFileSync(logFiles[level], `${JSON.stringify(entry)}\n`, "utf8")
-}
-
-function createLogger(options = {}) {
-    const level = options.level || process.env.LOG_LEVEL || "info"
-    const service = options.serviceName || "sabzlearn"
-
-    const prettyStream = pino.transport({
-        target: "pino-pretty",
-        options: {
-            colorize: !process.env.NO_COLOR,
-            translateTime: "SYS:standard",
-            ignore: "pid,hostname"
-        }
-    })
-
-    const baseLogger = pino(
+function createLevelLogger(level, filePath, bindings = {}) {
+    return pino(
         {
             level,
-            base: { service },
+            base: bindings,
             timestamp: pino.stdTimeFunctions.isoTime,
             serializers: {
                 err: pino.stdSerializers.err
             }
         },
-        prettyStream
+        pino.destination({ dest: filePath, sync: false })
     )
+}
 
-    const normalizePayload = (payload, message) => {
-        if (typeof payload === "string") {
-            return { message: payload, ...(message ? { details: message } : {}) }
-        }
+function normalizePayload(payload, message) {
+    if (typeof payload === "string") {
+        return { message: payload, ...(message ? { details: message } : {}) }
+    }
 
-        if (payload && typeof payload === "object") {
-            return message ? { ...payload, message } : payload
-        }
+    if (payload && typeof payload === "object") {
+        return message ? { ...payload, message } : payload
+    }
 
-        return { message: String(payload || "") }
+    return { message: String(payload || "") }
+}
+
+function createLogger(options = {}) {
+    const level = options.level || process.env.LOG_LEVEL || "info"
+    const service = options.serviceName || "sabzlearn"
+    const bindings = {
+        service,
+        ...(options.bindings || {})
+    }
+
+    const levelLoggers = {
+        info: createLevelLogger(level, logFiles.info, bindings),
+        warn: createLevelLogger(level, logFiles.warn, bindings),
+        error: createLevelLogger(level, logFiles.error, bindings),
+        fatal: createLevelLogger(level, logFiles.fatal, bindings)
     }
 
     const log = (logLevel, payload, message) => {
         const normalizedPayload = normalizePayload(payload, message)
-        baseLogger[logLevel](normalizedPayload)
-        writeToFile(logLevel, normalizedPayload, undefined)
+        levelLoggers[logLevel][logLevel](normalizedPayload)
     }
 
     return {
@@ -79,7 +75,7 @@ function createLogger(options = {}) {
         fatal(payload, message) {
             log("fatal", payload, message)
         },
-        child(bindings) {
+        child(bindings = {}) {
             return createLogger({ level, serviceName: service, bindings })
         }
     }
