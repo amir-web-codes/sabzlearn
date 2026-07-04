@@ -92,7 +92,24 @@ async function createItem(userId, course) {
     return { data, totalPrice }
 }
 
+async function deleteItem(userId) {
+    const oldCart = await cartModel.findOneAndUpdate(
+        { userId },
+        {
+            $set: {
+                items: []
+            }
+        },
+        {
+            new: false
+        }
+    )
+
+    return oldCart
+}
+
 module.exports = {
     getCart,
-    createItem
+    createItem,
+    deleteItem
 }

@@ -31,7 +31,20 @@ async function addNewItem(req, res) {
     })
 }
 
+async function deleteUserCart(req, res) {
+    const oldCart = await cartService.deleteItem(req.user.id)
+
+    res.json({
+        success: true,
+        message: "cart items deleted successfully",
+        meta: {
+            deletedItems: oldCart.items.length
+        }
+    })
+}
+
 module.exports = {
     getUserCart,
-    addNewItem
+    addNewItem,
+    deleteUserCart
 }
