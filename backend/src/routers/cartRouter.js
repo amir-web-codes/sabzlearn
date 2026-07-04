@@ -13,4 +13,6 @@ router.route("/:slug")
     .post(checkToken, checkUserBan, cartController.addNewItem)
     .delete(checkToken, cartController.deleteItemBySlug)
 
+// router.get("/checkout", limiters.cartLimiter, checkToken, checkUserBan)
+
 module.exports = router

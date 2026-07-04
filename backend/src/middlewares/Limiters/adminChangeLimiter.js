@@ -3,7 +3,8 @@ const rateLimiter = require("express-rate-limit")
 const adminChangeLimiter = rateLimiter({
     windowMs: 1000 * 60 * 30,
     max: 3,
-    headers: true,
+    standardHeaders: true,
+    legacyHeaders: false,
     handler: (req, res, next) => {
         res.status(429).json({
             success: false,

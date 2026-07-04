@@ -4,7 +4,8 @@ const enrollLimiter = rateLimit({
     windowMs: 1000 * 60 * 10,
     max: 10,
     keyGenerator: (req) => req.user.id,
-    headers: true,
+    standardHeaders: true,
+    legacyHeaders: false,
     handler: (req, res, next) => {
         res.status(429).json({
             success: false,

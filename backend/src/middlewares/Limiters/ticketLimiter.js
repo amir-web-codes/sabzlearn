@@ -3,7 +3,8 @@ const rateLimit = require("express-rate-limit")
 const ticketLimiter = rateLimit({
     windowMs: 1000 * 60 * 30,
     max: 5,
-    headers: true,
+    standardHeaders: true,
+    legacyHeaders: false,
     handler: (req, res, next) => {
         res.status(429).json({
             success: false,

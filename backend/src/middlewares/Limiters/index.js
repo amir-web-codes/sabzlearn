@@ -6,6 +6,7 @@ const adminChangeLimiter = require("./adminChangeLimiter")
 const requestLimiter = require("./requestLimiter")
 const ticketLimiter = require("./ticketLimiter")
 const courseLimiter = require("./courseLimiter")
+const cartLimiter = require("./cartLimiter")
 
 module.exports = {
     adminLimiter,
@@ -15,5 +16,6 @@ module.exports = {
     adminChangeLimiter,
     requestLimiter,
     ticketLimiter,
-    courseLimiter
+    courseLimiter,
+    cartLimiter
 }

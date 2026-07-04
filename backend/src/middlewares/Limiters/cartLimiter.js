@@ -1,7 +1,7 @@
-const rateLimiter = require("express-rate-limit")
+const rateLimit = require('express-rate-limit')
 
-const requestLimiter = rateLimiter({
-    windowMs: 1000 * 60 * 60,
+const cartLimiter = rateLimit({
+    windowMs: 1000 * 60 * 5,
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
@@ -13,4 +13,4 @@ const requestLimiter = rateLimiter({
     }
 })
 
-module.exports = requestLimiter
+module.exports = cartLimiter

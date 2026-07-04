@@ -3,7 +3,8 @@ const rateLimit = require("express-rate-limit")
 const commentLimiter = rateLimit({
     windowMs: 1000 * 60 * 1,
     max: 3,
-    headers: true,
+    standardHeaders: true,
+    legacyHeaders: false,
     handler: (req, res, next) => {
         res.status(429).json({
             success: false,
