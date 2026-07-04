@@ -5,8 +5,8 @@ const { checkToken, checkUserBan, checkSelfs, limiters } = require("../middlewar
 
 const cartController = require("../controllers/cartController")
 
-// router.route("/me")
-//     .get(checkToken, cartController.getUserCart)
+router.route("/me")
+    .get(checkToken, cartController.getUserCart)
 
 router.post("/:slug", checkToken, checkUserBan, cartController.addNewItem)
 
