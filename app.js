@@ -15,13 +15,19 @@ middlewares(app)
 app.use(requestLogger)
 
 process.on("uncaughtException", (error) => {
+    console.log(error)
     logger.fatal({ error }, "uncaught exception")
-    process.exit(1)
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
 })
 
 process.on("unhandledRejection", (reason) => {
+    console.log(reason)
     logger.fatal({ error: reason }, "unhandled rejection")
-    process.exit(1)
+    setTimeout(() => {
+        process.exit(1)
+    }, 100)
 })
 
 async function callDB() {
@@ -35,12 +41,14 @@ const courseRouter = require("./routers/courseRouter")
 const commentRouter = require("./routers/commentRouter")
 const lessonRouter = require("./routers/lessonRouter")
 const ticketRouter = require("./routers/ticketRouter")
+const cartRouter = require("./routers/cartRouter")
 
 app.use("/users", userRouter)
 app.use("/courses", courseRouter)
 app.use("/comments", commentRouter)
 app.use("/lessons", lessonRouter)
 app.use("/tickets", ticketRouter)
+app.use("/cart", cartRouter)
 
 app.use(corsErrorHandler)
 
@@ -67,5 +75,6 @@ app.use(errorHandler)
 const port = process.env.PORT || 7000
 
 app.listen(port, () => {
+    console.log(`server is running on port: ${process.env.PORT}`)
     logger.info({ port }, "server started successfully")
 })

@@ -13,9 +13,9 @@ router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin",
 router.get("/:slug/get-comments", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
 
 router.route("/:slug")
-    .get(limiters.courseLimiter, courseController.getCourseBySlug)
-    .patch(validator(courseValidations.editSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), courseController.editCourseDetails)
-    .delete(checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse)
+    .get(limiters.courseLimiter, checkToken, courseController.getCourseBySlug)
+    .patch(limiters.courseLimiter, validator(courseValidations.editSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), courseController.editCourseDetails)
+    .delete(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse)
 
 router.post("/create", validator(courseValidations.createSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 

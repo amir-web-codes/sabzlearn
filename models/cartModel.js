@@ -15,12 +15,12 @@ const cartSchema = new mongoose.Schema({
                 ref: "Course",
                 required: true
             },
-            oldPrice: {
+            price: {
                 type: Number,
                 min: 0,
                 default: 0
             },
-            newPrice: {
+            oldPrice: {
                 type: Number,
                 min: 0,
                 default: 0
@@ -33,6 +33,6 @@ const cartSchema = new mongoose.Schema({
     ]
 }, { timestamps: true })
 
-const cartModel = mongoose.Model("Cart", cartSchema)
+const cartModel = mongoose.model("Cart", cartSchema)
 
 module.exports = cartModel
