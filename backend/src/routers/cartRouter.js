@@ -5,14 +5,16 @@ const { checkToken, checkUserBan, checkSelfs, limiters } = require("../middlewar
 
 const cartController = require("../controllers/cartController")
 
+
+router.post("/checkout", limiters.cartLimiter, checkToken, checkUserBan, cartController.cartCheckout)
+
 router.route("/me")
-    .get(checkToken, cartController.getUserCart)
+    .get(checkToken, limiters.cartLimiter, cartController.getUserCart)
     .delete(checkToken, cartController.deleteUserCart)
 
 router.route("/:slug")
     .post(checkToken, checkUserBan, cartController.addNewItem)
     .delete(checkToken, cartController.deleteItemBySlug)
 
-// router.get("/checkout", limiters.cartLimiter, checkToken, checkUserBan)
 
 module.exports = router

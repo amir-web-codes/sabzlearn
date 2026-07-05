@@ -1,5 +1,4 @@
 const asyncWrapper = require("../utils/asyncWrapper")
-const sendError = require("../utils/sendError")
 
 const lessonService = require("../services/lessonService")
 const courseService = require("../services/courseService")

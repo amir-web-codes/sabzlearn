@@ -1,5 +1,6 @@
 const cartService = require("../services/cartService")
 const courseService = require("../services/courseService")
+const asyncWrapper = require("../utils/asyncWrapper")
 
 async function getUserCart(req, res) {
     const { data, totalPrice } = await cartService.getCart(req.user.id)
@@ -56,9 +57,23 @@ async function deleteItemBySlug(req, res) {
     })
 }
 
+async function cartCheckout(req, res) {
+    const data = await cartService.checkOut(req.user.id)
+
+    res.json({
+        success: true,
+        message: "payment done successfully",
+        data,
+        meta: {
+            pricePaid: data.totalPrice
+        }
+    })
+}
+
 module.exports = {
-    getUserCart,
-    addNewItem,
-    deleteUserCart,
-    deleteItemBySlug
+    getUserCart: asyncWrapper(getUserCart),
+    addNewItem: asyncWrapper(addNewItem),
+    deleteUserCart: asyncWrapper(deleteUserCart),
+    deleteItemBySlug: asyncWrapper(deleteItemBySlug),
+    cartCheckout: asyncWrapper(cartCheckout)
 }

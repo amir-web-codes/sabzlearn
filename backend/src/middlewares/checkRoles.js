@@ -1,5 +1,3 @@
-const sendError = require("../utils/sendError")
-
 const checkRoles = (allowedRoles = ["user"]) => {
     return (req, res, next) => {
 
@@ -13,7 +11,9 @@ const checkRoles = (allowedRoles = ["user"]) => {
         if (allowedRoles.includes(req.user.role)) {
             next()
         } else {
-            return sendError(403, "you don't have permission")
+            const err = new Error("you don't have permission")
+            err.status = 403
+            throw err
         }
     }
 }

@@ -1,5 +1,8 @@
+const mongoose = require("mongoose")
 const cartModel = require("../models/cartModel")
+const orderModel = require("../models/orderModel")
 const courseModel = require("../models/courseModel")
+const enrollmentModel = require("../models/enrollmentModel")
 
 async function getCart(userId) {
     let data = await cartModel.findOne({ userId })
@@ -47,6 +50,14 @@ async function getCart(userId) {
 }
 
 async function createItem(userId, course) {
+    const foundEnrollment = await enrollmentModel.exists({ userId, courseId: course._id, status: { $ne: "closed" } })
+
+    if (foundEnrollment) {
+        const err = new Error("you already own this course")
+        err.status = 400
+        throw err
+    }
+
     let data = await cartModel.findOne({ userId })
     let totalPrice = 0;
 
@@ -148,9 +159,50 @@ async function deleteBySlug(userId, slug) {
     return { data, totalPrice }
 }
 
+async function checkOut(userId) {
+    const { data, totalPrice } = await getCart(userId)
+
+    if (data.items.length === 0) {
+        const err = new Error("no items in cart")
+        err.status = 400
+        throw err
+    }
+
+    const session = await mongoose.startSession()
+    session.startTransaction()
+
+    const order = await orderModel.create([{
+        userId,
+        items: [...data.items],
+        totalPrice,
+        status: "pending"
+    }], { session })
+
+    data.items.forEach(async (item) => {
+        await enrollmentModel.create([{
+            userId,
+            courseId: item.courseId,
+            status: "active"
+        }], { session })
+    })
+
+    // empty cart
+    await deleteItems(userId)
+    await orderModel.updateOne([
+        { userId },
+        { status: "paid" }
+    ], { session })
+
+    await session.commitTransaction()
+    session.endSession()
+
+    return order
+}
+
 module.exports = {
     getCart,
     createItem,
     deleteItems,
-    deleteBySlug
+    deleteBySlug,
+    checkOut
 }

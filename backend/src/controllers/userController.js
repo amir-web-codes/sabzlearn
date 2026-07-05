@@ -1,4 +1,3 @@
-const sendError = require("../utils/sendError")
 const asyncWrapper = require("../utils/asyncWrapper")
 const { randomUUID } = require("crypto")
 
@@ -29,7 +28,9 @@ async function signUp(req, res) {
     const foundUser = await userService.findByEmail(email)
 
     if (foundUser) {
-        return sendError(409, "email already exists")
+        const err = new Error("email already exists")
+        err.status = 409
+        throw err
     }
 
     const createdUser = await userService.createUser(req.body)
@@ -104,14 +105,18 @@ async function login(req, res) {
         }
     }
 
-    sendError(401, "wrong email or password")
+    const err = new Error("wrong email or password")
+    err.status = 401
+    throw err
 }
 
 async function logOut(req, res) {
     const deviceId = req.cookies.deviceId
 
     if (!deviceId) {
-        sendError(403, "you're not logged in")
+        const err = new Error("you're not logged in")
+        err.status = 403
+        throw err
     }
 
     await userService.revokeUserToken(req.user.id, deviceId)
@@ -135,7 +140,9 @@ async function banUser(req, res) {
     const banDays = req.body.banDays
 
     if (banDays !== undefined && (!Number.isInteger(Number(banDays)) || banDays < 0)) {
-        return sendError(422, "invalid ban days")
+        const err = new Error("invalid ban days")
+        err.status = 422
+        throw err
     }
 
     await userService.banUser(foundUser, banDays, req.body.banReason, req.user.id)
@@ -195,7 +202,9 @@ async function refreshToken(req, res) {
     const oldToken = req.cookies.refreshToken
 
     if (!oldToken) {
-        sendError(403, "token not available or expired")
+        const err = new Error("token not available or expired")
+        err.status = 403
+        throw err
     }
 
 
@@ -204,7 +213,9 @@ async function refreshToken(req, res) {
     const userAgent = req.headers["user-agent"]
 
     if (!deviceId) {
-        sendError(403, "you're not logged in")
+        const err = new Error("you're not logged in")
+        err.status = 403
+        throw err
     }
 
     const { accessToken, refreshToken } = await userService.refreshAccessToken(oldToken, rememberMe, userAgent, deviceId)
@@ -305,7 +316,9 @@ async function requestNewRole(req, res) {
     const newRole = req.body.newRole || "teacher"
 
     if (req.user.role === newRole) {
-        return sendError(409, "user already have this role")
+        const err = new Error("user already has this role")
+        err.status = 409
+        throw err
     }
 
     await userService.requestRole(req.user.id, req.user.role, newRole)
