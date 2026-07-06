@@ -5,7 +5,6 @@ const cartSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        index: true,
         required: true
     },
     items: [
@@ -34,6 +33,8 @@ const cartSchema = new mongoose.Schema({
         }
     ]
 }, { timestamps: true })
+
+cartSchema.index({ userId: 1 }, { unique: true })
 
 const cartModel = mongoose.model("Cart", cartSchema)
 

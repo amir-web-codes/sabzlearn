@@ -4,53 +4,50 @@ const orderModel = require("../models/orderModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 
-async function getCart(userId) {
-    let data = await cartModel.findOne({ userId })
-    let totalPrice = 0
+async function getCart(userId, session) {
+
+    const data = await cartModel
+        .findOne({ userId })
+        .session(session || null)
 
     if (!data) {
-        data = await cartModel.create({
-            userId,
-            items: []
-        })
-
-        return { data, totalPrice }
-    }
-
-    const courseIds = data.items.map(item => item.courseId)
-
-    const courses = await courseModel.find({
-        _id: { $in: courseIds }
-    })
-
-    const courseMap = new Map(
-        courses.map(course => [course._id.toString(), course])
-    )
-
-    for (const item of data.items) {
-        const course = courseMap.get(item.courseId.toString())
-
-        if (!course) continue
-
-        if (item.price !== course.price) {
-            item.oldPrice = item.price
-            item.price = course.price
-            item.priceChanged = true
-        } else {
-            item.priceChanged = false
+        return {
+            data: await cartModel.create([{ userId, items: [] }], { session }).then(r => r[0]),
+            totalPrice: 0
         }
     }
 
+    let totalPrice = 0
 
-    await data.save()
+    const courseIds = data.items.map(i => i.courseId)
 
-    data.items.forEach(item => totalPrice += item.price)
+    const courses = await courseModel
+        .find({ _id: { $in: courseIds } })
+        .session(session || null)
+
+    const map = new Map(
+        courses.map(c => [c._id.toString(), c])
+    )
+
+    for (const item of data.items) {
+
+        const course = map.get(item.courseId.toString())
+        if (!course) continue
+
+        item.price = course.price
+        totalPrice += course.price
+    }
 
     return { data, totalPrice }
 }
 
 async function createItem(userId, course) {
-    const foundEnrollment = await enrollmentModel.exists({ userId, courseId: course._id, status: { $ne: "closed" } })
+
+    const foundEnrollment = await enrollmentModel.exists({
+        userId,
+        courseId: course._id,
+        status: { $ne: "closed" }
+    })
 
     if (foundEnrollment) {
         const err = new Error("you already own this course")
@@ -58,55 +55,95 @@ async function createItem(userId, course) {
         throw err
     }
 
-    let data = await cartModel.findOne({ userId })
-    let totalPrice = 0;
-
-    if (!data) {
-        data = await cartModel.create({
-            userId,
-            items: [{
-                title: course.title,
-                courseId: course._id,
-                price: course.price,
-                oldPrice: 0,
-                priceChanged: false
-            }]
-        })
-
-        data.items.forEach(item => totalPrice += item.price)
-
-        return { data, totalPrice }
-    }
-
-    const exists = data.items.some(
-        item => item.courseId.toString() === course._id.toString()
+    // اگر cart وجود نداشت بساز
+    await cartModel.updateOne(
+        { userId },
+        {
+            $setOnInsert: {
+                items: []
+            }
+        },
+        {
+            upsert: true
+        }
     )
 
-    if (data.items.length >= 50) {
-        const err = new Error("you can't add more than 50 items in your cart")
-        err.status = 400
+    // آیتم را فقط اگر وجود نداشت و ظرفیت کمتر از 50 بود اضافه کن
+    const data = await cartModel.findOneAndUpdate(
+        {
+            userId,
+            "items.courseId": { $ne: course._id },
+            $expr: {
+                $lt: [
+                    { $size: "$items" },
+                    50
+                ]
+            }
+        },
+        {
+            $push: {
+                items: {
+                    title: course.title,
+                    courseId: course._id,
+                    price: course.price,
+                    oldPrice: 0,
+                    priceChanged: false
+                }
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    // اگر update انجام نشد
+    if (!data) {
+
+        const cart = await cartModel.findOne({ userId })
+
+        const exists = cart.items.some(
+            item => item.courseId.toString() === course._id.toString()
+        )
+
+        if (exists) {
+            const err = new Error("course already exists in cart")
+            err.status = 409
+            throw err
+        }
+
+        if (cart.items.length >= 50) {
+            const err = new Error("cart can contain at most 50 items")
+            err.status = 400
+            throw err
+        }
+
+        const err = new Error("failed to add item")
+        err.status = 500
         throw err
     }
 
-    if (!exists) {
-        data.items.push({
-            title: course.title,
-            courseId: course._id,
-            price: course.price,
-            oldPrice: 0,
-            priceChanged: false
-        })
+    const totalPrice = data.items.reduce(
+        (sum, item) => sum + item.price,
+        0
+    )
 
-
-        await data.save()
+    return {
+        data,
+        totalPrice
     }
-
-    data.items.forEach(item => totalPrice += item.price)
-
-    return { data, totalPrice }
 }
 
-async function deleteItems(userId) {
+async function deleteItems(userId, session = null) {
+
+    const options = {
+        new: true,
+        upsert: true
+    }
+
+    if (session) {
+        options.session = session
+    }
+
     let oldCart = await cartModel.findOneAndUpdate(
         { userId },
         {
@@ -114,17 +151,8 @@ async function deleteItems(userId) {
                 items: []
             }
         },
-        {
-            new: false
-        }
+        options
     )
-
-    if (!oldCart) {
-        oldCart = await cartModel.create({
-            userId
-        })
-        return oldCart
-    }
 
     return oldCart
 }
@@ -153,6 +181,8 @@ async function deleteBySlug(userId, slug) {
         }
     )
 
+    console.log(data)
+
     let totalPrice = 0
     data.items.forEach(item => totalPrice += item.price)
 
@@ -160,43 +190,69 @@ async function deleteBySlug(userId, slug) {
 }
 
 async function checkOut(userId) {
-    const { data, totalPrice } = await getCart(userId)
-
-    if (data.items.length === 0) {
-        const err = new Error("no items in cart")
-        err.status = 400
-        throw err
-    }
 
     const session = await mongoose.startSession()
-    session.startTransaction()
 
-    const order = await orderModel.create([{
-        userId,
-        items: [...data.items],
-        totalPrice,
-        status: "pending"
-    }], { session })
+    try {
 
-    data.items.forEach(async (item) => {
-        await enrollmentModel.create([{
+        session.startTransaction()
+
+        const { data, totalPrice } = await getCart(userId, session)
+
+        if (!data.items.length) {
+            const err = new Error("no items in cart")
+            err.status = 400
+            throw err
+        }
+
+        const order = (await orderModel.create([{
             userId,
-            courseId: item.courseId,
-            status: "active"
-        }], { session })
-    })
+            items: data.items,
+            totalPrice,
+            status: "pending"
+        }], { session }))[0]
 
-    // empty cart
-    await deleteItems(userId)
-    await orderModel.updateOne([
-        { userId },
-        { status: "paid" }
-    ], { session })
+        for (const item of data.items) {
 
-    await session.commitTransaction()
-    session.endSession()
+            await enrollmentModel.updateOne(
+                {
+                    userId,
+                    courseId: item.courseId
+                },
+                {
+                    $setOnInsert: {
+                        userId,
+                        courseId: item.courseId,
+                        status: "active"
+                    }
+                },
+                {
+                    upsert: true,
+                    session
+                }
+            )
+        }
 
-    return order
+        await deleteItems(userId, session)
+
+        order.status = "paid"
+        await order.save(session)
+
+        await session.commitTransaction()
+
+        return order
+
+    } catch (err) {
+
+        await session.abortTransaction()
+
+        throw err
+
+    } finally {
+
+        await session.endSession()
+
+    }
 }
 
 module.exports = {
