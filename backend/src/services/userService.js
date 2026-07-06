@@ -389,10 +389,13 @@ async function findRequestById(requestId) {
 async function checkDeletedUser(user) {
     if (user.isDeleted) {
 
-        const populated = await user.populate("deletedBy", "username email")
-
-        const err = new Error(`user deleted by ${populated.deletedBy.username} email: ${populated.deletedBy.email}, at ${user.deletedAt}`)
+        await user.populate("deletedBy", "username email")
+        const err = new Error(`user deleted`)
         err.status = 404
+        err.details = {
+            deletedBy: user.deletedBy,
+            deletedAt: user.deletedAt
+        }
         throw err
     }
 }
