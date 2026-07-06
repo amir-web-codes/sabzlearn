@@ -153,8 +153,6 @@ async function deleteItems(userId, session = null) {
         },
         options
     )
-
-    return oldCart
 }
 
 async function deleteBySlug(userId, slug) {
@@ -165,6 +163,8 @@ async function deleteBySlug(userId, slug) {
         err.status = 404
         throw err
     }
+
+    await getCart(userId)
 
     const data = await cartModel.findOneAndUpdate(
         { userId },
@@ -180,8 +180,6 @@ async function deleteBySlug(userId, slug) {
             upsert: true
         }
     )
-
-    console.log(data)
 
     let totalPrice = 0
     data.items.forEach(item => totalPrice += item.price)
@@ -236,7 +234,7 @@ async function checkOut(userId) {
         await deleteItems(userId, session)
 
         order.status = "paid"
-        await order.save(session)
+        await order.save({ session })
 
         await session.commitTransaction()
 

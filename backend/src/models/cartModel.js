@@ -29,12 +29,13 @@ const cartSchema = new mongoose.Schema({
             priceChanged: {
                 type: Boolean,
                 default: false
-            }
+            },
+            default: Array
         }
     ]
 }, { timestamps: true })
 
-cartSchema.index({ userId: 1 }, { unique: true })
+cartSchema.index({ userId: 1, "items.courseId": 1 }, { unique: true })
 
 const cartModel = mongoose.model("Cart", cartSchema)
 
