@@ -14,7 +14,7 @@ async function getUserById(req, res) {
 }
 
 async function deleteUserById(req, res) {
-    await userService.deleteUser(req.params.id)
+    await userService.deleteUser(req.params.id, req.user.id)
 
     res.json({
         success: true,
@@ -71,6 +71,7 @@ async function login(req, res) {
         const result = await userService.comparePasswords(req.body.password, foundUser.password)
 
         if (result) {
+            await userService.checkDeletedUser(foundUser)
 
             const rememberMe = req.body.rememberMe
             const userAgent = req.headers["user-agent"]
@@ -177,7 +178,7 @@ async function getUserProfile(req, res) {
 }
 
 async function deleteUserProfile(req, res) {
-    await userService.deleteUser(req.user.id)
+    await userService.deleteUser(req.user.id, req.user.id)
 
     res.json({
         success: true,

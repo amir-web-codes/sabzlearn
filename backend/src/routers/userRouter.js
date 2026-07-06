@@ -47,7 +47,7 @@ router.patch("/admin/:id/change-role", validateId, checkToken, limiters.adminCha
 router.post("/auth/signup", limiters.loginLimiter, validator(userValidations.signUpSchema), userController.signUp)
 router.post("/auth/login", limiters.loginLimiter, validator(userValidations.loginSchema), userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
-router.post("/refresh-token", userController.refreshToken)
+router.post("/refresh-token", validator(userValidations.refreshTokenSchema), userController.refreshToken)
 
 
 

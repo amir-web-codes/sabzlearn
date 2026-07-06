@@ -36,11 +36,16 @@ const banUserSchema = z.object({
     banDays: z.coerce.number().min(1)
 })
 
+const refreshTokenSchema = z.object({
+    rememberMe: z.boolean().default(false)
+})
+
 module.exports = {
     signUpSchema,
     loginSchema,
     changePasswordSchema,
     updateUserSchema,
     requestRoleSchema,
-    banUserSchema
+    banUserSchema,
+    refreshTokenSchema
 }

@@ -57,8 +57,6 @@ async function createTokens(user, rememberMe, deviceId, userAgent, isLogin) {
         await tokenModel.findByIdAndDelete(deviceTokens[0]._id)
     }
 
-
-
     // if it's a login request, add lastLogin Date
     if (isLogin) {
         const today = new Date(Date.now())
@@ -136,10 +134,19 @@ async function unBanUser(bannedId) {
     await foundUser.save()
 }
 
-async function deleteUser(userId) {
-    const deletedData = await userModel.deleteOne({ _id: userId })
+async function deleteUser(userId, deletedById) {
+    const deletedData = await userModel.updateOne(
+        { _id: userId, isDeleted: false },
+        {
+            $set: {
+                isDeleted: true,
+                deletedBy: deletedById,
+                deletedAt: new Date(Date.now())
+            }
+        }
+    )
 
-    if (deletedData.deletedCount === 0) {
+    if (deletedData.matchedCount === 0) {
         const err = new Error("user not found")
         err.status = 404
         throw err
@@ -379,6 +386,17 @@ async function findRequestById(requestId) {
     return data
 }
 
+async function checkDeletedUser(user) {
+    if (user.isDeleted) {
+
+        const populated = await user.populate("deletedBy", "username email")
+
+        const err = new Error(`user deleted by ${populated.deletedBy.username} email: ${populated.deletedBy.email}, at ${user.deletedAt}`)
+        err.status = 404
+        throw err
+    }
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -401,5 +419,6 @@ module.exports = {
     acceptRequest,
     rejectRequest,
     getAllRequests,
-    findRequestById
+    findRequestById,
+    checkDeletedUser
 }

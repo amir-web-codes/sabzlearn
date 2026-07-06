@@ -1,5 +1,6 @@
 const mongoose = require("mongoose")
 const bcrypt = require("bcrypt")
+const { boolean } = require("zod")
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -42,6 +43,19 @@ const userSchema = new mongoose.Schema({
         default: null
     },
     banExpiresAt: {
+        type: Date,
+        default: null
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    deletedAt: {
         type: Date,
         default: null
     },
