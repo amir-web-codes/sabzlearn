@@ -13,7 +13,7 @@ router.post("/:id/reply", validateId, validator(ticketValidations.replySchema), 
 router.patch("/:id/change-status", validateId, validator(ticketValidations.changeStatusSchema), checkToken, checkUserBan, checkSelfs.checkSelfTicketAuthor(true), ticketController.changeTicketStatus)
 
 router.get("/me", checkToken, checkUserBan, ticketController.getUserTickets)
-router.get("/get-all", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), ticketController.getAllTickets)
+router.get("/admin/get-all", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), ticketController.getAllTickets)
 router.get("/:id", validateId, checkToken, checkUserBan, checkSelfs.checkSelfTicketAuthor(true), ticketController.getTicketById)
 
 

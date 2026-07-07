@@ -3,9 +3,9 @@ const logger = require("../utils/logger")
 
 async function getDB() {
     try {
-        await mongoose.connect(process.env.DATABASEURL)
+        await mongoose.connect(process.env.DATABASE_URL)
         console.log("connected to database successfully")
-        const sanitizedUrl = (process.env.DATABASEURL || "").replace(/\/\/([^:]+):([^@]+)@/, "//***:***@")
+        const sanitizedUrl = (process.env.DATABASE_URL || "").replace(/\/\/([^:]+):([^@]+)@/, "//***:***@")
         logger.info({ database: sanitizedUrl }, "connected to database successfully")
     } catch (err) {
         console.log(`database connection error: ${err}`)

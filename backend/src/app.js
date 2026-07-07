@@ -30,9 +30,12 @@ process.on("unhandledRejection", (reason) => {
     }, 100)
 })
 
+const { connectRedis } = require("./configs/redis")
 async function callDB() {
     await require("./configs/db")()
+    await connectRedis()
 }
+
 
 callDB()
 

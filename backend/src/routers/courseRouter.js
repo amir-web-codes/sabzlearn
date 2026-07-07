@@ -8,12 +8,12 @@ const courseController = require("../controllers/courseController")
 const validator = require("../middlewares/validator")
 const courseValidations = require("../middlewares/validations/course.validation")
 
-router.get("/getAll", courseController.getAllCourses)
+router.get("/getAll", courseController.getAllCourses) // redis
 router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
 router.get("/:slug/get-comments", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
 
 router.route("/:slug")
-    .get(limiters.courseLimiter, checkToken, courseController.getCourseBySlug)
+    .get(limiters.courseLimiter, checkToken, courseController.getCourseBySlug) // redis
     .patch(limiters.courseLimiter, validator(courseValidations.editSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), courseController.editCourseDetails)
     .delete(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse)
 

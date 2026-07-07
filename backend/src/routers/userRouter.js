@@ -14,8 +14,8 @@ router.route("/me")
     .patch(validator(userValidations.updateUserSchema), checkToken, checkUserBan, userController.updateUserProfile)
 
 
-router.get("/me/get-courses", checkToken, userController.getUserCourses)
-router.get("/me/get-enrolled-courses", checkToken, userController.getUserCourses)
+router.get("/me/get-courses", checkToken, userController.getUserCourses) // redis
+router.get("/me/get-enrolled-courses", checkToken, userController.getUserCourses) // redis
 router.get("/me/get-comments", checkToken, userController.getUserComments)
 router.get("/me/dashboard", checkToken, userController.getUserDashboard)
 
