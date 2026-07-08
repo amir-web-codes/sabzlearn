@@ -4,6 +4,8 @@ const orderModel = require("../models/orderModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 
+const invalidatePattern = require("../utils/invalidatePattern")
+
 async function getCart(userId, session) {
 
     const data = await cartModel
@@ -55,7 +57,6 @@ async function createItem(userId, course) {
         throw err
     }
 
-    // اگر cart وجود نداشت بساز
     await cartModel.updateOne(
         { userId },
         {
@@ -68,7 +69,6 @@ async function createItem(userId, course) {
         }
     )
 
-    // آیتم را فقط اگر وجود نداشت و ظرفیت کمتر از 50 بود اضافه کن
     const data = await cartModel.findOneAndUpdate(
         {
             userId,
@@ -96,7 +96,6 @@ async function createItem(userId, course) {
         }
     )
 
-    // اگر update انجام نشد
     if (!data) {
 
         const cart = await cartModel.findOne({ userId })
@@ -236,7 +235,10 @@ async function checkOut(userId) {
         order.status = "paid"
         await order.save({ session })
 
+        await invalidatePattern("courses:enrolled:*")
+
         await session.commitTransaction()
+
 
         return order
 

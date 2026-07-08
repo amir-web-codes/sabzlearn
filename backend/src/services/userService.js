@@ -6,6 +6,8 @@ const requestModel = require("../models/requestModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
+const { client } = require("../configs/redis")
+
 
 async function findUserById(userId) {
     const data = await userModel.findById(userId).select("-password").populate("bannedBy", "username email")
@@ -222,8 +224,27 @@ async function changePassword(user, password) {
 }
 
 async function findUserCourses(userId, page, limit) {
-    const data = await enrollmentModel.find({ userId }).select("courseId").populate("courseId", "title slug price").skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await enrollmentModel.countDocuments({ userId })
+    const key = `courses:enrolled:page:${page}:limit:${limit}`
+    const cached = await client.get(key)
+
+    let data = cached
+        ? JSON.parse(cached)
+        : null
+
+    let totalNumber = 0
+
+    if (data) {
+        totalNumber = Number(await client.get("courses:enrolled:totalNumber"))
+        return { data, totalNumber }
+    }
+
+
+    data = await enrollmentModel.find({ userId }).select("courseId").populate("courseId", "title slug price").skip((page - 1) * limit).limit(limit).lean()
+    totalNumber = await enrollmentModel.countDocuments({ userId })
+
+    await client.set(key, JSON.stringify(data), { EX: 600 })
+    await client.set("courses:enrolled:totalNumber", totalNumber, { EX: 600 })
+
     return { data, totalNumber }
 }
 

@@ -165,7 +165,7 @@ async function getAllCourses(page = 1, limit = 20) {
 
     if (cached) {
 
-        totalNumber = Number(await client.get("courses:total"))
+        totalNumber = Number(await client.get("courses:totalNumber"))
         return { data, totalNumber }
     }
 
@@ -274,8 +274,8 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
         )
     }
 
-    await client.set(courseKey, JSON.stringify(foundCourse))
-    await client.set(lessonsKey, JSON.stringify(foundLessons))
+    await client.set(courseKey, JSON.stringify(foundCourse), { EX: 600 })
+    await client.set(lessonsKey, JSON.stringify(foundLessons), { EX: 600 })
 
     if (lessonsIncluded === "true") {
         return { foundCourse, foundLessons, totalDuration }
