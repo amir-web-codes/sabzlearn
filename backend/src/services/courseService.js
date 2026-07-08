@@ -49,6 +49,9 @@ async function findCourseBySlug(slug, select) {
         throw err
     }
 
+    await invalidatePattern("courses:*")
+    await invalidatePattern("lessons: *")
+
     return data
 }
 
@@ -123,7 +126,9 @@ async function createCourse({ title, description, price, discountPrice, level, l
 }
 
 async function removeCourseFromDb(slug) {
-    return await courseModel.findOneAndDelete({ slug })
+    await courseModel.findOneAndDelete({ slug })
+
+    await invalidatePattern("courses:*")
 }
 
 async function updateCourse({ title, description, price, level, language, status }, slug) {
@@ -160,7 +165,6 @@ async function getAllCourses(page = 1, limit = 20) {
 
     if (cached) {
 
-        console.log("cached")
         totalNumber = Number(await client.get("courses:total"))
         return { data, totalNumber }
     }
@@ -170,7 +174,7 @@ async function getAllCourses(page = 1, limit = 20) {
     totalNumber = await courseModel.countDocuments()
 
     await client.set(key, JSON.stringify(data), { EX: 600 })
-    await client.set("courses:total", totalNumber, { EX: 600 })
+    await client.set("courses:totalNumber", totalNumber, { EX: 600 })
 
     return { data, totalNumber }
 }
@@ -224,18 +228,60 @@ async function findCourseComments(course, page = 1, limit = 20) {
 }
 
 async function getCourseDetails(slug, lessonsIncluded = "true") {
-    const foundCourse = await findCourseBySlug(slug)
+    const courseKey = `courses:${slug}:lessons:${lessonsIncluded}`
+    const lessonsKey = `courses:${slug}:getLessons`
 
-    const foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
+    const cached = await client.get(courseKey)
 
-    let totalDuration = 0
-    if (foundLessons.length > 0) {
-        foundLessons.map(lesson => totalDuration += lesson.duration)
+
+    let foundLessons;
+    let totalDuration = 0;
+
+    let foundCourse = cached
+        ? JSON.parse(cached)
+        : null
+
+    if (foundCourse) {
+
+        const cachedLessons = await client.get(lessonsKey);
+
+        foundLessons = cachedLessons
+            ? JSON.parse(cachedLessons)
+            : null
+
+        if (foundLessons.length > 0) {
+            totalDuration = foundLessons.reduce(
+                (sum, lesson) => sum + lesson.duration,
+                0
+            )
+        }
+
+        if (lessonsIncluded === "true") {
+            return { foundCourse, foundLessons, totalDuration }
+        }
+
+        return { foundCourse, totalDuration }
     }
+
+    foundCourse = await findCourseBySlug(slug)
+
+    foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
+
+    if (foundLessons.length > 0) {
+        totalDuration = foundLessons.reduce(
+            (sum, lesson) => sum + lesson.duration,
+            0
+        )
+    }
+
+    await client.set(courseKey, JSON.stringify(foundCourse))
+    await client.set(lessonsKey, JSON.stringify(foundLessons))
 
     if (lessonsIncluded === "true") {
         return { foundCourse, foundLessons, totalDuration }
     }
+
+
 
     return { foundCourse, totalDuration }
 }
