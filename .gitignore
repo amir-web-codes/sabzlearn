@@ -5,7 +5,6 @@ node_modules/
 # envoirment variables
 
 .env
-.env.*
 
 # logs
 

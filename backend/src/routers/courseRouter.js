@@ -17,7 +17,7 @@ router.route("/:slug")
     .patch(limiters.courseLimiter, validator(courseValidations.editSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), courseController.editCourseDetails) // redis
     .delete(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse) // redis
 
-router.post("/create", validator(courseValidations.createSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse) // redis
+router.post("/create", validator(courseValidations.createSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 
 router.post("/:slug/enroll", checkToken, checkUserBan, limiters.enrollLimiter, courseController.registerUserInCourse)
 router.post("/:slug/cancel-enroll", checkToken, checkUserBan, limiters.enrollLimiter, courseController.cancelEnrollment)

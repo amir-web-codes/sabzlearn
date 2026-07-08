@@ -144,6 +144,8 @@ async function updateCourse({ title, description, price, level, language, status
 
     await foundCourse.save()
 
+    await invalidatePattern("courses:*")
+
     return foundCourse
 }
 
@@ -158,6 +160,7 @@ async function getAllCourses(page = 1, limit = 20) {
 
     if (cached) {
 
+        console.log("cached")
         totalNumber = Number(await client.get("courses:total"))
         return { data, totalNumber }
     }
