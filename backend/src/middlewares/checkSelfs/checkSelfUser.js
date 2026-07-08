@@ -1,5 +1,3 @@
-const sendError = require("../../utils/sendError")
-
 function checkSelfUser(adminAllowed = false) {
     return (req, res, next) => {
 
@@ -19,7 +17,9 @@ function checkSelfUser(adminAllowed = false) {
         }
 
 
-        sendError(403, "you don't have permission")
+        const err = new Error("you don't have permission")
+        err.status = 403
+        throw err
     }
 }
 

@@ -3,6 +3,8 @@ const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const lessonModel = require("../models/lessonModel")
 const slugify = require("slugify")
+
+const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 
 function generateSlug(title) {
@@ -102,7 +104,7 @@ async function createCourse({ title, description, price, discountPrice, level, l
         selectedPrice = 0
     }
 
-    return await courseModel.create({
+    const data = await courseModel.create({
         title,
         slug,
         description,
@@ -114,6 +116,10 @@ async function createCourse({ title, description, price, discountPrice, level, l
         status,
         studentsCount: 0,
     })
+
+    await invalidatePattern("courses:*")
+
+    return data
 }
 
 async function removeCourseFromDb(slug) {
@@ -142,13 +148,17 @@ async function updateCourse({ title, description, price, level, language, status
 }
 
 async function getAllCourses(page = 1, limit = 20) {
-    const key = `courses:${page}:limit:${limit}`
-    let data = JSON.parse(await client.get(key))
+    const key = `courses:page:${page}:limit:${limit}`
+    const cached = await client.get(key)
     let totalNumber = 0
 
-    if (data) {
-        console.log("hello")
-        totalNumber = await client.get("courses:total")
+    let data = cached
+        ? JSON.parse(cached)
+        : null
+
+    if (cached) {
+
+        totalNumber = Number(await client.get("courses:total"))
         return { data, totalNumber }
     }
 
