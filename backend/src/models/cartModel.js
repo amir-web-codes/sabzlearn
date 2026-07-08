@@ -29,8 +29,7 @@ const cartSchema = new mongoose.Schema({
             priceChanged: {
                 type: Boolean,
                 default: false
-            },
-            default: Array
+            }
         }
     ]
 }, { timestamps: true })

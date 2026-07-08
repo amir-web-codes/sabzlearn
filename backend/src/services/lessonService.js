@@ -15,10 +15,11 @@ async function findById(id) {
     return data
 }
 
-async function createLesson(userId, courseId, { title, description, duration, order }) {
+async function createLesson(userId, courseId, { title, description, duration, order }, slug) {
     const lastOrder = await lessonModel.find({ courseId }).sort({ order: -1 }).limit(1)
     const newOrder = lastOrder.length ? lastOrder[0].order + 100 : 100
 
+    await invalidatePattern(`courses:${slug}:*`)
 
     return await lessonModel.create({
         title,
@@ -40,6 +41,9 @@ async function editById(lessonId, { title, description, duration, order }) {
 
     await data.save()
 
+    await invalidatePattern("courses:*")
+    await invalidatePattern("lessons:*")
+
     return data
 }
 
@@ -51,6 +55,9 @@ async function deleteById(lessonId) {
         err.status = 404
         throw err
     }
+
+    await invalidatePattern("courses:*")
+    await invalidatePattern("lessons:*")
 }
 
 async function findAll(page = 1, limit = 20) {
@@ -63,8 +70,6 @@ async function findAll(page = 1, limit = 20) {
         : null
 
     if (cached) {
-
-        console.log("all lessons")
 
         totalNumber = Number(await client.get("lessons:totalNumber"))
         return { data, totalNumber }
@@ -91,9 +96,7 @@ async function findCourseLessons(course, page = 1, limit = 20) {
 
     if (cached) {
 
-        console.log("course lessons")
-
-        totalNumber = Number(await client.get("lessons:totalNumber"))
+        totalNumber = Number(await client.get(`courses:${course.slug}:lessons:totalNumber`))
         return { data, totalNumber }
     }
 
@@ -102,8 +105,6 @@ async function findCourseLessons(course, page = 1, limit = 20) {
 
     await client.set(key, JSON.stringify(data), { EX: 600 })
     await client.set(`courses:${course.slug}:lessons:totalNumber`, totalNumber, { EX: 600 })
-
-    console.log(await client.keys("*"))
 
     return { data, totalNumber }
 }

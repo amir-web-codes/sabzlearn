@@ -235,10 +235,10 @@ async function checkOut(userId) {
         order.status = "paid"
         await order.save({ session })
 
-        await invalidatePattern("courses:enrolled:*")
 
         await session.commitTransaction()
 
+        await invalidatePattern("courses:enrolled:*")
 
         return order
 
@@ -255,10 +255,23 @@ async function checkOut(userId) {
     }
 }
 
+async function getOrderById(id) {
+    const data = await orderModel.findById(id).lean()
+
+    if (!data) {
+        const err = new Error("order not found")
+        err.status = 404
+        throw err
+    }
+
+    return data
+}
+
 module.exports = {
     getCart,
     createItem,
     deleteItems,
     deleteBySlug,
-    checkOut
+    checkOut,
+    getOrderById
 }

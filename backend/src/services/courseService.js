@@ -49,9 +49,6 @@ async function findCourseBySlug(slug, select) {
         throw err
     }
 
-    await invalidatePattern("courses:*")
-    await invalidatePattern("lessons: *")
-
     return data
 }
 
@@ -229,7 +226,7 @@ async function findCourseComments(course, page = 1, limit = 20) {
 
 async function getCourseDetails(slug, lessonsIncluded = "true") {
     const courseKey = `courses:${slug}:lessons:${lessonsIncluded}`
-    const lessonsKey = `courses:${slug}:getLessons`
+    const lessonsKey = `courses:${slug}:lessons`
 
     const cached = await client.get(courseKey)
 

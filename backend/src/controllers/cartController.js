@@ -67,10 +67,21 @@ async function cartCheckout(req, res) {
     })
 }
 
+async function getOrderById(req, res) {
+    const data = await cartService.getOrderById(req.params.id)
+
+    res.json({
+        success: true,
+        message: "order fetched successfully",
+        data
+    })
+}
+
 module.exports = {
     getUserCart: asyncWrapper(getUserCart),
     addNewItem: asyncWrapper(addNewItem),
     deleteUserCart: asyncWrapper(deleteUserCart),
     deleteItemBySlug: asyncWrapper(deleteItemBySlug),
-    cartCheckout: asyncWrapper(cartCheckout)
+    cartCheckout: asyncWrapper(cartCheckout),
+    getOrderById: asyncWrapper(getOrderById)
 }
