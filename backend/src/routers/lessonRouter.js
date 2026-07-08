@@ -8,7 +8,7 @@ const lessonController = require("../controllers/lessonController")
 const validator = require("../middlewares/validator")
 const lessonValidations = require("../middlewares/validations/lesson.validation")
 
-router.get("/get-all", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, lessonController.getAllLessons) // redis
+router.get("/getall", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, lessonController.getAllLessons) // redis
 router.get("/:slug/get-lessons", checkToken, checkUserBan, lessonController.getCourseLessons)
 
 router.post("/courses/:slug/create", validator(lessonValidations.createSchema), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), lessonController.createNewLesson)

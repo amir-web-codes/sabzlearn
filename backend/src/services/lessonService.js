@@ -1,5 +1,8 @@
 const lessonModel = require("../models/lessonModel")
 
+const { client } = require("../configs/redis")
+const invalidatePattern = require("../utils/invalidatePattern")
+
 async function findById(id) {
     const data = await lessonModel.findById(id)
 
@@ -51,12 +54,33 @@ async function deleteById(lessonId) {
 }
 
 async function findAll(page = 1, limit = 20) {
-    const data = await lessonModel.find().skip((page - 1) * limit).limit(limit).sort({ order: 1 }).lean()
-    const totalNumber = await lessonModel.countDocuments()
+    const key = `lessons:page:${page}:limit:${limit}`
+    const cached = await client.get(key)
+    let totalNumber = 0
+
+    let data = cached
+        ? JSON.parse(cached)
+        : null
+
+    if (cached) {
+
+        console.log("well")
+
+        totalNumber = Number(await client.get("lessons:totalNumber"))
+        return { data, totalNumber }
+    }
+
+
+    data = await lessonModel.find().skip((page - 1) * limit).limit(limit).sort({ order: 1 }).lean()
+    totalNumber = await lessonModel.countDocuments()
+
+    await client.set(key, JSON.stringify(data), { EX: 600 })
+    await client.set("lessons:totalNumber", totalNumber, { EX: 600 })
+
     return { data, totalNumber }
 }
 
-async function findCourseLessons(course, page, limit) {
+async function findCourseLessons(course, page = 1, limit = 20) {
     const data = await lessonModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
     const totalNumber = await lessonModel.countDocuments({ courseId: course._id })
 
