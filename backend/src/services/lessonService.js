@@ -64,7 +64,7 @@ async function findAll(page = 1, limit = 20) {
 
     if (cached) {
 
-        console.log("well")
+        console.log("all lessons")
 
         totalNumber = Number(await client.get("lessons:totalNumber"))
         return { data, totalNumber }
@@ -81,8 +81,29 @@ async function findAll(page = 1, limit = 20) {
 }
 
 async function findCourseLessons(course, page = 1, limit = 20) {
-    const data = await lessonModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await lessonModel.countDocuments({ courseId: course._id })
+    const key = `courses:${course.slug}:lessons:page:${page}:limit:${limit}`
+    const cached = await client.get(key)
+    let totalNumber = 0
+
+    let data = cached
+        ? JSON.parse(cached)
+        : null
+
+    if (cached) {
+
+        console.log("course lessons")
+
+        totalNumber = Number(await client.get("lessons:totalNumber"))
+        return { data, totalNumber }
+    }
+
+    data = await lessonModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
+    totalNumber = await lessonModel.countDocuments({ courseId: course._id })
+
+    await client.set(key, JSON.stringify(data), { EX: 600 })
+    await client.set(`courses:${course.slug}:lessons:totalNumber`, totalNumber, { EX: 600 })
+
+    console.log(await client.keys("*"))
 
     return { data, totalNumber }
 }
