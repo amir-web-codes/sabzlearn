@@ -3,6 +3,7 @@ const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const lessonModel = require("../models/lessonModel")
 const slugify = require("slugify")
+const { client } = require("../configs/redis")
 
 function generateSlug(title) {
     return slugify(title, {
@@ -141,8 +142,23 @@ async function updateCourse({ title, description, price, level, language, status
 }
 
 async function getAllCourses(page = 1, limit = 20) {
-    const data = await courseModel.find().skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await courseModel.countDocuments()
+    const key = `courses:${page}:limit:${limit}`
+    let data = JSON.parse(await client.get(key))
+    let totalNumber = 0
+
+    if (data) {
+        console.log("hello")
+        totalNumber = await client.get("courses:total")
+        return { data, totalNumber }
+    }
+
+
+    data = await courseModel.find().skip((page - 1) * limit).limit(limit).lean()
+    totalNumber = await courseModel.countDocuments()
+
+    await client.set(key, JSON.stringify(data), { EX: 600 })
+    await client.set("courses:total", totalNumber, { EX: 600 })
+
     return { data, totalNumber }
 }
 
