@@ -33,9 +33,8 @@ process.on("unhandledRejection", (reason) => {
 const { connectRedis } = require("./configs/redis")
 async function callDB() {
     await require("./configs/db")()
-    await connectRedis()
+    // await connectRedis()
 }
-
 
 callDB()
 
@@ -61,6 +60,15 @@ app.get("/health", (req, res) => {
         status: "ok"
     })
 })
+
+const swaggerUI = require("swagger-ui-express")
+const swaggerSpec = require("./configs/swagger")
+
+app.use(
+    "/api-docs",
+    swaggerUI.serve,
+    swaggerUI.setup(swaggerSpec)
+)
 
 function notFound(req, res, next) {
     const err = new Error(`route ${req.originalUrl} not found`)

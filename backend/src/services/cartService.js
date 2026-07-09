@@ -188,6 +188,13 @@ async function deleteBySlug(userId, slug) {
 
 async function checkOut(userId) {
 
+    const pendingOrder = (await orderModel.create([{
+        userId,
+        items: data.items,
+        totalPrice,
+        status: "pending"
+    }], { session }))[0]
+
     const session = await mongoose.startSession()
 
     try {
@@ -201,13 +208,6 @@ async function checkOut(userId) {
             err.status = 400
             throw err
         }
-
-        const order = (await orderModel.create([{
-            userId,
-            items: data.items,
-            totalPrice,
-            status: "pending"
-        }], { session }))[0]
 
         for (const item of data.items) {
 
@@ -232,8 +232,15 @@ async function checkOut(userId) {
 
         await deleteItems(userId, session)
 
-        order.status = "paid"
-        await order.save({ session })
+        const order = orderModel.findOneAndUpdate(
+            { _id: pendingOrder._id },
+            {
+                $set: {
+                    status: "paid"
+                }
+            },
+            { session }
+        )
 
 
         await session.commitTransaction()
