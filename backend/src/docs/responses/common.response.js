@@ -66,19 +66,5 @@ module.exports = {
                 }
             }
         }
-    },
-    NotFound: {
-        description: "Not found",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                example: {
-                    success: false,
-                    message: "not found"
-                }
-            }
-        }
     }
 }
