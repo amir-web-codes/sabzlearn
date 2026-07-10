@@ -1,5 +1,5 @@
-const userPath = require("./user.path")
+const userPaths = require("./user.path")
 
 module.exports = {
-    ...userPath
+    ...userPaths
 }

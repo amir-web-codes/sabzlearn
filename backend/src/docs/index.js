@@ -1,21 +1,17 @@
-const userPaths = require("./paths/user.path")
-const userSchemas = require("./schemas/user.schema")
-const commonSchemas = require("./schemas/common.schema")
-const commonResponses = require("./responses/common.response")
-const userResponses = require("./responses/user.response")
+const paths = require("./paths")
+const schemas = require("./schemas")
+const responses = require("./responses")
 
 module.exports = {
     paths: {
-        ...userPaths
+        ...paths
     },
     components: {
         schemas: {
-            ...userSchemas,
-            ...commonSchemas
+            ...schemas
         },
         responses: {
-            ...commonResponses,
-            ...userResponses
+            ...responses
         }
     }
 }

@@ -1,7 +1,7 @@
-const commonResponse = require("./common.response")
-const userResponse = require("./user.response")
+const commonResponses = require("./common.response")
+const userResponses = require("./user.response")
 
 module.exports = {
-    ...commonResponse,
-    ...userResponse
+    ...commonResponses,
+    ...userResponses
 }
