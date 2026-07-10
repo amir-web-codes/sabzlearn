@@ -21,7 +21,7 @@ module.exports = {
                     $ref: "#/components/responses/Unauthorized"
                 },
                 404: {
-                    $ref: "#/components/responses/UserNotFound"
+                    $ref: "#/components/responses/NotFound"
                 }
             }
         }

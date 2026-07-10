@@ -1,6 +1,7 @@
 module.exports = {
     Error: {
         type: "object",
+        description: "Standard error response",
         properties: {
             success: {
                 type: "boolean",

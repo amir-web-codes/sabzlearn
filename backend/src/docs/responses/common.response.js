@@ -1,6 +1,6 @@
 module.exports = {
     Unauthorized: {
-        description: "unauthrozied",
+        description: "Unauthrozied",
         content: {
             "application/json": {
                 schema: {
@@ -21,6 +21,62 @@ module.exports = {
                             message: "invalid or expired token"
                         }
                     }
+                }
+            }
+        }
+    },
+    Forbidden: {
+        description: "No access",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "you don't have permission"
+                }
+            }
+        }
+    },
+    InvalidId: {
+        description: "Invalid id",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "invalid id"
+                }
+            }
+        }
+    },
+    NoIdProvided: {
+        description: "No id provided",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "no id provided"
+                }
+            }
+        }
+    },
+    NotFound: {
+        description: "Not found",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "not found"
                 }
             }
         }
