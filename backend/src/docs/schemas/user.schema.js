@@ -57,7 +57,7 @@ module.exports = {
 
             isDeleted: {
                 type: "boolean",
-                example: false
+                example: true
             },
 
             deletedBy: {
@@ -101,6 +101,42 @@ module.exports = {
             "isBanned",
             "isDeleted",
             "lastLogin"
+        ]
+    },
+    GetUserProfile: {
+        type: "object",
+        properties: {
+            success: {
+                type: "boolean",
+                example: true
+            },
+            message: {
+                type: "string",
+                example: "user fetched successfully"
+            },
+            data: {
+                $ref: "#/components/schemas/User"
+            },
+            meta: {
+                type: "object",
+                properties: {
+                    signUpDate: {
+                        type: "string",
+                        format: "date-format",
+                        example: "2026-08-01T12:00:00.000Z"
+                    },
+                    lastLogin: {
+                        type: "string",
+                        format: "date-format",
+                        example: "2026-08-01T12:00:00.000Z"
+                    }
+                }
+            }
+        },
+        required: [
+            "success",
+            "message",
+            "data"
         ]
     }
 }

@@ -1,24 +1,27 @@
 module.exports = {
     "/users/me": {
         get: {
-            summary: "Gets user profile",
-            description: "Gets user profile by its JWT token ID",
+            description: "Get user profile based on its JWT token ID",
+            summary: "Get user profile",
             tags: [
                 "Users"
             ],
             responses: {
                 200: {
-                    description: "user fetched successfully",
+                    description: "success",
                     content: {
                         "application/json": {
                             schema: {
-                                $ref: "#/components/schemas/User"
+                                $ref: "#/components/schemas/GetUserProfile"
                             }
                         }
                     }
                 },
-                400: {
-                    description: "failed"
+                401: {
+                    $ref: "#/components/responses/Unauthorized"
+                },
+                404: {
+                    $ref: "#/components/responses/UserNotFound"
                 }
             }
         }
