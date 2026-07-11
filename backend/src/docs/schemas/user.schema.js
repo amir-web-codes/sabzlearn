@@ -152,6 +152,7 @@ module.exports = {
             },
             accessToken: {
                 type: "string",
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNTIzNjg2ZTUxMGE3M2ZlNDgyNGM3MCIsInJvbGUiOiJ1c2VyIiwiaXNCYW5uZWQiOmZhbHNlLCJiYW5FeHBpcmVzQXQiOm51bGwsImlhdCI6MTc4Mzc3MjgwNywiZXhwIjoxNzgzNzczMTA3fQ.hBYqg7qbmQqrRzrTUrusEJFtiuNswvDg7kzMbECul-k"
             }
         },
         required: [
@@ -195,6 +196,10 @@ module.exports = {
                 type: "string",
                 example: "StrongPassword123"
             }
-        }
+        },
+        required: [
+            "email",
+            "password"
+        ]
     }
 }

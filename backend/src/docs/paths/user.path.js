@@ -11,12 +11,12 @@ module.exports = {
                 content: {
                     "application/json": {
                         schema: {
-                            $ref: "#/components/schemas/AuthSuccess"
+                            $ref: "#/components/schemas/UserSignUp"
                         },
                         example: {
                             username: "amir",
                             email: "amir@gmail.com",
-                            password: "12345678"
+                            password: "StrongPassword123"
                         }
                     }
                 }
@@ -27,11 +27,12 @@ module.exports = {
                     content: {
                         "application/json": {
                             schema: {
-                                $ref: "#/components/schemas/SuccessLoginSchema"
+                                $ref: "#/components/schemas/AuthSuccess"
                             },
                             example: {
                                 success: true,
-                                message: "user signed up successfully"
+                                message: "user signed up successfully",
+                                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNTIzNjg2ZTUxMGE3M2ZlNDgyNGM3MCIsInJvbGUiOiJ1c2VyIiwiaXNCYW5uZWQiOmZhbHNlLCJiYW5FeHBpcmVzQXQiOm51bGwsImlhdCI6MTc4Mzc3MjgwNywiZXhwIjoxNzgzNzczMTA3fQ.hBYqg7qbmQqrRzrTUrusEJFtiuNswvDg7kzMbECul-k"
                             }
                         }
                     }
@@ -49,6 +50,83 @@ module.exports = {
                             example: {
                                 success: false,
                                 message: "email already exists"
+                            }
+                        }
+                    }
+                },
+                429: {
+                    $ref: "#/components/responses/TooManyRequests"
+                },
+                500: {
+                    $ref: "#/components/responses/InternalServerError"
+                }
+            }
+        }
+    },
+    "/users/auth/login": {
+        post: {
+            description: "user login with email and password",
+            summary: "user login",
+            tags: [
+                "Users"
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            $ref: "#/components/schemas/UserLogin"
+                        },
+                        example: {
+                            email: "amir@gmail.com",
+                            password: "StrongPassword123"
+                        }
+                    }
+                }
+            },
+            responses: {
+                201: {
+                    description: "login successful",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/AuthSuccess"
+                            },
+                            example: {
+                                success: true,
+                                message: "login successful",
+                                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNTIzNjg2ZTUxMGE3M2ZlNDgyNGM3MCIsInJvbGUiOiJ1c2VyIiwiaXNCYW5uZWQiOmZhbHNlLCJiYW5FeHBpcmVzQXQiOm51bGwsImlhdCI6MTc4Mzc3MjgwNywiZXhwIjoxNzgzNzczMTA3fQ.hBYqg7qbmQqrRzrTUrusEJFtiuNswvDg7kzMbECul-k"
+                            }
+                        }
+                    }
+                },
+                400: {
+                    $ref: "#/components/responses/FailedValidation"
+                },
+                401: {
+                    description: "wrong email or password",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/Error"
+                            },
+                            example: {
+                                success: false,
+                                message: "wrong email or password"
+                            }
+                        }
+                    }
+                },
+                404: {
+                    description: "user deleted",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/Error"
+                            },
+                            example: {
+                                success: false,
+                                message: "user deleted"
                             }
                         }
                     }
