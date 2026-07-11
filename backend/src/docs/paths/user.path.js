@@ -185,6 +185,93 @@ module.exports = {
             }
         }
     },
+    "/users/refresh-token": {
+        post: {
+            description: "get new access token based on refresh token",
+            summary: "get access token",
+            tags: [
+                "Users"
+            ],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            rememberMe: {
+                                type: "boolean",
+                                nullable: true
+                            }
+                        },
+                        example: {
+                            rememberMe: true
+                        }
+                    }
+                }
+            },
+            responses: {
+                200: {
+                    description: "token refreshed successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/Success"
+                            },
+                            example: {
+                                success: true,
+                                message: "token refreshed successfully"
+                            }
+                        }
+                    }
+                },
+                400: {
+                    $ref: "#/components/responses/FailedValidation"
+                },
+                401: {
+                    description: "faked refresh token",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/Error"
+                            },
+                            example: {
+                                success: false,
+                                message: "faked refresh token"
+                            }
+                        }
+                    }
+                },
+                403: {
+                    description: "Unauthrozied errors",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/Error"
+                            },
+                            examples: {
+                                InvalidOrExpired: {
+                                    description: "invalid or expired refresh token",
+                                    value: {
+                                        success: false,
+                                        message: "token not available or expired"
+                                    }
+                                },
+                                NotLoggedIn: {
+                                    description: "not logged in",
+                                    value: {
+                                        success: false,
+                                        message: "you're not logged in"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                500: {
+                    $ref: "#/components/responses/InternalServerError"
+                }
+            }
+        }
+    },
     "/users/me": {
         get: {
             description: "Get user profile based on its JWT token ID",

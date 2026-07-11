@@ -82,7 +82,7 @@ module.exports = {
         }
     },
     FailedValidation: {
-        description: "request body validation failed",
+        description: "Request body validation failed",
         content: {
             "application/json": {
                 schema: {
@@ -96,7 +96,7 @@ module.exports = {
         }
     },
     TooManyRequests: {
-        description: "too many requests",
+        description: "Too many requests",
         content: {
             "application/json": {
                 schema: {
