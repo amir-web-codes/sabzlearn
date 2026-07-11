@@ -122,12 +122,12 @@ module.exports = {
                 properties: {
                     signUpDate: {
                         type: "string",
-                        format: "date-format",
+                        format: "date-time",
                         example: "2026-08-01T12:00:00.000Z"
                     },
                     lastLogin: {
                         type: "string",
-                        format: "date-format",
+                        format: "date-time",
                         example: "2026-08-01T12:00:00.000Z"
                     }
                 }
@@ -137,6 +137,51 @@ module.exports = {
             "success",
             "message",
             "data"
+        ]
+    },
+    AuthSuccess: {
+        type: "object",
+        properties: {
+            success: {
+                type: "boolean",
+                example: true
+            },
+            message: {
+                type: "string",
+                example: "login successful"
+            },
+            accessToken: {
+                type: "string",
+            }
+        },
+        required: [
+            "success",
+            "message",
+            "accessToken"
+        ]
+    },
+    UserSignUp: {
+        type: "object",
+        properties: {
+            username: {
+                type: "string",
+                example: "amir"
+            },
+            email: {
+                type: "string",
+                format: "email",
+                example: "amir@gmail.com"
+            },
+            password: {
+                type: "string",
+                example: "12345678",
+                minlength: 8
+            }
+        },
+        required: [
+            "username",
+            "email",
+            "password"
         ]
     }
 }
