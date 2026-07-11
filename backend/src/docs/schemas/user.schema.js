@@ -174,7 +174,7 @@ module.exports = {
             },
             password: {
                 type: "string",
-                example: "12345678",
+                example: "StrongPassword123",
                 minlength: 8
             }
         },
@@ -183,5 +183,18 @@ module.exports = {
             "email",
             "password"
         ]
+    },
+    UserLogin: {
+        type: "object",
+        properties: {
+            email: {
+                type: "string",
+                example: "amir@gmail.com"
+            },
+            password: {
+                type: "string",
+                example: "StrongPassword123"
+            }
+        }
     }
 }
