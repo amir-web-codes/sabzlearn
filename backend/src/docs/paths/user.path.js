@@ -140,6 +140,51 @@ module.exports = {
             }
         }
     },
+    "/users/auth/logout": {
+        post: {
+            description: "log out user from all devices",
+            summary: "user log out",
+            tags: [
+                "Users"
+            ],
+            responses: {
+                200: {
+                    description: "logged out successfully",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#components/schemas/Success"
+                            },
+                            example: {
+                                success: true,
+                                message: "user logged out successfully, please remove access token"
+                            }
+                        }
+                    }
+                },
+                403: {
+                    description: "not logged in",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                $ref: "#/components/schemas/Error"
+                            },
+                            example: {
+                                success: false,
+                                message: "you're not logged in"
+                            }
+                        }
+                    }
+                },
+                401: {
+                    $ref: "#/components/responses/Unauthorized"
+                },
+                500: {
+                    $ref: "#/components/responses/InternalServerError"
+                }
+            }
+        }
+    },
     "/users/me": {
         get: {
             description: "Get user profile based on its JWT token ID",
