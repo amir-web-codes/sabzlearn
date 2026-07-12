@@ -64,8 +64,9 @@ module.exports = {
                         }
                     }
                 },
+                422: { $ref: "#/components/responses/AssignedToAnUser" },
                 429: { $ref: "#/components/responses/TooManyTickets" },
-                500: { $ref: "#/components/responses/InternalServerError" }
+                500: { $ref: "#/components/responses/InternalServerError" },
             }
         }
     },

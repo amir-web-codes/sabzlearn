@@ -1,15 +1,21 @@
 const ticketModel = require("../models/ticketModel")
 const userModel = require("../models/userModel")
 
-async function createTicket(userId, { title, message, teacherId }) {
+async function createTicket(userId, { title, message, assignedToId }) {
     let foundUser;
 
-    if (teacherId) {
-        foundUser = await userModel.findById(teacherId).select("-password").lean()
+    if (assignedToId) {
+        foundUser = await userModel.findById(assignedToId).select("role").lean()
 
         if (!foundUser) {
             const err = new Error("user not found")
             err.status = 404
+            throw err
+        }
+
+        if (foundUser.role === "user") {
+            const err = new Error("you can't assign a ticket to an user")
+            err.status = 409
             throw err
         }
     }
@@ -26,8 +32,8 @@ async function createTicket(userId, { title, message, teacherId }) {
         title,
         message,
         userId,
-        assignedTo: teacherId,
-        for: teacherId ? foundUser.role : "admin",
+        assignedTo: assignedToId,
+        for: assignedToId ? foundUser.role : "admin",
         status: "open"
     })
 }

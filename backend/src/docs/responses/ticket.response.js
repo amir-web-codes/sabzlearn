@@ -70,5 +70,19 @@ module.exports = {
                 example: { success: false, message: "you're sending too many tickets, please try again later" }
             }
         }
+    },
+    AssignedToAnUser: {
+        description: "can't assign a ticket to an user",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "you can't assign a ticket to an user"
+                }
+            }
+        }
     }
 }
