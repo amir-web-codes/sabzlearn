@@ -5,5 +5,5 @@ const limitParameter = require("./limit.parameter")
 module.exports = {
     ...idParameter,
     ...pageParameter,
-    limitParameter
+    ...limitParameter
 }

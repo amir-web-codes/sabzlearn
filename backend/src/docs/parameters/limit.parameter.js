@@ -3,10 +3,14 @@ module.exports = {
     {
         name: "limit",
         in: "query",
+        description: "Number of items per page, Maximum 100",
         required: false,
         schema: {
             type: "integer",
-            default: 20
+            minimum: 1,
+            maximum: 100,
+            default: 20,
+            example: 20
         }
     }
 }

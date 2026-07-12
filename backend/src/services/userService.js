@@ -305,10 +305,6 @@ async function changeRole(userId, role) {
 
         user.role = role
         await user.save()
-    } else {
-        const err = new Error("role is not available")
-        err.status = 422
-        throw err
     }
 
     return user

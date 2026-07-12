@@ -1,6 +1,7 @@
 const paths = require("./paths")
 const schemas = require("./schemas")
 const responses = require("./responses")
+const parameters = require("./parameters")
 
 module.exports = {
     paths: {
@@ -12,6 +13,9 @@ module.exports = {
         },
         responses: {
             ...responses
+        },
+        parameters: {
+            ...parameters
         }
     }
 }

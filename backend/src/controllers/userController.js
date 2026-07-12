@@ -308,7 +308,7 @@ async function changeUserRole(req, res) {
 
     res.status(201).json({
         success: true,
-        message: `user "${foundUser.username}: ${foundUser.email}" role changed to "${foundUser.role}" successfully`
+        message: `user ${foundUser.username}: ${foundUser.email} role changed to ${foundUser.role} successfully`
     })
 }
 

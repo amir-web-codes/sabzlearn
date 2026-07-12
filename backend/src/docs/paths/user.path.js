@@ -292,8 +292,12 @@ module.exports = {
             summary: "Get current user's courses",
             tags: ["Users", "Courses"],
             parameters: [
-                { name: "page", in: "query", required: false, schema: { type: "integer", default: 1 } },
-                { name: "limit", in: "query", required: false, schema: { type: "integer", default: 20 } }
+                {
+                    $ref: "#/components/parameters/PageParameter"
+                },
+                {
+                    $ref: "#/components/parameters/LimitParameter"
+                }
             ],
             responses: {
                 200: {
@@ -329,8 +333,12 @@ module.exports = {
             summary: "Get current user's comments",
             tags: ["Users", "Comments"],
             parameters: [
-                { name: "page", in: "query", required: false, schema: { type: "integer", default: 1 } },
-                { name: "limit", in: "query", required: false, schema: { type: "integer", default: 20 } }
+                {
+                    $ref: "#/components/parameters/PageParameter"
+                },
+                {
+                    $ref: "#/components/parameters/LimitParameter"
+                }
             ],
             responses: {
                 200: {
@@ -429,8 +437,12 @@ module.exports = {
             summary: "Get pending requests",
             tags: ["Users", "Admin", "Requests"],
             parameters: [
-                { name: "page", in: "query", required: false, schema: { type: "integer", default: 1 } },
-                { name: "limit", in: "query", required: false, schema: { type: "integer", default: 20 } }
+                {
+                    $ref: "#/components/parameters/PageParameter"
+                },
+                {
+                    $ref: "#/components/parameters/LimitParameter"
+                }
             ],
             responses: {
                 200: {
@@ -463,8 +475,12 @@ module.exports = {
             summary: "Get all requests",
             tags: ["Users", "Admin", "Requests"],
             parameters: [
-                { name: "page", in: "query", required: false, schema: { type: "integer", default: 1 } },
-                { name: "limit", in: "query", required: false, schema: { type: "integer", default: 20 } }
+                {
+                    $ref: "#/components/parameters/PageParameter"
+                },
+                {
+                    $ref: "#/components/parameters/LimitParameter"
+                }
             ],
             responses: {
                 200: {
@@ -497,7 +513,9 @@ module.exports = {
             summary: "Get request by id",
             tags: ["Users", "Admin", "Requests"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c40" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             responses: {
                 200: {
@@ -530,7 +548,9 @@ module.exports = {
             summary: "Accept a role request",
             tags: ["Users", "Admin", "Requests"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c40" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             responses: {
                 200: {
@@ -569,7 +589,9 @@ module.exports = {
             summary: "Reject a role request",
             tags: ["Users", "Admin", "Requests"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c40" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             responses: {
                 200: {
@@ -608,7 +630,9 @@ module.exports = {
             summary: "Get user by id",
             tags: ["Users", "Admin"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c32" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             responses: {
                 200: {
@@ -639,7 +663,9 @@ module.exports = {
             summary: "Delete user by id",
             tags: ["Users", "Admin"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c32" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             responses: {
                 200: {
@@ -667,7 +693,9 @@ module.exports = {
             summary: "Ban a user",
             tags: ["Users", "Admin"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c32" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             requestBody: {
                 required: true,
@@ -739,7 +767,9 @@ module.exports = {
             summary: "Unban a user",
             tags: ["Users", "Admin"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c32" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             responses: {
                 200: {
@@ -768,7 +798,9 @@ module.exports = {
             summary: "Change user role",
             tags: ["Users", "Admin"],
             parameters: [
-                { name: "id", in: "path", required: true, schema: { type: "string" }, example: "6857e4d1e5d82d0d1f5d8c32" }
+                {
+                    $ref: "#/components/parameters/IdParameter"
+                }
             ],
             requestBody: {
                 required: true,
@@ -830,7 +862,6 @@ module.exports = {
                     }
                 },
                 404: { $ref: "#/components/responses/UserNotFound" },
-                422: { $ref: "#/components/responses/InvalidRole" },
                 429: { $ref: "#/components/responses/TooManyRequestsGeneric" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }

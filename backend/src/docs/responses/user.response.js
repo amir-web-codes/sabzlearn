@@ -125,15 +125,6 @@ module.exports = {
             }
         }
     },
-    InvalidRole: {
-        description: "Role is not a valid role",
-        content: {
-            "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "role is not available" }
-            }
-        }
-    },
     AlreadyHasRole: {
         description: "User already has the requested role",
         content: {

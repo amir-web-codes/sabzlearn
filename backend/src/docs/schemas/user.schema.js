@@ -164,50 +164,28 @@ module.exports = {
     UserSignUp: {
         type: "object",
         properties: {
-            username: {
-                type: "string",
-                example: "amir"
-            },
-            email: {
-                type: "string",
-                format: "email",
-                example: "amir@gmail.com"
-            },
-            password: {
-                type: "string",
-                example: "StrongPassword123",
-                minlength: 8
-            }
+            username: { type: "string", minLength: 3, maxLength: 30, example: "amir" },
+            email: { type: "string", format: "email", minLength: 5, maxLength: 50, example: "amir@gmail.com" },
+            password: { type: "string", minLength: 5, maxLength: 70, example: "StrongPassword123" },
+            rememberMe: { type: "boolean", default: false, example: false }
         },
-        required: [
-            "username",
-            "email",
-            "password"
-        ]
+        required: ["username", "email", "password"]
     },
     UserLogin: {
         type: "object",
         properties: {
-            email: {
-                type: "string",
-                example: "amir@gmail.com"
-            },
-            password: {
-                type: "string",
-                example: "StrongPassword123"
-            }
+            email: { type: "string", format: "email", minLength: 5, maxLength: 50, example: "amir@gmail.com" },
+            password: { type: "string", minLength: 5, maxLength: 70, example: "StrongPassword123" },
+            rememberMe: { type: "boolean", default: false, example: false }
         },
-        required: [
-            "email",
-            "password"
-        ]
+        required: ["email", "password"]
     },
     UpdateUser: {
         type: "object",
         description: "Fields that can be updated on the current user's profile",
         properties: {
             username: { type: "string", minLength: 3, maxLength: 30, example: "amir_new" },
-            email: { type: "string", format: "email", example: "new-amir@gmail.com" }
+            email: { type: "string", format: "email", minLength: 5, maxLength: 50, example: "new-amir@gmail.com" }
         }
     },
     ChangePassword: {
