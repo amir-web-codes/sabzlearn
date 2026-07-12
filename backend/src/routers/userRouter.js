@@ -40,7 +40,7 @@ router.route("/admin/:id")
 router.patch("/admin/:id/ban", validateId, validator(userValidations.banUserSchema), checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.banUser)
 router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.unBanUser)
 
-router.patch("/admin/:id/change-role", validateId, checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
+router.patch("/admin/:id/change-role", validateId, validator(userValidations.changeRoleSchema), checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 
 
 router.post("/auth/signup", limiters.loginLimiter, validator(userValidations.signUpSchema), userController.signUp)

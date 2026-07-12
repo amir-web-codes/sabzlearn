@@ -40,6 +40,10 @@ const refreshTokenSchema = z.object({
     rememberMe: z.boolean().default(false)
 })
 
+const changeRoleSchema = z.object({
+    newRole: z.enum(["user", "teacher", "admin"])
+})
+
 module.exports = {
     signUpSchema,
     loginSchema,
@@ -47,5 +51,6 @@ module.exports = {
     updateUserSchema,
     requestRoleSchema,
     banUserSchema,
-    refreshTokenSchema
+    refreshTokenSchema,
+    changeRoleSchema
 }
