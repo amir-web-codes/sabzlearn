@@ -65,10 +65,10 @@ module.exports = {
                 type: "string",
                 pattern: "^[a-fA-F0-9]{24}$",
                 example: "6857e4d1e5d82d0d1f5d8c99",
-                description: "If this field is provided, the ticket will be assigned directly to the specified teacher(for: \"teacher\"). Otherwise, the ticket will be submitted to administrators (for: \"admin\").}'
+                description: `Optional. If this field is provided, the ticket will be assigned directly to the specified teacher(for: "teacher"). Otherwise, the ticket will be submitted to administrators (for: "admin").}`
             },
-            required: ["title", "message"]
         },
+        required: ["title", "message"]
     },
 
     ReplyMessage: {

@@ -1,9 +1,9 @@
 const idParameter = require("./id.parameter")
-const pageParameter = require("./page.parameter")
-const limitParameter = require("./limit.parameter")
+const paginationParameters = require("./pagination.parameter")
+const ticketParameter = require("./ticket.parameter")
 
 module.exports = {
     ...idParameter,
-    ...pageParameter,
-    ...limitParameter
+    ...paginationParameters,
+    ...ticketParameter
 }

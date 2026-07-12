@@ -2,9 +2,10 @@ const ticketModel = require("../models/ticketModel")
 const userModel = require("../models/userModel")
 
 async function createTicket(userId, { title, message, teacherId }) {
+    let foundUser;
 
     if (teacherId) {
-        const foundUser = await userModel.findById(teacherId).select("-password").lean()
+        foundUser = await userModel.findById(teacherId).select("-password").lean()
 
         if (!foundUser) {
             const err = new Error("user not found")
@@ -26,7 +27,7 @@ async function createTicket(userId, { title, message, teacherId }) {
         message,
         userId,
         assignedTo: teacherId,
-        for: teacherId ? "teacher" : "admin",
+        for: teacherId ? foundUser.role : "admin",
         status: "open"
     })
 }
@@ -95,7 +96,7 @@ async function findTicketWithPopulate(userId, ticketId) {
     return data
 }
 
-async function findAllTickets(user, availableOnly, page, limit) {
+async function findAllTickets(user, availableOnly = true, page = 1, limit = 20) {
 
     let query = {};
 
@@ -106,6 +107,10 @@ async function findAllTickets(user, availableOnly, page, limit) {
     } else if (user.role === "admin") {
 
         query.for = "admin"
+        query.assignedTo = {
+            $in: [null, user.id]
+        }
+
     }
 
 

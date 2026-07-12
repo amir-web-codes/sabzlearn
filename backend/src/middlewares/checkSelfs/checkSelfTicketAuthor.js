@@ -11,7 +11,7 @@ function checkSelfTicketAuthor(adminAllowed = false) {
             req.ticket = foundTicket
             return next()
 
-        } else if (foundTicket.userId.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {
+        } else if ((foundTicket.assignedTo && foundTicket.assignedTo.equals(user.id) && foundTicket.userId.equals(req.user.id)) || (adminAllowed && req.user.role === "admin")) {
             req.ticket = foundTicket
             return next()
         } else if (foundTicket.for === "admin" && req.user.role === "admin") {

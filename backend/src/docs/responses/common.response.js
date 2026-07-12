@@ -53,20 +53,6 @@ module.exports = {
             }
         }
     },
-    NoIdProvided: {
-        description: "No id provided",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                example: {
-                    success: false,
-                    message: "no id provided"
-                }
-            }
-        }
-    },
     InternalServerError: {
         description: "internal server error",
         content: {
