@@ -130,13 +130,6 @@ async function findAllTickets(user, availableOnly = true, page = 1, limit = 20) 
 }
 
 async function changeStatus(user, ticketId, newStatus) {
-    const availableStatuses = ["pending", "closed"]
-
-    if (!availableStatuses.includes(newStatus)) {
-        const err = new Error("status not available")
-        err.status = 400
-        throw err
-    }
 
     const foundTicket = await findTicketById(ticketId)
 

@@ -6,15 +6,12 @@ function checkSelfTicketAuthor(adminAllowed = false) {
 
         const foundTicket = await ticketService.findTicketById(req.params.id)
 
-        if (foundTicket.for === "teacher" && foundTicket.assignedTo.equals(req.user.id)) {
+        if ((foundTicket.assignedTo && foundTicket.assignedTo.equals(req.user.id)) || foundTicket.userId.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {
 
             req.ticket = foundTicket
             return next()
 
-        } else if ((foundTicket.assignedTo && foundTicket.assignedTo.equals(user.id) && foundTicket.userId.equals(req.user.id)) || (adminAllowed && req.user.role === "admin")) {
-            req.ticket = foundTicket
-            return next()
-        } else if (foundTicket.for === "admin" && req.user.role === "admin") {
+        } else if (foundTicket.for === "admin" && req.user.role === "admin" && (foundTicket.assignedTo == null || foundTicket.assignedTo.equals(req.user.id))) {
             req.ticket = foundTicket
             return next()
         }

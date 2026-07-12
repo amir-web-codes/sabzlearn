@@ -294,18 +294,15 @@ async function getUserDashboard(userId) {
 async function changeRole(userId, role) {
     const user = await findUserById(userId)
 
-    const availableRoles = ["user", "teacher", "admin"]
-
-    if (availableRoles.includes(role)) {
-        if (user.role === "admin") {
-            const err = new Error("you can't change another admin role")
-            err.status = 403
-            throw err
-        }
-
-        user.role = role
-        await user.save()
+    if (user.role === "admin") {
+        const err = new Error("you can't change another admin role")
+        err.status = 403
+        throw err
     }
+
+    user.role = role
+    await user.save()
+
 
     return user
 }
