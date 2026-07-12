@@ -112,8 +112,8 @@ async function getCourseStudents(req, res) {
 }
 
 async function getCourseComments(req, res) {
-    const page = Number(req.params.page) || 1
-    const limit = Number(req.params.limit) || 20
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 20
 
     const { data, totalNumber } = await courseService.findCourseComments(req.course, page, limit)
 

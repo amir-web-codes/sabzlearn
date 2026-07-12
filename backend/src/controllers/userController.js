@@ -275,8 +275,8 @@ async function getUserCourses(req, res) {
 }
 
 async function getUserComments(req, res) {
-    const page = Number(req.params.page) || 1
-    const limit = Number(req.params.limit) || 20
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 20
 
     const { data, totalNumber } = await userService.findUserComments(req.user.id, page, limit)
 

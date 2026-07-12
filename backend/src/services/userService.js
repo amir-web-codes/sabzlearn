@@ -207,7 +207,7 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
         if (err.status === 401) {
             throw err
         } else {
-            err = new Error("invaild or expired token")
+            err = new Error("invalid or expired token")
             err.status = 403
             throw err
         }
