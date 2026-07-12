@@ -27,7 +27,7 @@ module.exports = {
         }
     },
     MaxTicketsReached: {
-        description: "User has reached the maximum number of open tickets (3)",
+        description: "User has reached the maximum number of tickets (3)",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -59,6 +59,15 @@ module.exports = {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
                 example: { success: false, message: "you can't reopen ticket" }
+            }
+        }
+    },
+    TooManyTickets: {
+        description: "Too many tickets created recently (5 per 30 minutes)",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: { success: false, message: "you're sending too many tickets, please try again later" }
             }
         }
     }

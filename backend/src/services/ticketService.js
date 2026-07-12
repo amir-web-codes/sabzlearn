@@ -113,7 +113,6 @@ async function findAllTickets(user, availableOnly = true, page = 1, limit = 20) 
 
     }
 
-
     if (availableOnly) {
         query.status = { $ne: "closed" }
     }
