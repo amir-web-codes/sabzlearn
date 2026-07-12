@@ -138,7 +138,7 @@ async function logOut(req, res) {
 async function banUser(req, res) {
     const foundUser = await userService.findUserById(req.params.id)
 
-    const banDays = req.body.banDays
+    const banDays = Number(req.body.banDays) ?? 0
 
     if (banDays !== undefined && (!Number.isInteger(Number(banDays)) || banDays < 0)) {
         const err = new Error("invalid ban days")

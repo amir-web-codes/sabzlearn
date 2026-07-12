@@ -220,8 +220,9 @@ module.exports = {
     RequestRole: {
         type: "object",
         properties: {
-            newRole: { type: "string", enum: ["user", "teacher"], example: "teacher" }
-        }
+            newRole: { type: "string", enum: ["user", "teacher", "admin"], example: "teacher" }
+        },
+        required: ["newRole"]
     },
     ChangeUserRole: {
         type: "object",
@@ -235,17 +236,12 @@ module.exports = {
         properties: {
             banDays: {
                 type: "number",
-                minimum: 1,
+                minimum: 0,
                 example: 7,
-                description: "تعداد روز بن. اگر ارسال نشود، بن دائمی خواهد بود"
-            },
-            banReason: {
-                type: "string",
-                example: "Spam",
-                description: "دلیل بن (اختیاری)"
             }
         }
     },
+
     RefreshTokenBody: {
         type: "object",
         properties: {

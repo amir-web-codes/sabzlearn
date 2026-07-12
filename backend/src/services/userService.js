@@ -110,10 +110,10 @@ async function banUser(user, banDays, reason = "no reason", userId) {
     user.banReason = reason
     user.bannedBy = userId
 
-    if (banDays !== undefined) {
-        user.banExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * banDays)
-    } else {
+    if (banDays == undefined || banDays === 0) {
         user.banExpiresAt = null
+    } else {
+        user.banExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * banDays)
     }
 
     await user.save()

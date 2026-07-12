@@ -33,7 +33,7 @@ const requestRoleSchema = z.object({
 })
 
 const banUserSchema = z.object({
-    banDays: z.coerce.number().min(1)
+    banDays: z.coerce.number().min(0).default(0)
 })
 
 const refreshTokenSchema = z.object({

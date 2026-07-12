@@ -1,6 +1,4 @@
 module.exports = {
-    // ==================== AUTH ====================
-
     "/users/auth/signup": {
         post: {
             description: "user login for the first time",
@@ -665,7 +663,7 @@ module.exports = {
 
     "/users/admin/{id}/ban": {
         patch: {
-            description: "Ban a user for a number of days, or permanently if banDays is omitted (admin only, cannot ban another admin)",
+            description: "Ban a user for a number of days (admin only, cannot ban another admin)",
             summary: "Ban a user",
             tags: ["Users", "Admin"],
             parameters: [
@@ -676,7 +674,7 @@ module.exports = {
                 content: {
                     "application/json": {
                         schema: { $ref: "#/components/schemas/BanUser" },
-                        example: { banDays: 7, banReason: "Spam" }
+                        example: { banDays: 7 }
                     }
                 }
             },
@@ -690,7 +688,30 @@ module.exports = {
                         }
                     }
                 },
-                400: { $ref: "#/components/responses/InvalidId" },
+                400: {
+                    description: "invalid id path parameter OR request body failed validation",
+                    content: {
+                        "application/json": {
+                            schema: { $ref: "#/components/schemas/Error" },
+                            examples: {
+                                invalidId: {
+                                    summary: "invalid id",
+                                    value: { success: false, message: "invalid id" }
+                                },
+                                failedValidation: {
+                                    summary: "body validation failed",
+                                    value: {
+                                        success: false,
+                                        message: "validation failed",
+                                        errors: [
+                                            { code: "too_small", path: ["banDays"], message: "Number must be greater than or equal to 1" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: {
                     description: "no permission OR cannot ban an admin",
@@ -771,7 +792,30 @@ module.exports = {
                         }
                     }
                 },
-                400: { $ref: "#/components/responses/InvalidId" },
+                400: {
+                    description: "invalid id path parameter OR request body failed validation",
+                    content: {
+                        "application/json": {
+                            schema: { $ref: "#/components/schemas/Error" },
+                            examples: {
+                                invalidId: {
+                                    summary: "invalid id",
+                                    value: { success: false, message: "invalid id" }
+                                },
+                                failedValidation: {
+                                    summary: "body validation failed",
+                                    value: {
+                                        success: false,
+                                        message: "validation failed",
+                                        errors: [
+                                            { code: "invalid_enum_value", path: ["newRole"], message: "Invalid enum value. Expected 'user' | 'teacher' | 'admin', received 'moderator'" }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: {
                     description: "no permission OR cannot change another admin's role",

@@ -86,11 +86,23 @@ module.exports = {
         content: {
             "application/json": {
                 schema: {
-                    $ref: "#/components/schemas/Error"
+                    type: "object",
+                    properties: {
+                        success: { type: "boolean", example: false },
+                        message: { type: "string", example: "validation failed" },
+                        errors: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/ValidationErrorItem" }
+                        }
+                    },
+                    required: ["success", "message", "errors"]
                 },
                 example: {
                     success: false,
-                    message: "validation failed"
+                    message: "validation failed",
+                    errors: [
+                        { code: "too_small", path: ["password"], message: "String must contain at least 5 character(s)" }
+                    ]
                 }
             }
         }
