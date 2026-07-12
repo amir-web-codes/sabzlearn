@@ -292,19 +292,34 @@ async function getUserDashboard(userId) {
 }
 
 async function changeRole(userId, role) {
-    const user = await findUserById(userId)
+    const user = await userModel.findOneAndUpdate(
+        {
+            _id: userId,
+            role: { $ne: "admin" }
+        },
+        {
+            $set: { role }
+        },
+        {
+            new: true
+        }
+    );
 
-    if (user.role === "admin") {
-        const err = new Error("you can't change another admin role")
-        err.status = 403
-        throw err
+    if (!user) {
+        const exists = await userModel.exists({ _id: userId });
+
+        if (!exists) {
+            const err = new Error("user not found");
+            err.status = 404;
+            throw err;
+        }
+
+        const err = new Error("you can't change another admin role");
+        err.status = 403;
+        throw err;
     }
 
-    user.role = role
-    await user.save()
-
-
-    return user
+    return user;
 }
 
 async function requestRole(userId, currentRole, role) {
