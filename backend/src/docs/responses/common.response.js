@@ -95,8 +95,8 @@ module.exports = {
             }
         }
     },
-    TooManyRequests: {
-        description: "Too many requests",
+    TooManyLoginAttempts: {
+        description: "Too many login/signup attempts",
         content: {
             "application/json": {
                 schema: {
@@ -105,6 +105,34 @@ module.exports = {
                 example: {
                     success: false,
                     message: "too many login attempts, please try again later"
+                }
+            }
+        }
+    },
+    TooManyRequestsGeneric: {
+        description: "Too many requests",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "too many requests, please try again later"
+                }
+            }
+        }
+    },
+    TooManyAdminRequests: {
+        description: "Too many requests (admin rate limit)",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+                example: {
+                    success: false,
+                    message: "you're sending too many requests, slow down cowboy🤠"
                 }
             }
         }
