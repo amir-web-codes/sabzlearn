@@ -34,5 +34,15 @@ module.exports = {
             "success",
             "message"
         ]
+    },
+    PaginationMeta: {
+        type: "object",
+        description: "Pagination metadata",
+        properties: {
+            totalNumber: { type: "number", example: 42 },
+            totalPages: { type: "number", example: 3 },
+            page: { type: "number", example: 1 },
+            limit: { type: "number", example: 20 }
+        }
     }
 }
