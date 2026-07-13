@@ -31,7 +31,7 @@ module.exports = {
 
     UpdateComment: {
         type: "object",
-        description: "تمام فیلدها اختیاری هستند، فقط فیلدهای ارسال‌شده آپدیت می‌شوند",
+        description: "All fields are optional. Only the provided fields will be updated.",
         properties: {
             title: { type: "string", minLength: 3, maxLength: 60, example: "Updated title" },
             text: { type: "string", minLength: 3, maxLength: 300, example: "Updated review text." },
