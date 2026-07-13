@@ -4,17 +4,14 @@ const path = require("path")
 const morgan = require("morgan")
 const cookieParser = require("cookie-parser")
 const rateLimit = require("express-rate-limit")
-const { corsMiddleware, corsErrorHandler } = require("./cors")
-const cors = require("cors")
+const { corsMiddleware } = require("./cors")
 
 function middlewares(app) {
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
-    app.use(helmet())
-    // app.use(corsMiddleware)
-    app.use(cors())
-    // redis
     app.use(cookieParser())
+    app.use(helmet())
+    app.use(corsMiddleware)
 
     const globalRateLimiter = rateLimit({
         windowMs: 1000 * 60 * 20,

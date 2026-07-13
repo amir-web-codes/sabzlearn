@@ -163,7 +163,9 @@ async function changeStatus(user, ticketId, newStatus) {
 
 
         foundTicket.status = newStatus
-        return await foundTicket.save()
+        await foundTicket.save()
+
+        return foundTicket
     }
 
 }
