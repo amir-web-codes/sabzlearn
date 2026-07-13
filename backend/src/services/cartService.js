@@ -187,18 +187,9 @@ async function deleteBySlug(userId, slug) {
 }
 
 async function checkOut(userId) {
-
-    const pendingOrder = (await orderModel.create([{
-        userId,
-        items: data.items,
-        totalPrice,
-        status: "pending"
-    }], { session }))[0]
-
     const session = await mongoose.startSession()
 
     try {
-
         session.startTransaction()
 
         const { data, totalPrice } = await getCart(userId, session)
@@ -209,56 +200,39 @@ async function checkOut(userId) {
             throw err
         }
 
-        for (const item of data.items) {
+        const pendingOrder = (await orderModel.create([{
+            userId,
+            items: data.items,
+            totalPrice,
+            status: "pending"
+        }], { session }))[0]
 
+        for (const item of data.items) {
             await enrollmentModel.updateOne(
-                {
-                    userId,
-                    courseId: item.courseId
-                },
-                {
-                    $setOnInsert: {
-                        userId,
-                        courseId: item.courseId,
-                        status: "active"
-                    }
-                },
-                {
-                    upsert: true,
-                    session
-                }
+                { userId, courseId: item.courseId },
+                { $setOnInsert: { userId, courseId: item.courseId, status: "active" } },
+                { upsert: true, session }
             )
         }
 
         await deleteItems(userId, session)
 
-        const order = orderModel.findOneAndUpdate(
+        const order = await orderModel.findOneAndUpdate(
             { _id: pendingOrder._id },
-            {
-                $set: {
-                    status: "paid"
-                }
-            },
-            { session }
+            { $set: { status: "paid" } },
+            { session, new: true }
         )
 
-
         await session.commitTransaction()
-
         await invalidatePattern("courses:enrolled:*")
 
         return order
 
     } catch (err) {
-
         await session.abortTransaction()
-
         throw err
-
     } finally {
-
         await session.endSession()
-
     }
 }
 
