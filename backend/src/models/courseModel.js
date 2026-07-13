@@ -56,6 +56,19 @@ const courseSchema = new mongoose.Schema({
     //     type: String,
     //     required: true
     // },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    deletedAt: {
+        type: Date,
+        default: null
+    },
     status: {
         type: String,
         enum: ["draft", "published", "archived", "closed"],

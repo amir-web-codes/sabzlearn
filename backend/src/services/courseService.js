@@ -2,6 +2,7 @@ const commentModel = require("../models/commentModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const lessonModel = require("../models/lessonModel")
+const userModel = require("../models/userModel")
 const slugify = require("slugify")
 
 const invalidatePattern = require("../utils/invalidatePattern")
@@ -38,9 +39,9 @@ async function findCourseBySlug(slug, select) {
     }
 
     if (select) {
-        data = await courseModel.findOne({ slug }).select(select)
+        data = await courseModel.findOne({ slug, isDeleted: false }).select(select)
     } else {
-        data = await courseModel.findOne({ slug })
+        data = await courseModel.findOne({ slug, isDeleted: false })
     }
 
     if (!data) {
@@ -122,8 +123,25 @@ async function createCourse({ title, description, price, discountPrice, level, l
     return data
 }
 
-async function removeCourseFromDb(slug) {
-    await courseModel.findOneAndDelete({ slug })
+async function removeCourseFromDb(slug, deletedById) {
+    const deletedData = await courseModel.findOneAndUpdate(
+        {
+            slug
+        },
+        {
+            $set: {
+                isDeleted: true,
+                deletedBy: deletedById,
+                deletedAt: new Date(Date.now())
+            }
+        }
+    )
+
+    if (deletedData.matchedCount === 0) {
+        const err = new Error("user not found")
+        err.status = 404
+        throw err
+    }
 
     await invalidatePattern("courses:*")
 }
@@ -167,7 +185,7 @@ async function getAllCourses(page = 1, limit = 20) {
     }
 
 
-    data = await courseModel.find().skip((page - 1) * limit).limit(limit).lean()
+    data = await courseModel.find({ isDeleted: false }).skip((page - 1) * limit).limit(limit).lean()
     totalNumber = await courseModel.countDocuments()
 
     await client.set(key, JSON.stringify(data), { EX: 600 })
@@ -176,39 +194,37 @@ async function getAllCourses(page = 1, limit = 20) {
     return { data, totalNumber }
 }
 
-async function enrollUserCourse(slug, userId) {
+async function enrollUserInCourse(slug, userId) {
     const foundCourse = await findCourseBySlug(slug)
+
+    const userExists = await userModel.exists({ _id: userId })
+    if (!userExists) {
+        const err = new Error("user not found")
+        err.status = 404
+        throw err
+    }
 
     const today = new Date()
 
-    const foundEnrollment = await enrollmentModel.findOne({ courseId: foundCourse._id, userId })
-
-    if (foundEnrollment) {
-        foundEnrollment.status = "active"
-        foundEnrollment.lastAccessedAt = today
-        return await foundEnrollment.save()
-    }
-
-    await enrollmentModel.create({
-        userId,
-        courseId: foundCourse._id,
-        status: "active",
-        enrolledAt: today,
-        lastAccessedAt: today
-    })
+    await enrollmentModel.findOneAndUpdate(
+        { _id: userId },
+        {
+            $set: {
+                courseId: foundCourse._id,
+                status: "active",
+                enrolledAt: today,
+                lastAccessedAt: today
+            }
+        },
+        {
+            upsert: true
+        }
+    )
 
     const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id })
 
     foundCourse.studentsCount = totalNumber
     await foundCourse.save()
-}
-
-async function cancelEnrollStatus(slug, userId) {
-    const foundCourse = await findCourseBySlug(slug)
-    const foundEnrollment = await findEnrollment(foundCourse._id, userId)
-
-    foundEnrollment.status = "cancelled"
-    await foundEnrollment.save()
 }
 
 async function findCourseStudents(course, page = 1, limit = 20) {
@@ -290,8 +306,7 @@ module.exports = {
     updateCourse,
     getAllCourses,
     findCourseById,
-    enrollUserCourse,
-    cancelEnrollStatus,
+    enrollUserInCourse,
     findCourseStudents,
     findCourseComments,
     updateCourseRating,

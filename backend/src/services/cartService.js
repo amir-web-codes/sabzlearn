@@ -4,43 +4,96 @@ const orderModel = require("../models/orderModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 
-const invalidatePattern = require("../utils/invalidatePattern")
 
 async function getCart(userId, session) {
+    const queryOptions = session ? { session } : {};
 
-    const data = await cartModel
+    let cart = await cartModel
         .findOne({ userId })
-        .session(session || null)
+        .session(session || null);
 
-    if (!data) {
+
+    if (!cart) {
+        const [createdCart] = await cartModel.create(
+            [
+                {
+                    userId,
+                    items: []
+                }
+            ],
+            queryOptions
+        );
+
         return {
-            data: await cartModel.create([{ userId, items: [] }], { session }).then(r => r[0]),
+            data: createdCart,
             totalPrice: 0
-        }
+        };
     }
 
-    let totalPrice = 0
 
-    const courseIds = data.items.map(i => i.courseId)
+    const courseIds = cart.items.map(
+        item => item.courseId
+    );
+
 
     const courses = await courseModel
-        .find({ _id: { $in: courseIds } })
-        .session(session || null)
+        .find({
+            _id: {
+                $in: courseIds
+            }
+        })
+        .session(session || null);
 
-    const map = new Map(
-        courses.map(c => [c._id.toString(), c])
-    )
 
-    for (const item of data.items) {
+    const courseMap = new Map(
+        courses.map(course => [
+            course._id.toString(),
+            course
+        ])
+    );
 
-        const course = map.get(item.courseId.toString())
-        if (!course) continue
 
-        item.price = course.price
-        totalPrice += course.price
+    let totalPrice = 0;
+
+
+    const validItems = [];
+
+    for (const item of cart.items) {
+
+        const course = courseMap.get(
+            item.courseId.toString()
+        );
+
+        if (!course) {
+            continue;
+        }
+
+
+        if (item.price !== course.price) {
+            item.oldPrice = item.price;
+            item.priceChanged = true;
+        }
+
+        item.price = course.price;
+
+        totalPrice += course.price;
+
     }
 
-    return { data, totalPrice }
+
+    if (validItems.length !== cart.items.length) {
+
+        cart.items = validItems;
+
+        await cart.save({
+            session
+        });
+    }
+
+    return {
+        data: cart,
+        totalPrice
+    };
 }
 
 async function createItem(userId, course) {
@@ -207,6 +260,13 @@ async function checkOut(userId) {
             status: "pending"
         }], { session }))[0]
 
+        const order = await orderModel.findOneAndUpdate(
+            { _id: pendingOrder._id },
+            { $set: { status: "paid" } },
+            { session, new: true }
+        )
+
+
         for (const item of data.items) {
             await enrollmentModel.updateOne(
                 { userId, courseId: item.courseId },
@@ -217,14 +277,8 @@ async function checkOut(userId) {
 
         await deleteItems(userId, session)
 
-        const order = await orderModel.findOneAndUpdate(
-            { _id: pendingOrder._id },
-            { $set: { status: "paid" } },
-            { session, new: true }
-        )
 
         await session.commitTransaction()
-        await invalidatePattern("courses:enrolled:*")
 
         return order
 

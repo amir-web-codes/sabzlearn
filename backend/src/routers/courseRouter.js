@@ -1,12 +1,13 @@
 const express = require("express")
 const router = express.Router()
 
-const { checkToken, checkRoles, checkUserBan, checkSelfs, limiters } = require("../middlewares")
+const { validateId, checkToken, checkRoles, checkUserBan, checkSelfs, limiters } = require("../middlewares")
 
 const courseController = require("../controllers/courseController")
 
 const validator = require("../middlewares/validator")
 const courseValidations = require("../middlewares/validations/course.validation")
+const { checkSelfCourseAuthor } = require("../middlewares/checkSelfs")
 
 router.get("/getAll", limiters.courseLimiter, courseController.getAllCourses)
 router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
@@ -19,7 +20,6 @@ router.route("/:slug")
 
 router.post("/create", checkToken, validator(courseValidations.createSchema), checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
 
-router.post("/:slug/enroll", checkToken, checkUserBan, limiters.enrollLimiter, courseController.registerUserInCourse)
-router.post("/:slug/cancel-enroll", checkToken, checkUserBan, limiters.enrollLimiter, courseController.cancelEnrollment)
+router.post("/:slug/enroll/:id", validateId, checkToken, checkUserBan, limiters.enrollLimiter, checkSelfCourseAuthor(false), courseController.registerUserInCourseByTeacher)
 
 module.exports = router

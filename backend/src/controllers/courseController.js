@@ -33,7 +33,7 @@ async function createCourse(req, res) {
 }
 
 async function deleteCourse(req, res) {
-    await courseService.removeCourseFromDb(req.params.slug.toLowerCase().trim())
+    await courseService.removeCourseFromDb(req.params.slug.toLowerCase().trim(), req.user.id)
 
     res.json({
         success: true,
@@ -70,22 +70,13 @@ async function getAllCourses(req, res) {
     })
 }
 
-async function registerUserInCourse(req, res) {
+async function registerUserInCourseByTeacher(req, res) {
 
-    await courseService.enrollUserCourse(req.params.slug.toLowerCase().trim(), req.user.id)
+    await courseService.enrollUserInCourse(req.params.slug.toLowerCase().trim(), req.params.id)
 
     res.status(201).json({
         success: true,
         message: "enrollment successful"
-    })
-}
-
-async function cancelEnrollment(req, res) {
-    await courseService.cancelEnrollStatus(req.params.slug.toLowerCase().trim(), req.user.id)
-
-    res.json({
-        success: true,
-        message: "enrollment cancelled successfully"
     })
 }
 
@@ -137,8 +128,7 @@ module.exports = {
     deleteCourse: asyncWrapper(deleteCourse),
     editCourseDetails: asyncWrapper(editCourseDetails),
     getAllCourses: asyncWrapper(getAllCourses),
-    registerUserInCourse: asyncWrapper(registerUserInCourse),
-    cancelEnrollment: asyncWrapper(cancelEnrollment),
+    registerUserInCourseByTeacher: asyncWrapper(registerUserInCourseByTeacher),
     getCourseStudents: asyncWrapper(getCourseStudents),
     getCourseComments: asyncWrapper(getCourseComments)
 }

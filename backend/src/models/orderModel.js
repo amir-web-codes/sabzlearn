@@ -11,7 +11,7 @@ const orderSchema = new mongoose.Schema({
         {
             courseId: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
+                ref: "Course",
                 required: true
             },
             title: {
