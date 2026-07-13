@@ -24,7 +24,7 @@ module.exports = {
             order: {
                 type: "number",
                 example: 100,
-                description: "اختیاری. اگر ارسال نشود، به‌صورت خودکار (آخرین order موجود در همان دوره + 100) محاسبه می‌شود"
+                description: "Optional. If not provided, it will be automatically calculated as (the latest existing order in the same course + 100)."
             }
         },
         required: ["title", "description"]
@@ -32,7 +32,7 @@ module.exports = {
 
     EditLesson: {
         type: "object",
-        description: "تمام فیلدها اختیاری هستند، فقط فیلدهای ارسال‌شده آپدیت می‌شوند",
+        description: "All fields are optional. Only the provided fields will be updated.",
         properties: {
             title: { type: "string", minLength: 5, maxLength: 150, example: "Introduction to Hooks (updated)" },
             description: { type: "string", example: "Updated description." },
