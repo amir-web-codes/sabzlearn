@@ -19,6 +19,7 @@ async function getUserCart(req, res) {
 async function addNewItem(req, res) {
 
     const foundCourse = await courseService.findCourseBySlug(req.params.slug, "title price")
+    console.log("hi")
     const { data, totalPrice } = await cartService.createItem(req.user.id, foundCourse)
 
     res.status(201).json({
