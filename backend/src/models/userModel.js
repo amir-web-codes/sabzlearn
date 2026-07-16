@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
         default: "user",
         required: true
     },
+    avatarURL: {
+        type: String,
+        default: "./public/avatars/default-avatar."
+    },
     isBanned: {
         type: Boolean,
         default: false
