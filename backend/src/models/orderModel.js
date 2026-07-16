@@ -28,9 +28,15 @@ const orderSchema = new mongoose.Schema({
         min: 0,
         required: true
     },
+    authority: {
+        type: String,
+        default: null
+    },
+    refId: { type: String, default: null },
+    failReason: { type: String, default: null },
     status: {
         type: String,
-        enum: ["pending", "paid", "failed", "processing", "cancelled"],
+        enum: ["pending", "paid", "failed", "expired"],
         default: "pending"
     }
 }, { timestamps: true })
