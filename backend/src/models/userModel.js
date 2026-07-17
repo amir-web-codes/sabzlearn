@@ -33,10 +33,12 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         url: {
-            type: String
+            type: String,
+            default: "/images/default-avatar.png"
         },
         publicId: {
-            type: String
+            type: String,
+            default: null
         }
     },
     isBanned: {

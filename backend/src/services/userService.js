@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
 const { client } = require("../configs/redis")
-
+const { uploadImage, deleteFile } = require("./fileService")
 
 async function findUserById(userId) {
     const data = await userModel.findById(userId).select("-password").populate("bannedBy", "username email")
@@ -27,28 +27,35 @@ async function findByEmail(email) {
     return data
 }
 
-async function uploadAvatar(file, user) {
-    const oldPublicId = user.avatar.publicId
+async function uploadAvatar(req, file, user) {
+    try {
+        const oldPublicId = user.avatar.publicId
 
-    const uploadedFile = await uploadImage(file, "sabzlearn/avatars")
+        const uploadedFile = await uploadImage(file, "sabzlearn/avatars")
 
-    user.avatar = {
-        url: uploadedFile.secure_url,
-        publicId: uploadedFile.public_id
+        user.avatar = {
+            url: uploadedFile.secure_url,
+            publicId: uploadedFile.public_id
+        }
+
+        req.uploadedFile = uploadedFile
+
+        await user.save()
+
+        if (oldPublicId) {
+            console.log('he')
+            await deleteFile(oldPublicId, "image")
+        }
+
+        return user
+    } catch (err) {
+        await deleteFile(uploadedFile.public_id)
+        err.status = 500
+        throw err
     }
-
-    req.uploadedFile = uploadedFile
-
-    await user.save()
-
-    if (oldPublicId) {
-        await deleteFile(oldPublicId)
-    }
-
-    return user
 }
 
-async function createUser({ username, email, password }, file) {
+async function createUser(req, { username, email, password }, file) {
 
 
     const today = new Date(Date.now())
@@ -62,7 +69,8 @@ async function createUser({ username, email, password }, file) {
     })
 
     if (file) {
-        await uploadAvatar(file, createdUser)
+        await uploadAvatar(req, file, createdUser)
+        delete req.uploadedFile
     }
 
     return createdUser
@@ -165,7 +173,7 @@ async function unBanUser(bannedId) {
 }
 
 async function deleteUser(userId, deletedById) {
-    const deletedData = await userModel.updateOne(
+    const deletedData = await userModel.findOneAndUpdate(
         { _id: userId, isDeleted: false },
         {
             $set: {
@@ -176,18 +184,19 @@ async function deleteUser(userId, deletedById) {
         }
     )
 
-    if (deletedData.matchedCount === 0) {
+    if (!deletedData) {
         const err = new Error("user not found")
         err.status = 404
         throw err
     }
 
     await tokenModel.deleteMany({ userId: userId })
+    await deleteUserAvatar(deletedData)
 
     return deletedData
 }
 
-async function updateUser(user, username, email, password) {
+async function updateUser(req, user, { username, email }, file) {
 
     const foundEmail = await findByEmail(email)
 
@@ -200,7 +209,12 @@ async function updateUser(user, username, email, password) {
     user.username = username || user.username
     user.email = email || user.email
 
-    await user.save()
+    if (file) {
+        await uploadAvatar(req, file, user)
+        delete req.uploadedFile
+    } else {
+        await user.save()
+    }
 }
 
 async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
@@ -244,7 +258,7 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
 }
 
 async function changePassword(user, password) {
-    revokeUserToken(user._id)
+    await revokeUserToken(user._id)
 
     user.password = password
 
@@ -252,7 +266,7 @@ async function changePassword(user, password) {
 }
 
 async function findUserCourses(userId, page, limit) {
-    const key = `courses:enrolled:page:${page}:limit:${limit}`
+    const key = `courses:users:${userId}:enrolled:page:${page}:limit:${limit}`
     const cached = await client.get(key)
 
     let data = cached
@@ -262,7 +276,7 @@ async function findUserCourses(userId, page, limit) {
     let totalNumber = 0
 
     if (data) {
-        totalNumber = Number(await client.get("courses:enrolled:totalNumber"))
+        totalNumber = Number(await client.get(`courses:users:${userId}:enrolled:totalNumber`))
         return { data, totalNumber }
     }
 
@@ -271,7 +285,7 @@ async function findUserCourses(userId, page, limit) {
     totalNumber = await enrollmentModel.countDocuments({ userId })
 
     await client.set(key, JSON.stringify(data), { EX: 600 })
-    await client.set("courses:enrolled:totalNumber", totalNumber, { EX: 600 })
+    await client.set(`courses:users:${userId}:enrolled:totalNumber`, totalNumber, { EX: 600 })
 
     return { data, totalNumber }
 }
@@ -351,33 +365,24 @@ async function changeRole(userId, role) {
 }
 
 async function requestRole(userId, currentRole, role) {
-    const availableRoles = ["user", "teacher"]
 
-    if (availableRoles.includes(role)) {
+    const userRequests = await requestModel.find({ userId }).sort({ createdAt: 1 })
 
-        const userRequests = await requestModel.find({ userId }).sort({ createdAt: 1 })
+    if (userRequests.length >= 3) {
+        await requestModel.findByIdAndDelete(userRequests[0]._id)
+    }
 
-        if (userRequests.length >= 3) {
-            await requestModel.findByIdAndDelete(userRequests[0]._id)
-        }
-
-        const isExists = await requestModel.exists({ userId, status: "pending" })
-        if (!isExists) {
-            return await requestModel.create({
-                userId,
-                requestedRole: role,
-                currentRole,
-                status: "pending"
-            })
-        } else {
-            const err = new Error("you already have a pending request")
-            err.status = 403
-            throw err
-        }
-
+    const isExists = await requestModel.exists({ userId, status: "pending" })
+    if (!isExists) {
+        return await requestModel.create({
+            userId,
+            requestedRole: role,
+            currentRole,
+            status: "pending"
+        })
     } else {
-        const err = new Error("requested role not available")
-        err.status = 422
+        const err = new Error("you already have a pending request")
+        err.status = 403
         throw err
     }
 }
@@ -457,6 +462,17 @@ async function checkDeletedUser(user) {
     }
 }
 
+async function deleteUserAvatar(user) {
+    if (user.avatar.publicId) {
+        await deleteFile(user.avatar.publicId, "image")
+    }
+
+    user.avatar.url = "/images/default-avatar.png"
+    user.avatar.publicId = null
+
+    await user.save()
+}
+
 module.exports = {
     findUserById,
     findByEmail,
@@ -480,5 +496,6 @@ module.exports = {
     rejectRequest,
     getAllRequests,
     findRequestById,
-    checkDeletedUser
+    checkDeletedUser,
+    deleteUserAvatar
 }

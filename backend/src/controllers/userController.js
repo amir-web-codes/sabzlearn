@@ -34,7 +34,7 @@ async function signUp(req, res) {
         throw err
     }
 
-    const createdUser = await userService.createUser(req.body, req.file)
+    const createdUser = await userService.createUser(req, req.body, req.file)
 
     const rememberMe = req.body.rememberMe
     const userAgent = req.headers["user-agent"]
@@ -188,11 +188,10 @@ async function deleteUserProfile(req, res) {
 }
 
 async function updateUserProfile(req, res) {
-    const { username, email } = req.body
 
     const foundUser = await userService.findUserById(req.user.id)
 
-    await userService.updateUser(foundUser, username, email)
+    await userService.updateUser(req, foundUser, req.body, req.file)
 
     res.json({
         success: true,
@@ -397,6 +396,17 @@ async function getRequestById(req, res) {
     })
 }
 
+async function deleteUserAvatar(req, res) {
+    const foundUser = await userService.findUserById(req.user.id)
+
+    await userService.deleteUserAvatar(foundUser)
+
+    res.json({
+        success: true,
+        message: "avatar deleted successfully"
+    })
+}
+
 module.exports = {
     getUserById: asyncWrapper(getUserById),
     deleteUserById: asyncWrapper(deleteUserById),
@@ -419,5 +429,6 @@ module.exports = {
     getAllRequests: asyncWrapper(getAllRequests),
     acceptRequest: asyncWrapper(acceptRequest),
     rejectRequest: asyncWrapper(rejectRequest),
-    getRequestById: asyncWrapper(getRequestById)
+    getRequestById: asyncWrapper(getRequestById),
+    deleteUserAvatar: asyncWrapper(deleteUserAvatar)
 }
