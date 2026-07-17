@@ -1,11 +1,10 @@
-
 const multer = require("multer")
 const path = require("path")
 const crypto = require("crypto")
 
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        const uploadPath = path.join(__dirname, "../public/uploads/avatars")
+        const uploadPath = path.join(__dirname, "../public/uploads/thumbnails")
         if (!fs.existsSync(uploadPath)) {
 
             fs.mkdirSync(uploadPath, {
@@ -16,21 +15,18 @@ const storage = multer.diskStorage({
 
         cb(null, uploadPath)
     },
-
     filename(req, file, cb) {
         const ext = path.extname(file.originalname)
 
         const name = crypto.randomBytes(16).toString("hex") + ext
 
         cb(null, name)
-
     }
 })
 
-const avatarUpload = multer({
+const thumbnailUpload = multer({
     storage,
     fileFiler(req, file, cb) {
-
         const allowed = [
             "image/jpeg",
             "image/png",
@@ -44,8 +40,8 @@ const avatarUpload = multer({
         cb(null, true)
     },
     limits: {
-        fileSize: 1024 * 1024 * 2
+        fileSize: 1024 * 1024 * 3
     }
 })
 
-module.exports = avatarUpload
+module.exports = thumbnailUpload
