@@ -27,17 +27,45 @@ async function findByEmail(email) {
     return data
 }
 
-async function createUser({ username, email, password }) {
+async function uploadAvatar(file, user) {
+    const oldPublicId = user.avatar.publicId
+
+    const uploadedFile = await uploadImage(file, "sabzlearn/avatars")
+
+    user.avatar = {
+        url: uploadedFile.secure_url,
+        publicId: uploadedFile.public_id
+    }
+
+    req.uploadedFile = uploadedFile
+
+    await user.save()
+
+    if (oldPublicId) {
+        await deleteFile(oldPublicId)
+    }
+
+    return user
+}
+
+async function createUser({ username, email, password }, file) {
+
 
     const today = new Date(Date.now())
 
-    return await userModel.create({
+    const createdUser = await userModel.create({
         username,
         email,
         password: password,
         role: "user",
         lastLogin: today
     })
+
+    if (file) {
+        await uploadAvatar(file, createdUser)
+    }
+
+    return createdUser
 }
 
 async function createTokens(user, rememberMe, deviceId, userAgent, isLogin) {
