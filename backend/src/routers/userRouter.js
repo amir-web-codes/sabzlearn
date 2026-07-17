@@ -8,6 +8,8 @@ const userController = require("../controllers/userController")
 const validator = require("../middlewares/validator")
 const userValidations = require("../middlewares/validations/user.validation")
 
+const { avatarUpload } = require("../middlewares/uploads")
+
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
@@ -42,8 +44,7 @@ router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLim
 
 router.patch("/admin/:id/change-role", validateId, validator(userValidations.changeRoleSchema), checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 
-
-router.post("/auth/signup", limiters.loginLimiter, validator(userValidations.signUpSchema), userController.signUp)
+router.post("/auth/signup", limiters.loginLimiter, validator(userValidations.signUpSchema), avatarUpload.single("avatar"), userController.signUp)
 router.post("/auth/login", limiters.loginLimiter, validator(userValidations.loginSchema), userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
 router.post("/refresh-token", validator(userValidations.refreshTokenSchema), userController.refreshToken)
