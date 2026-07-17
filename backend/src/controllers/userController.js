@@ -23,6 +23,7 @@ async function deleteUserById(req, res) {
 }
 
 async function signUp(req, res) {
+
     const { email } = req.body
 
     const foundUser = await userService.findByEmail(email)
@@ -33,7 +34,7 @@ async function signUp(req, res) {
         throw err
     }
 
-    const createdUser = await userService.createUser(req.body)
+    const createdUser = await userService.createUser(req.body, req.file)
 
     const rememberMe = req.body.rememberMe
     const userAgent = req.headers["user-agent"]

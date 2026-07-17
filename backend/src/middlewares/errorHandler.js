@@ -1,6 +1,7 @@
 const logger = require("../utils/logger")
+const fs = require("fs")
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = async (err, req, res, next) => {
     const status = err.status || 500
     const context = {
         status,
@@ -21,6 +22,10 @@ const errorHandler = (err, req, res, next) => {
         err.message = "internal server error"
     } else if (status >= 400) {
         logger.warn(context, "client error")
+    }
+
+    if (req.file) {
+        await fs.promises.unlink(req.file.path)
     }
 
     res.status(status).json({

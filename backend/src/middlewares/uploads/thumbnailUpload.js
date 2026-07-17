@@ -1,10 +1,11 @@
 const multer = require("multer")
 const path = require("path")
 const crypto = require("crypto")
+const fs = require("fs")
 
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        const uploadPath = path.join(__dirname, "../public/uploads/thumbnails")
+        const uploadPath = path.join(__dirname, "../../public/uploads/thumbnails")
         if (!fs.existsSync(uploadPath)) {
 
             fs.mkdirSync(uploadPath, {
