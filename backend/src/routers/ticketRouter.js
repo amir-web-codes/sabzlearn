@@ -12,9 +12,8 @@ router.post("/create", validator(ticketValidations.createSchema), checkToken, ch
 router.post("/:id/reply", validateId, validator(ticketValidations.replySchema), checkToken, checkUserBan, checkSelfs.checkSelfTicketAuthor(false), ticketController.addTicketReply)
 router.patch("/:id/change-status", validateId, validator(ticketValidations.changeStatusSchema), checkToken, checkUserBan, checkSelfs.checkSelfTicketAuthor(true), ticketController.changeTicketStatus)
 
-router.get("/me", checkToken, checkUserBan, ticketController.getUserTickets)
-router.get("/admin/get-all", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), ticketController.getAllTickets)
+router.get("/me", validator(ticketValidations.getUserTicketsQuerySchema, "query"), checkToken, checkUserBan, ticketController.getUserTickets)
+router.get("/admin/get-all", validator(ticketValidations.getAllTicketsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), ticketController.getAllTickets)
 router.get("/:id", validateId, checkToken, checkUserBan, checkSelfs.checkSelfTicketAuthor(true), ticketController.getTicketById)
-
 
 module.exports = router
