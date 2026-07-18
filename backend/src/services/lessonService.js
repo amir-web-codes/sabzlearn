@@ -2,6 +2,7 @@ const lessonModel = require("../models/lessonModel")
 
 const { client } = require("../configs/redis")
 const invalidatePattern = require("../utils/invalidatePattern")
+const { buildCacheKey, resolveTTL } = require("../utils/listCache")
 
 async function findById(id) {
     const data = await lessonModel.findById(id)
@@ -60,53 +61,69 @@ async function deleteById(lessonId) {
     await invalidatePattern("lessons:*")
 }
 
-async function findAll(page = 1, limit = 20) {
-    const key = `lessons:page:${page}:limit:${limit}`
-    const cached = await client.get(key)
-    let totalNumber = 0
+async function findAll(page = 1, limit = 20, filters = {}, sort = {}) {
+    const { courseId } = filters
+    const { sortBy = "order", sortOrder = "desc" } = sort
 
-    let data = cached
-        ? JSON.parse(cached)
-        : null
+    const allowedSortFields = ["order", "duration", "createdAt"]
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "order"
+    const sortDirection = sortOrder === "asc" ? 1 : -1
 
-    if (cached) {
+    const skipCache = Boolean(courseId)
+    const cacheKey = buildCacheKey("lessons:list", { page, limit, sortBy, sortOrder })
 
-        totalNumber = Number(await client.get("lessons:totalNumber"))
-        return { data, totalNumber }
+    if (!skipCache) {
+        const cached = await client.get(cacheKey)
+        if (cached) return JSON.parse(cached)
     }
 
+    const query = {}
+    if (courseId) query.courseId = courseId
 
-    data = await lessonModel.find().skip((page - 1) * limit).limit(limit).sort({ order: 1 }).lean()
-    totalNumber = await lessonModel.countDocuments()
+    const data = await lessonModel
+        .find(query)
+        .sort({ [sortField]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
 
-    await client.set(key, JSON.stringify(data), { EX: 600 })
-    await client.set("lessons:totalNumber", totalNumber, { EX: 600 })
+    const totalNumber = await lessonModel.countDocuments(query)
+    const result = { data, totalNumber }
 
-    return { data, totalNumber }
+    if (!skipCache) {
+        const hasNonDefaultFilters = sortBy !== "order" || sortOrder !== "desc"
+        await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
+    }
+
+    return result
 }
 
-async function findCourseLessons(course, page = 1, limit = 20) {
-    const key = `courses:${course.slug}:lessons:page:${page}:limit:${limit}`
-    const cached = await client.get(key)
-    let totalNumber = 0
+async function findCourseLessons(course, page = 1, limit = 20, sort = {}) {
+    const { sortBy = "order", sortOrder = "desc" } = sort
 
-    let data = cached
-        ? JSON.parse(cached)
-        : null
+    const allowedSortFields = ["order", "duration", "createdAt"]
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "order"
+    const sortDirection = sortOrder === "asc" ? 1 : -1
 
-    if (cached) {
+    const cacheKey = buildCacheKey(`courses:${course.slug}:lessons:list`, { page, limit, sortBy, sortOrder })
 
-        totalNumber = Number(await client.get(`courses:${course.slug}:lessons:totalNumber`))
-        return { data, totalNumber }
-    }
+    const cached = await client.get(cacheKey)
+    if (cached) return JSON.parse(cached)
 
-    data = await lessonModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
-    totalNumber = await lessonModel.countDocuments({ courseId: course._id })
+    const data = await lessonModel
+        .find({ courseId: course._id })
+        .sort({ [sortField]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
 
-    await client.set(key, JSON.stringify(data), { EX: 600 })
-    await client.set(`courses:${course.slug}:lessons:totalNumber`, totalNumber, { EX: 600 })
+    const totalNumber = await lessonModel.countDocuments({ courseId: course._id })
+    const result = { data, totalNumber }
 
-    return { data, totalNumber }
+    const hasNonDefaultFilters = sortBy !== "order" || sortOrder !== "desc"
+    await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
+
+    return result
 }
 
 module.exports = {
