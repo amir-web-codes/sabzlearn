@@ -38,9 +38,23 @@ async function createTicket(userId, { title, message, assignedToId }) {
     })
 }
 
-async function findUserTickets(userId, page, limit) {
-    const data = await ticketModel.find({ userId }).skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await ticketModel.countDocuments({ userId })
+async function findUserTickets(userId, page, limit, filters = {}, sort = {}) {
+    const { status } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+
+    const query = { userId }
+    if (status) query.status = status
+
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await ticketModel
+        .find(query)
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await ticketModel.countDocuments(query)
     return { data, totalNumber }
 }
 
@@ -72,7 +86,6 @@ async function createReply(user, ticketId, { message }) {
     }
 
     if (!foundTicket.userId.equals(user.id)) {
-        // if user didn't send the reply
         foundTicket.responsedBy = user.id
         foundTicket.assignedTo = user.id
         foundTicket.status = "pending"
@@ -102,30 +115,30 @@ async function findTicketWithPopulate(userId, ticketId) {
     return data
 }
 
-async function findAllTickets(user, availableOnly = true, page = 1, limit = 20) {
+async function findAllTickets(user, availableOnly = true, page = 1, limit = 20, filters = {}, sort = {}) {
+    const { status } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
     let query = {};
 
     if (user.role === "teacher") {
-
         query.assignedTo = user.id
-
     } else if (user.role === "admin") {
-
         query.for = "admin"
-        query.assignedTo = {
-            $in: [null, user.id]
-        }
-
+        query.assignedTo = { $in: [null, user.id] }
     }
 
-    if (availableOnly) {
+    if (status) {
+        query.status = status
+    } else if (availableOnly) {
         query.status = { $ne: "closed" }
     }
 
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
     const data = await ticketModel
         .find(query)
-        .sort({ createdAt: -1 })
+        .sort({ [sortBy]: sortDirection })
         .skip((page - 1) * limit)
         .limit(limit)
         .lean()
@@ -136,7 +149,6 @@ async function findAllTickets(user, availableOnly = true, page = 1, limit = 20) 
 }
 
 async function changeStatus(user, ticketId, newStatus) {
-
     const foundTicket = await findTicketById(ticketId)
 
     if (newStatus === foundTicket.status) {
@@ -153,21 +165,17 @@ async function changeStatus(user, ticketId, newStatus) {
         err.status = 403
         throw err
     } else {
-
         if (foundTicket.status === "closed" && user.role !== "admin") {
-
             const err = new Error("you can't reopen ticket")
             err.status = 403
             throw err
         }
-
 
         foundTicket.status = newStatus
         await foundTicket.save()
 
         return foundTicket
     }
-
 }
 
 module.exports = {
