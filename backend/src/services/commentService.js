@@ -1,9 +1,23 @@
 const commentModel = require("../models/commentModel")
 const courseService = require("./courseService")
 
-async function findUserComments(userId, page, limit) {
-    const data = await commentModel.find({ authorId: userId }).skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await commentModel.countDocuments({ authorId: userId })
+async function findUserComments(userId, page, limit, filters = {}, sort = {}) {
+    const { rating } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+
+    const query = { authorId: userId }
+    if (rating) query.rating = rating
+
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await commentModel
+        .find(query)
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await commentModel.countDocuments(query)
     return { data, totalNumber }
 }
 
@@ -21,7 +35,6 @@ async function findCommentById(id) {
 
 async function updateRating(courseId) {
     const courseComments = await commentModel.find({ courseId }).select("rating").lean()
-
     await courseService.updateCourseRating(courseId, courseComments)
 }
 
@@ -41,11 +54,7 @@ async function updateCommentById(comment, id, { title, text, rating }) {
     }
 
     const result = await commentModel.findByIdAndUpdate(id, {
-        $set: {
-            title,
-            text,
-            rating: newRating
-        }
+        $set: { title, text, rating: newRating }
     })
 
     await updateRating(result.courseId)
@@ -56,7 +65,6 @@ async function createComment(slug, userId, { title, text, rating }) {
 
     let selectedRating;
     const avaiableRatings = ["Very Bad", "Bad", "Medium", "Good", "Very Good"]
-
 
     if (avaiableRatings.includes(rating)) {
         selectedRating = rating
