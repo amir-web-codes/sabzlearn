@@ -1,4 +1,5 @@
 const { z } = require("zod")
+const { paginationFields, sortFields } = require("./common.validation")
 
 const baseSchema = z.object({
     title: z.string().min(3).max(60),
@@ -10,7 +11,14 @@ const createSchema = baseSchema
 
 const updateSchema = baseSchema.partial()
 
+const getUserCommentsQuerySchema = z.object({
+    ...paginationFields(),
+    rating: z.enum(["Very Bad", "Bad", "Medium", "Good", "Very Good"]).optional(),
+    ...sortFields(["createdAt", "rating"], "createdAt")
+})
+
 module.exports = {
     createSchema,
-    updateSchema
+    updateSchema,
+    getUserCommentsQuerySchema
 }
