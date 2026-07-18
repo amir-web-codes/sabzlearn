@@ -5,11 +5,19 @@ const commentController = require("../controllers/commentController.js")
 
 const { validateId, limiters, checkRoles, checkToken, checkUserBan, checkSelfs } = require("../middlewares")
 
-
 const validator = require("../middlewares/validator")
 const commentValidations = require("../middlewares/validations/comment.validation")
 
-router.get("/:id/comments", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), checkUserBan, commentController.getUserComments)
+router.get(
+    "/:id/comments",
+    validateId,
+    validator(commentValidations.getUserCommentsQuerySchema, "query"),
+    checkToken,
+    limiters.adminLimiter,
+    checkRoles(["admin"]),
+    checkUserBan,
+    commentController.getUserComments
+)
 
 router.route("/:id")
     .get(validateId, checkToken, checkUserBan, checkSelfs.checkSelfCommentAuthor(true), commentController.getCommentById)
