@@ -13,10 +13,9 @@ async function createNewTicket(req, res) {
 }
 
 async function getUserTickets(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, status, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await ticketService.findUserTickets(req.user.id, page, limit)
+    const { data, totalNumber } = await ticketService.findUserTickets(req.user.id, page, limit, { status }, { sortBy, sortOrder })
 
     res.json({
         success: true,
@@ -52,11 +51,10 @@ async function addTicketReply(req, res) {
 }
 
 async function getAllTickets(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, status, sortBy, sortOrder } = req.query
     const availableOnly = req.query.availableOnly === "true"
 
-    const { data, totalNumber } = await ticketService.findAllTickets(req.user, availableOnly, page, limit)
+    const { data, totalNumber } = await ticketService.findAllTickets(req.user, availableOnly, page, limit, { status }, { sortBy, sortOrder })
 
     res.json({
         success: true,
