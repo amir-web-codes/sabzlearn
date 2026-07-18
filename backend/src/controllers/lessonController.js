@@ -16,7 +16,7 @@ async function getLessonById(req, res) {
 async function createNewLesson(req, res) {
     const foundCourse = await courseService.findCourseBySlug(req.params.slug)
 
-    const data = await lessonService.createLesson(req.user.id, foundCourse._id, req.body)
+    const data = await lessonService.createLesson(req.user.id, foundCourse._id, req.body, foundCourse.slug)
 
     res.status(201).json({
         success: true,
@@ -45,11 +45,9 @@ async function deleteLesson(req, res) {
 }
 
 async function getAllLessons(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, courseId, sortBy, sortOrder } = req.query
 
-
-    const { data, totalNumber } = await lessonService.findAll(page, limit)
+    const { data, totalNumber } = await lessonService.findAll(page, limit, { courseId }, { sortBy, sortOrder })
 
     res.json({
         success: true,
@@ -65,12 +63,11 @@ async function getAllLessons(req, res) {
 }
 
 async function getCourseLessons(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, sortBy, sortOrder } = req.query
 
     const foundCourse = await courseService.findCourseBySlug(req.params.slug)
 
-    const { data, totalNumber } = await lessonService.findCourseLessons(foundCourse, page, limit)
+    const { data, totalNumber } = await lessonService.findCourseLessons(foundCourse, page, limit, { sortBy, sortOrder })
 
     res.json({
         success: true,
