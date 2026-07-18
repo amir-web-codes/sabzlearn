@@ -1,4 +1,5 @@
 const { z } = require("zod");
+const { paginationFields, sortFields } = require("./common.validation")
 
 const baseSchema = z.object({
     username: z.string().trim().min(3).max(30),
@@ -29,7 +30,7 @@ const updateUserSchema = baseSchema.pick({
 }).partial()
 
 const requestRoleSchema = z.object({
-    newRole: z.enum(["user", "teacher", "admin"])
+    newRole: z.enum(["teacher", "admin"])
 })
 
 const banUserSchema = z.object({
@@ -44,6 +45,36 @@ const changeRoleSchema = z.object({
     newRole: z.enum(["user", "teacher", "admin"])
 })
 
+const getUserTicketsQuerySchema = z.object({
+    ...paginationFields(),
+    status: z.enum(["open", "pending", "closed"]).optional(),
+    ...sortFields(["createdAt"], "createdAt")
+})
+
+
+const getAllRequestsQuerySchema = z.object({
+    ...paginationFields(),
+    status: z.enum(["pending", "accepted", "rejected"]).optional(),
+    requestedRole: z.enum(["user", "teacher"]).optional(),
+    ...sortFields(["createdAt"], "createdAt")
+})
+
+const getPendingRequestsQuerySchema = z.object({
+    ...paginationFields(),
+    ...sortFields(["createdAt"], "createdAt")
+})
+
+const getUserCoursesQuerySchema = z.object({
+    ...paginationFields(),
+    ...sortFields(["createdAt"], "createdAt")
+})
+
+const getUserCommentsQuerySchema = z.object({
+    ...paginationFields(),
+    rating: z.enum(["Very Bad", "Bad", "Medium", "Good", "Very Good"]).optional(),
+    ...sortFields(["createdAt", "rating"], "createdAt")
+})
+
 module.exports = {
     signUpSchema,
     loginSchema,
@@ -52,5 +83,10 @@ module.exports = {
     requestRoleSchema,
     banUserSchema,
     refreshTokenSchema,
-    changeRoleSchema
+    changeRoleSchema,
+    getUserTicketsQuerySchema,
+    getAllRequestsQuerySchema,
+    getPendingRequestsQuerySchema,
+    getUserCoursesQuerySchema,
+    getUserCommentsQuerySchema
 }
