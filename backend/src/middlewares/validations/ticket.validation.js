@@ -1,4 +1,5 @@
 const { z } = require("zod")
+const { paginationFields, sortFields } = require("./common.validation")
 
 const objectIdSchema = z.string().regex(
     /^[0-9a-fA-F]{24}$/,
@@ -21,8 +22,23 @@ const changeStatusSchema = z.object({
     newStatus: z.enum(["pending", "closed"])
 })
 
+const getUserTicketsQuerySchema = z.object({
+    ...paginationFields(),
+    status: z.enum(["open", "pending", "closed"]).optional(),
+    ...sortFields(["createdAt"], "createdAt")
+})
+
+const getAllTicketsQuerySchema = z.object({
+    ...paginationFields(),
+    status: z.enum(["open", "pending", "closed"]).optional(),
+    availableOnly: z.enum(["true", "false"]).default("true"),
+    ...sortFields(["createdAt"], "createdAt")
+})
+
 module.exports = {
     createSchema,
     replySchema,
-    changeStatusSchema
+    changeStatusSchema,
+    getUserTicketsQuerySchema,
+    getAllTicketsQuerySchema
 }
