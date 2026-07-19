@@ -9,9 +9,11 @@ const validator = require("../middlewares/validator")
 const courseValidations = require("../middlewares/validations/course.validation")
 const { checkSelfCourseAuthor } = require("../middlewares/checkSelfs")
 
-router.get("/getAll", limiters.courseLimiter, courseController.getAllCourses)
-router.get("/:slug/get-students", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
-router.get("/:slug/get-comments", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
+router.get("/getAll", limiters.courseLimiter, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
+
+router.get("/:slug/get-students", validator(courseValidations.getCourseStudentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
+
+router.get("/:slug/get-comments", validator(courseValidations.getCourseCommentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
 
 router.route("/:slug")
     .get(limiters.courseLimiter, checkToken, courseController.getCourseBySlug)
