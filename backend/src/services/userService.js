@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt")
 
 const { client } = require("../configs/redis")
 const { uploadImage, deleteFile } = require("./fileService")
+const { buildCacheKey, resolveTTL } = require("../utils/listCache")
 
 async function findUserById(userId) {
     const data = await userModel.findById(userId).select("-password").populate("bannedBy", "username email")
@@ -28,10 +29,12 @@ async function findByEmail(email) {
 }
 
 async function uploadAvatar(req, file, user) {
-    try {
-        const oldPublicId = user.avatar.publicId
+    let uploadedFile;
 
-        const uploadedFile = await uploadImage(file, "sabzlearn/avatars")
+    try {
+        uploadedFile = await uploadImage(file, "sabzlearn/avatars")
+
+        const oldPublicId = user.avatar.publicId
 
         user.avatar = {
             url: uploadedFile.secure_url,
@@ -43,21 +46,20 @@ async function uploadAvatar(req, file, user) {
         await user.save()
 
         if (oldPublicId) {
-            console.log('he')
             await deleteFile(oldPublicId, "image")
         }
 
         return user
     } catch (err) {
-        await deleteFile(uploadedFile.public_id)
-        err.status = 500
+        if (uploadedFile) {
+            await deleteFile(uploadedFile.public_id).catch(() => { })
+        }
+        err.status = err.status || 500
         throw err
     }
 }
 
 async function createUser(req, { username, email, password }, file) {
-
-
     const today = new Date(Date.now())
 
     const createdUser = await userModel.create({
@@ -69,8 +71,13 @@ async function createUser(req, { username, email, password }, file) {
     })
 
     if (file) {
-        await uploadAvatar(req, file, createdUser)
-        delete req.uploadedFile
+        try {
+            await uploadAvatar(req, file, createdUser)
+        } catch (err) {
+            console.error("avatar upload failed during signup, continuing with default avatar:", err)
+        } finally {
+            delete req.uploadedFile
+        }
     }
 
     return createdUser
@@ -88,17 +95,14 @@ async function createTokens(user, rememberMe, deviceId, userAgent, isLogin) {
     }
 
     const deviceTokens = await tokenModel.find({ userId: user._id, deviceId }).sort({ createdAt: 1 })
-    // maximum tokens per device
     const maximumDeviceTokens = 2
 
     if (deviceTokens.length >= maximumDeviceTokens) {
         await tokenModel.findByIdAndDelete(deviceTokens[0]._id)
     }
 
-    // if it's a login request, add lastLogin Date
     if (isLogin) {
         const today = new Date(Date.now())
-
         user.lastLogin = today
         await user.save()
     }
@@ -124,18 +128,15 @@ async function comparePasswords(password, dbPassword) {
 }
 
 async function revokeUserToken(userId, deviceId) {
-
     if (!deviceId) {
         await tokenModel.updateMany({ userId }, { revoked: true })
     } else {
         await tokenModel.updateMany({ userId, deviceId }, { revoked: true })
     }
-
     return
 }
 
 async function banUser(user, banDays, reason = "no reason", userId) {
-
     if (user.role === "admin") {
         const err = new Error("you can't ban an admin")
         err.status = 403
@@ -181,7 +182,8 @@ async function deleteUser(userId, deletedById) {
                 deletedBy: deletedById,
                 deletedAt: new Date(Date.now())
             }
-        }
+        },
+        { new: true }
     )
 
     if (!deletedData) {
@@ -197,17 +199,21 @@ async function deleteUser(userId, deletedById) {
 }
 
 async function updateUser(req, user, { username, email }, file) {
+    if (email) {
+        const foundEmail = await findByEmail(email)
 
-    const foundEmail = await findByEmail(email)
+        if (foundEmail && email !== user.email) {
+            const err = new Error("email already exists")
+            err.status = 403
+            throw err
+        }
 
-    if (foundEmail && email !== user.email) {
-        const err = new Error("email already exists")
-        err.status = 403
-        throw err
+        user.email = email
     }
 
-    user.username = username || user.username
-    user.email = email || user.email
+    if (username) {
+        user.username = username
+    }
 
     if (file) {
         await uploadAvatar(req, file, user)
@@ -230,9 +236,7 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
             throw err
         }
 
-
         const compareResult = await bcrypt.compare(token, foundTokens[0].hashedToken)
-
 
         if (!compareResult) {
             const err = new Error("faked refresh token")
@@ -244,7 +248,6 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
         await foundTokens[0].save()
 
         return await createTokens(foundUser, rememberMe, deviceId, userAgent)
-
     } catch (err) {
         if (err.status === 401) {
             throw err
@@ -254,45 +257,66 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
             throw err
         }
     }
-
 }
 
 async function changePassword(user, password) {
     await revokeUserToken(user._id)
-
     user.password = password
-
     await user.save()
 }
 
-async function findUserCourses(userId, page, limit) {
-    const key = `courses:users:${userId}:enrolled:page:${page}:limit:${limit}`
+async function findUserCourses(userId, page, limit, sort = {}) {
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const key = buildCacheKey(`courses:users:${userId}:enrolled`, { page, limit, sortBy, sortOrder })
     const cached = await client.get(key)
 
-    let data = cached
-        ? JSON.parse(cached)
-        : null
-
+    let data = cached ? JSON.parse(cached) : null
     let totalNumber = 0
 
     if (data) {
-        totalNumber = Number(await client.get(`courses:users:${userId}:enrolled:totalNumber`))
+        totalNumber = Number(await client.get(`${key}:totalNumber`))
         return { data, totalNumber }
     }
 
+    data = await enrollmentModel
+        .find({ status: "active" })
+        .select("courseId")
+        .populate("courseId", "title slug price")
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
 
-    data = await enrollmentModel.find({ userId }).select("courseId").populate("courseId", "title slug price").skip((page - 1) * limit).limit(limit).lean()
     totalNumber = await enrollmentModel.countDocuments({ userId })
 
-    await client.set(key, JSON.stringify(data), { EX: 600 })
-    await client.set(`courses:users:${userId}:enrolled:totalNumber`, totalNumber, { EX: 600 })
+    console.log(data)
+
+    const hasNonDefaultFilters = sortBy !== "createdAt" || sortOrder !== "desc"
+    await client.set(key, JSON.stringify(data), { EX: resolveTTL(hasNonDefaultFilters) })
+    await client.set(`${key}:totalNumber`, totalNumber, { EX: resolveTTL(hasNonDefaultFilters) })
 
     return { data, totalNumber }
 }
 
-async function findUserComments(userId, page, limit) {
-    const data = await commentModel.find({ authorId: userId }).skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await commentModel.countDocuments({ authorId: userId })
+async function findUserComments(userId, page, limit, filters = {}, sort = {}) {
+    const { rating } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+
+    const query = { authorId: userId }
+    if (rating) query.rating = rating
+
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await commentModel
+        .find(query)
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await commentModel.countDocuments(query)
     return { data, totalNumber }
 }
 
@@ -335,16 +359,9 @@ async function getUserDashboard(userId) {
 
 async function changeRole(userId, role) {
     const user = await userModel.findOneAndUpdate(
-        {
-            _id: userId,
-            role: { $ne: "admin" }
-        },
-        {
-            $set: { role }
-        },
-        {
-            new: true
-        }
+        { _id: userId, role: { $ne: "admin" } },
+        { $set: { role } },
+        { new: true }
     );
 
     if (!user) {
@@ -365,7 +382,6 @@ async function changeRole(userId, role) {
 }
 
 async function requestRole(userId, currentRole, role) {
-
     const userRequests = await requestModel.find({ userId }).sort({ createdAt: 1 })
 
     if (userRequests.length >= 3) {
@@ -387,8 +403,17 @@ async function requestRole(userId, currentRole, role) {
     }
 }
 
-async function findPendingRequests(page, limit) {
-    const data = await requestModel.find({ status: "pending" }).skip((page - 1) * limit).limit(limit).lean()
+async function findPendingRequests(page, limit, sort = {}) {
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await requestModel
+        .find({ status: "pending" })
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
     const totalNumber = await requestModel.countDocuments({ status: "pending" })
 
     return { data, totalNumber }
@@ -423,7 +448,6 @@ async function acceptRequest(adminId, requestId) {
 
     foundUser.role = foundRequest.requestedRole
     await foundUser.save()
-
 }
 
 async function rejectRequest(adminId, requestId) {
@@ -435,22 +459,35 @@ async function rejectRequest(adminId, requestId) {
     await foundRequest.save()
 }
 
-async function getAllRequests(page, limit) {
-    const data = await requestModel.find().skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await requestModel.countDocuments()
+async function getAllRequests(page, limit, filters = {}, sort = {}) {
+    const { status, requestedRole } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+
+    const query = {}
+    if (status) query.status = status
+    if (requestedRole) query.requestedRole = requestedRole
+
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await requestModel
+        .find(query)
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await requestModel.countDocuments(query)
 
     return { data, totalNumber }
 }
 
 async function findRequestById(requestId) {
     const data = requestModel.findById(requestId).populate("processedBy userId", "username email").lean()
-
     return data
 }
 
 async function checkDeletedUser(user) {
     if (user.isDeleted) {
-
         await user.populate("deletedBy", "username email")
         const err = new Error(`user deleted`)
         err.status = 404
