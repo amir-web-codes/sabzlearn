@@ -7,6 +7,7 @@ const slugify = require("slugify")
 
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
+const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
 
 function generateSlug(title) {
     return slugify(title, {
@@ -169,29 +170,58 @@ async function updateCourse({ title, description, price, level, language, status
     return foundCourse
 }
 
-async function getAllCourses(page = 1, limit = 20) {
-    const key = `courses:page:${page}:limit:${limit}`
-    const cached = await client.get(key)
-    let totalNumber = 0
+async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
+    const { level, language, status, minPrice, maxPrice } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
-    let data = cached
-        ? JSON.parse(cached)
-        : null
+    const sortFieldMap = {
+        createdAt: "createdAt",
+        price: "price",
+        students: "studentsCount",
+        rating: "rating.average",
+        title: "title"
+    }
+    const sortField = sortFieldMap[sortBy] || "createdAt"
+    const sortDirection = sortOrder === "asc" ? 1 : -1
 
-    if (cached) {
+    const skipCache = hasUnboundedParams({ minPrice, maxPrice })
+    const cacheKey = buildCacheKey("courses:list", {
+        page, limit, level, language, status, sortBy, sortOrder
+    })
 
-        totalNumber = Number(await client.get("courses:totalNumber"))
-        return { data, totalNumber }
+    if (!skipCache) {
+        const cached = await client.get(cacheKey)
+        if (cached) return JSON.parse(cached)
     }
 
+    const query = { isDeleted: false }
 
-    data = await courseModel.find({ isDeleted: false }).skip((page - 1) * limit).limit(limit).lean()
-    totalNumber = await courseModel.countDocuments()
+    if (level) query.level = level
+    if (language) query.language = language
+    if (status) query.status = status
 
-    await client.set(key, JSON.stringify(data), { EX: 600 })
-    await client.set("courses:totalNumber", totalNumber, { EX: 600 })
+    if (minPrice !== undefined || maxPrice !== undefined) {
+        query.price = {}
+        if (minPrice !== undefined) query.price.$gte = Number(minPrice)
+        if (maxPrice !== undefined) query.price.$lte = Number(maxPrice)
+    }
 
-    return { data, totalNumber }
+    const data = await courseModel
+        .find(query)
+        .sort({ [sortField]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await courseModel.countDocuments(query)
+    const result = { data, totalNumber }
+
+    if (!skipCache) {
+        const hasNonDefaultFilters = Boolean(level || language || status || sortBy !== "createdAt")
+        await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
+    }
+
+    return result
 }
 
 async function enrollUserInCourse(slug, userId) {
@@ -207,18 +237,12 @@ async function enrollUserInCourse(slug, userId) {
     const today = new Date()
 
     await enrollmentModel.findOneAndUpdate(
-        { _id: userId },
+        { userId, courseId: foundCourse._id },
         {
-            $set: {
-                courseId: foundCourse._id,
-                status: "active",
-                enrolledAt: today,
-                lastAccessedAt: today
-            }
+            $set: { status: "active", lastAccessedAt: today },
+            $setOnInsert: { userId, courseId: foundCourse._id }
         },
-        {
-            upsert: true
-        }
+        { upsert: true, setDefaultsOnInsert: true, runValidators: true }
     )
 
     const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id })
@@ -227,16 +251,45 @@ async function enrollUserInCourse(slug, userId) {
     await foundCourse.save()
 }
 
-async function findCourseStudents(course, page = 1, limit = 20) {
+async function findCourseStudents(course, page = 1, limit = 20, sort = {}) {
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
-    const data = await enrollmentModel.find({ courseId: course._id }).select("userId").populate("userId", "username email").skip((page - 1) * limit).limit(limit).lean()
+    const allowedSortFields = ["createdAt", "lastAccessedAt"]
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt"
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await enrollmentModel
+        .find({ courseId: course._id })
+        .select("userId createdAt lastAccessedAt")
+        .populate("userId", "username email")
+        .sort({ [sortField]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
     const totalNumber = course.studentsCount
     return { data, totalNumber }
 }
 
-async function findCourseComments(course, page = 1, limit = 20) {
-    const data = await commentModel.find({ courseId: course._id }).skip((page - 1) * limit).limit(limit).lean()
-    const totalNumber = await commentModel.countDocuments({ courseId: course._id })
+async function findCourseComments(course, page = 1, limit = 20, filters = {}, sort = {}) {
+    const { rating } = filters
+    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+
+    const query = { courseId: course._id }
+    if (rating) query.rating = rating
+
+    const allowedSortFields = ["createdAt", "rating"]
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt"
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await commentModel
+        .find(query)
+        .sort({ [sortField]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await commentModel.countDocuments(query)
     return { data, totalNumber }
 }
 
