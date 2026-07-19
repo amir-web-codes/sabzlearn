@@ -13,18 +13,18 @@ const { avatarUpload } = require("../middlewares/uploads")
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
-    .patch(avatarUpload.single("newAvatar"), validator(userValidations.updateUserSchema), checkToken, checkUserBan, userController.updateUserProfile)
+    .patch(checkToken, checkUserBan, avatarUpload.single("newAvatar"), validator(userValidations.updateUserSchema), userController.updateUserProfile)
 
 router.delete("/me/delete-avatar", checkToken, checkUserBan, userController.deleteUserAvatar)
 
-router.get("/me/get-courses", checkToken, userController.getUserCourses)
-router.get("/me/get-comments", checkToken, userController.getUserComments)
+router.get("/me/get-courses", validator(userValidations.getUserCoursesQuerySchema, "query"), checkToken, userController.getUserCourses)
+router.get("/me/get-comments", validator(userValidations.getUserCommentsQuerySchema, "query"), checkToken, userController.getUserComments)
 router.get("/me/dashboard", checkToken, userController.getUserDashboard)
 
 
 
-router.get("/admin/requests/get-pending", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getPendingRequests)
-router.get("/admin/requests/get-all", checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
+router.get("/admin/requests/get-pending", validator(userValidations.getPendingRequestsQuerySchema, "query"), checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getPendingRequests)
+router.get("/admin/requests/get-all", validator(userValidations.getAllRequestsQuerySchema, "query"), checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
 router.get("/admin/requests/:id", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequestById)
 
 router.patch("/request-role", limiters.requestLimiter, validator(userValidations.requestRoleSchema), checkToken, userController.requestNewRole)
