@@ -4,14 +4,10 @@ const orderModel = require("../models/orderModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 
+const invalidatePattern = require("../utils/invalidatePattern")
+
 const MAX_CART_ITEMS = 50
 
-/**
- * Official MongoDB retry pattern for transactions.
- * Retries the whole transaction on TransientTransactionError,
- * and retries just the commit on UnknownTransactionCommitResult.
- * https://www.mongodb.com/docs/manual/core/transactions-in-applications/
- */
 async function withTransaction(session, fn) {
     while (true) {
         session.startTransaction()
@@ -222,11 +218,6 @@ async function deleteBySlug(userId, slug) {
     return { data, totalPrice }
 }
 
-/**
- * Step 1 of checkout: validates the cart and creates a "pending" order.
- * Does NOT enroll the user or clear the cart yet — that only happens
- * once payment is actually confirmed (see completeOrder).
- */
 async function createOrder(userId) {
     const session = await mongoose.startSession()
 
@@ -259,11 +250,6 @@ async function createOrder(userId) {
     }
 }
 
-/**
- * Step 2 of checkout: called once payment is confirmed (gateway
- * callback/webhook). Marks the order paid, enrolls the user, clears the cart.
- * Idempotent: calling it twice for an already-paid order is a no-op.
- */
 async function completeOrder(orderId, userId) {
     const session = await mongoose.startSession()
 
@@ -299,6 +285,7 @@ async function completeOrder(orderId, userId) {
             }
 
             await deleteItems(userId, session)
+            invalidatePattern(`courses:users:${userId}:*`)
 
             return order
         })
@@ -307,11 +294,6 @@ async function completeOrder(orderId, userId) {
     }
 }
 
-/**
- * Called when the gateway reports a failed/cancelled payment.
- * NOTE: your orderModel schema needs a "failed" status (and ideally a
- * failReason field) for this to actually persist — see notes below.
- */
 async function failOrder(orderId, userId, reason) {
     const order = await orderModel.findOneAndUpdate(
         { _id: orderId, userId, status: "pending" },
@@ -328,11 +310,6 @@ async function failOrder(orderId, userId, reason) {
     return order
 }
 
-/**
- * TEMPORARY convenience wrapper — keeps old callers working while there's
- * no real payment gateway. Once you add one, stop calling this and use
- * createOrder() + completeOrder()/failOrder() instead (see explanation).
- */
 async function checkOut(userId) {
     const order = await createOrder(userId)
     return completeOrder(order._id, userId)

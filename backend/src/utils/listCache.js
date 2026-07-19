@@ -1,7 +1,5 @@
 const crypto = require("crypto")
 
-// این پارامترها cardinality نامحدود دارن (بازه‌ی قیمت آزاد)، هیچوقت نباید
-// کلید cache براشون ساخته بشه، وگرنه Redis پر از کلیدهای یک‌بار-مصرف می‌شه
 const UNBOUNDED_PARAMS = ["minPrice", "maxPrice"]
 
 function hasUnboundedParams(filters = {}) {

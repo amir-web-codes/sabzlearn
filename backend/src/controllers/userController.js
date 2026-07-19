@@ -23,7 +23,6 @@ async function deleteUserById(req, res) {
 }
 
 async function signUp(req, res) {
-
     const { email } = req.body
 
     const foundUser = await userService.findByEmail(email)
@@ -41,7 +40,6 @@ async function signUp(req, res) {
     const deviceId = randomUUID()
 
     const { accessToken, refreshToken } = await userService.createTokens(createdUser, rememberMe, deviceId, userAgent)
-
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -188,7 +186,6 @@ async function deleteUserProfile(req, res) {
 }
 
 async function updateUserProfile(req, res) {
-
     const foundUser = await userService.findUserById(req.user.id)
 
     await userService.updateUser(req, foundUser, req.body, req.file)
@@ -207,7 +204,6 @@ async function refreshToken(req, res) {
         err.status = 403
         throw err
     }
-
 
     const deviceId = req.cookies.deviceId
     const rememberMe = req.body.rememberMe ?? false
@@ -255,10 +251,9 @@ async function changeUserPassword(req, res) {
 }
 
 async function getUserCourses(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await userService.findUserCourses(req.user.id, page, limit)
+    const { data, totalNumber } = await userService.findUserCourses(req.user.id, page, limit, { sortBy, sortOrder })
     const students = data.map(object => object.courseId)
 
     res.json({
@@ -275,10 +270,9 @@ async function getUserCourses(req, res) {
 }
 
 async function getUserComments(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, rating, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await userService.findUserComments(req.user.id, page, limit)
+    const { data, totalNumber } = await userService.findUserComments(req.user.id, page, limit, { rating }, { sortBy, sortOrder })
 
     res.json({
         success: true,
@@ -313,7 +307,6 @@ async function changeUserRole(req, res) {
 }
 
 async function requestNewRole(req, res) {
-
     const newRole = req.body.newRole || "teacher"
 
     if (req.user.role === newRole) {
@@ -331,15 +324,14 @@ async function requestNewRole(req, res) {
 }
 
 async function getPendingRequests(req, res) {
+    const { page, limit, sortBy, sortOrder } = req.query
 
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
-    const { data, totalNumber } = await userService.findPendingRequests(page, limit)
+    const { data, totalNumber } = await userService.findPendingRequests(page, limit, { sortBy, sortOrder })
 
     res.json({
         success: true,
         message: "requests fetched successfully",
-        data,
+        data: data.length ? data : "no request found",
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
@@ -350,15 +342,14 @@ async function getPendingRequests(req, res) {
 }
 
 async function getAllRequests(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, status, requestedRole, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await userService.getAllRequests(page, limit)
+    const { data, totalNumber } = await userService.getAllRequests(page, limit, { status, requestedRole }, { sortBy, sortOrder })
 
     res.json({
         success: true,
         message: "requests fetched successfully",
-        data,
+        data: data.length ? data : "no request found",
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),

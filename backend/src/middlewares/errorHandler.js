@@ -24,8 +24,8 @@ const errorHandler = async (err, req, res, next) => {
         logger.warn(context, "client error")
     }
 
-    if (req.file) {
-        await fs.promises.unlink(req.file.path)
+    if (req.uploadedFile) {
+        await deleteFile(req.uploadedFile.public_id)
     }
 
     res.status(status).json({

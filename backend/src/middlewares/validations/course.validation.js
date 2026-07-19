@@ -15,24 +15,6 @@ const createSchema = baseSchema
 
 const editSchema = baseSchema.partial()
 
-const getAllCoursesSchema = z.object({
-    query: z.object({
-        page: z.coerce.number().int().positive().default(1),
-        limit: z.coerce.number().int().positive().max(100).default(20),
-        search: z.string().trim().min(1).max(100).optional(),
-        level: z.string().trim().optional(),
-        language: z.string().trim().optional(),
-        status: z.string().trim().optional(),
-        minPrice: z.coerce.number().nonnegative().optional(),
-        maxPrice: z.coerce.number().nonnegative().optional(),
-        sortBy: z.enum(["createdAt", "price", "students", "rating", "title"]).default("createdAt"),
-        sortOrder: z.enum(["asc", "desc"]).default("desc")
-    }).refine(
-        data => !(data.minPrice !== undefined && data.maxPrice !== undefined) || data.minPrice <= data.maxPrice,
-        { message: "minPrice must be less than or equal to maxPrice", path: ["minPrice"] }
-    )
-}).optional()
-
 const getAllCoursesQuerySchema = z.object({
     ...paginationFields(),
     level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
@@ -60,7 +42,6 @@ const getCourseStudentsQuerySchema = z.object({
 module.exports = {
     createSchema,
     editSchema,
-    getAllCoursesSchema,
     getAllCoursesQuerySchema,
     getCourseCommentsQuerySchema,
     getCourseStudentsQuerySchema

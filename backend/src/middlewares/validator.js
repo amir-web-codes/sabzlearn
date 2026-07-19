@@ -1,6 +1,6 @@
-function validator(schema) {
+function validator(schema, source = "body") {
     return (req, res, next) => {
-        const result = schema.safeParse(req.body)
+        const result = schema.safeParse(req[source])
 
         if (!result.success) {
             const err = new Error("validation failed")
@@ -9,7 +9,7 @@ function validator(schema) {
             throw err
         }
 
-        req.body = result.data
+        Object.assign(req[source], result.data)
         next()
     }
 }
