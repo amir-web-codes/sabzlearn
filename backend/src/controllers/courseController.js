@@ -52,10 +52,14 @@ async function editCourseDetails(req, res) {
 }
 
 async function getAllCourses(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, level, language, status, minPrice, maxPrice, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await courseService.getAllCourses(page, limit)
+    const { data, totalNumber } = await courseService.getAllCourses(
+        page,
+        limit,
+        { level, language, status, minPrice, maxPrice },
+        { sortBy, sortOrder }
+    )
 
     res.json({
         success: true,
@@ -82,10 +86,9 @@ async function registerUserInCourseByTeacher(req, res) {
 
 async function getCourseStudents(req, res) {
 
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit)
+    const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit, { sortBy, sortOrder })
     const students = data.map(object => object.userId)
 
     res.json({
@@ -103,10 +106,9 @@ async function getCourseStudents(req, res) {
 }
 
 async function getCourseComments(req, res) {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 20
+    const { page, limit, rating, sortBy, sortOrder } = req.query
 
-    const { data, totalNumber } = await courseService.findCourseComments(req.course, page, limit)
+    const { data, totalNumber } = await courseService.findCourseComments(req.course, page, limit, { rating }, { sortBy, sortOrder })
 
     res.json({
         success: true,
