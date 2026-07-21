@@ -124,6 +124,46 @@ async function getCourseComments(req, res) {
     })
 }
 
+async function updateCourseThumbnail(req, res) {
+    const data = await courseService.updateCourseThumbnail(req.params.slug.toLowerCase().trim(), req.file)
+
+    res.json({
+        success: true,
+        message: "course thumbnail updated successfully",
+        data
+    })
+}
+
+async function deleteCourseThumbnail(req, res) {
+    const data = await courseService.deleteCourseThumbnail(req.params.slug.toLowerCase().trim())
+
+    res.json({
+        success: true,
+        message: "course thumbnail reset to default successfully",
+        data
+    })
+}
+
+async function updateCourseCoverVideo(req, res) {
+    const data = await courseService.updateCourseCoverVideo(req.params.slug.toLowerCase().trim(), req.file)
+
+    res.json({
+        success: true,
+        message: "course cover video updated successfully",
+        data
+    })
+}
+
+async function deleteCourseCoverVideo(req, res) {
+    const data = await courseService.deleteCourseCoverVideo(req.params.slug.toLowerCase().trim())
+
+    res.json({
+        success: true,
+        message: "course cover video deleted successfully",
+        data
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
     createCourse: asyncWrapper(createCourse),
@@ -132,5 +172,9 @@ module.exports = {
     getAllCourses: asyncWrapper(getAllCourses),
     registerUserInCourseByTeacher: asyncWrapper(registerUserInCourseByTeacher),
     getCourseStudents: asyncWrapper(getCourseStudents),
-    getCourseComments: asyncWrapper(getCourseComments)
+    getCourseComments: asyncWrapper(getCourseComments),
+    updateCourseThumbnail: asyncWrapper(updateCourseThumbnail),
+    deleteCourseThumbnail: asyncWrapper(deleteCourseThumbnail),
+    updateCourseCoverVideo: asyncWrapper(updateCourseCoverVideo),
+    deleteCourseCoverVideo: asyncWrapper(deleteCourseCoverVideo)
 }

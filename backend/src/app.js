@@ -15,19 +15,15 @@ middlewares(app)
 app.use(requestLogger)
 
 process.on("uncaughtException", (error) => {
-    console.log(error)
     logger.fatal({ error }, "uncaught exception")
-    setTimeout(() => {
-        process.exit(1)
-    }, 100)
+    console.log(error)
+    process.exit(1)
 })
 
 process.on("unhandledRejection", (reason) => {
-    console.log(reason)
     logger.fatal({ error: reason }, "unhandled rejection")
-    setTimeout(() => {
-        process.exit(1)
-    }, 100)
+    console.log(reason)
+    process.exit(1)
 })
 
 const { connectRedis } = require("./configs/redis")
