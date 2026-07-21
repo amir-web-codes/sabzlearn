@@ -16,7 +16,7 @@ async function getLessonById(req, res) {
 async function createNewLesson(req, res) {
     const foundCourse = await courseService.findCourseBySlug(req.params.slug)
 
-    const data = await lessonService.createLesson(req.user.id, foundCourse._id, req.body, foundCourse.slug)
+    const data = await lessonService.createLesson(req.user.id, foundCourse._id, req.body, foundCourse.slug, req.file)
 
     res.status(201).json({
         success: true,
@@ -26,7 +26,7 @@ async function createNewLesson(req, res) {
 }
 
 async function editLesson(req, res) {
-    const data = await lessonService.editById(req.params.id, req.body)
+    const data = await lessonService.editById(req.params.id, req.body, req.file)
 
     res.status(201).json({
         success: true,
