@@ -4,7 +4,6 @@ const { paginationFields, sortFields } = require("./common.validation")
 const baseSchema = z.object({
     title: z.string().min(5).max(150),
     description: z.string(),
-    duration: z.coerce.number().default(0),
     order: z.coerce.number().optional()
 })
 

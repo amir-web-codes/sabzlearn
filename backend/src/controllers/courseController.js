@@ -33,7 +33,9 @@ async function createCourse(req, res) {
 }
 
 async function deleteCourse(req, res) {
-    await courseService.removeCourseFromDb(req.params.slug.toLowerCase().trim(), req.user.id)
+    console.log("deletedData")
+
+    await courseService.deleteCourse(req.params.slug.toLowerCase().trim(), req.user.id)
 
     res.json({
         success: true,

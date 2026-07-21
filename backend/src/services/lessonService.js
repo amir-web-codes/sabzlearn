@@ -17,15 +17,19 @@ async function findById(id) {
     return data
 }
 
-async function createLesson(userId, courseId, { title, description, duration, order }, slug, file) {
+async function createLesson(userId, courseId, { title, description, order }, slug, file) {
     const lastOrder = await lessonModel.find({ courseId }).sort({ order: -1 }).limit(1)
     const newOrder = lastOrder.length ? lastOrder[0].order + 100 : 100
 
     let video = { url: null, publicId: null }
+    let finalDuration = 0
 
     if (file) {
         const uploadedFile = await uploadVideo(file, `sabzlearn/lessons/${courseId}`)
         video = { url: uploadedFile.secure_url, publicId: uploadedFile.public_id }
+        finalDuration = uploadedFile.duration
+            ? Math.round((uploadedFile.duration / 60) * 100) / 100
+            : 0
     }
 
     await invalidatePattern(`courses:${slug}:*`)
@@ -35,18 +39,17 @@ async function createLesson(userId, courseId, { title, description, duration, or
         description,
         courseId,
         publisherId: userId,
-        duration: duration,
+        duration: finalDuration,
         order: order !== undefined ? order : newOrder,
         video
     })
 }
 
-async function editById(lessonId, { title, description, duration, order, removeVideo }, file) {
+async function editById(lessonId, { title, description, order, removeVideo }, file) {
     const data = await findById(lessonId)
 
     if (title !== undefined) data.title = title
     if (description !== undefined) data.description = description
-    if (duration !== undefined) data.duration = duration
     if (order !== undefined) data.order = order
 
     const oldPublicId = data.video.publicId
@@ -54,8 +57,17 @@ async function editById(lessonId, { title, description, duration, order, removeV
     if (file) {
         const uploadedFile = await uploadVideo(file, `sabzlearn/lessons/${data.courseId}`)
         data.video = { url: uploadedFile.secure_url, publicId: uploadedFile.public_id }
+
+        data.duration = uploadedFile.duration
+            ? Math.round((uploadedFile.duration / 60) * 100) / 100
+            : 0
     } else if (removeVideo === "true" && oldPublicId) {
         data.video = { url: null, publicId: null }
+        data.duration = 0
+    }
+
+    if (!data.video.publicId) {
+        data.duration = 0
     }
 
     await data.save()

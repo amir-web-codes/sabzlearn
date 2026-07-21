@@ -127,7 +127,8 @@ async function createCourse({ title, description, price, discountPrecentage, lev
     return data
 }
 
-async function removeCourseFromDb(slug, deletedById) {
+async function deleteCourse(slug, deletedById) {
+
     const deletedData = await courseModel.findOneAndUpdate(
         {
             slug
@@ -141,11 +142,8 @@ async function removeCourseFromDb(slug, deletedById) {
         }
     )
 
-    if (deletedData.matchedCount === 0) {
-        const err = new Error("user not found")
-        err.status = 404
-        throw err
-    }
+
+    lessonModel.deleteMany({ courseId: deletedData._id })
 
     await invalidatePattern("courses:*")
 }
@@ -463,7 +461,7 @@ async function deleteCourseCoverVideo(slug) {
 module.exports = {
     findCourseBySlug,
     createCourse,
-    removeCourseFromDb,
+    deleteCourse,
     updateCourse,
     getAllCourses,
     findCourseById,
