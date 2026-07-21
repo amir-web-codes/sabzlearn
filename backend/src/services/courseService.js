@@ -3,8 +3,9 @@ const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const lessonModel = require("../models/lessonModel")
 const userModel = require("../models/userModel")
-const slugify = require("slugify")
 
+
+const generateUniqueSlug = require("../utils/generateUniqueSlug")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
@@ -12,26 +13,7 @@ const { uploadImage, uploadVideo, deleteFile } = require("./fileService")
 
 const DEFAULT_THUMBNAIL_URL = "/images/default-thumbnail.png"
 
-function generateSlug(title) {
-    return slugify(title, {
-        lower: true,
-        strict: true,
-        trim: true
-    })
-}
 
-async function generateUniqueSlug(title) {
-    const baseSlug = generateSlug(title)
-    let slug = baseSlug
-    let counter = 1
-
-    while (await courseModel.exists({ slug })) {
-        slug = `${baseSlug}-${counter}`
-        counter++
-    }
-
-    return slug
-}
 
 async function findCourseBySlug(slug, select) {
     let data;

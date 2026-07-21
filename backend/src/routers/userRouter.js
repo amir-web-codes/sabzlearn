@@ -8,11 +8,11 @@ const userController = require("../controllers/userController")
 const validator = require("../middlewares/validator")
 const userValidations = require("../middlewares/validations/user.validation")
 
-const { avatarUpload } = require("../middlewares/uploads")
+const { imageUpload } = require("../middlewares/uploads")
 
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
-    .patch(checkToken, checkUserBan, avatarUpload.single("newAvatar"), validator(userValidations.updateUserSchema), userController.updateUserProfile)
+    .patch(checkToken, checkUserBan, imageUpload.single("newAvatar"), validator(userValidations.updateUserSchema), userController.updateUserProfile)
     .delete(checkToken, checkUserBan, userController.deleteUserProfile)
 
 router.delete("/me/delete-avatar", checkToken, checkUserBan, userController.deleteUserAvatar)
@@ -45,7 +45,7 @@ router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLim
 
 router.patch("/admin/:id/change-role", validateId, validator(userValidations.changeRoleSchema), checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 
-router.post("/auth/signup", limiters.loginLimiter, avatarUpload.single("avatar"), validator(userValidations.signUpSchema), userController.signUp)
+router.post("/auth/signup", limiters.loginLimiter, imageUpload.single("avatar"), validator(userValidations.signUpSchema), userController.signUp)
 router.post("/auth/login", limiters.loginLimiter, validator(userValidations.loginSchema), userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
 router.post("/refresh-token", validator(userValidations.refreshTokenSchema), userController.refreshToken)

@@ -9,7 +9,7 @@ const validator = require("../middlewares/validator")
 const courseValidations = require("../middlewares/validations/course.validation")
 const { checkSelfCourseAuthor } = require("../middlewares/checkSelfs")
 
-const { thumbnailUpload, videoUpload } = require("../middlewares/uploads")
+const { imageUpload, videoUpload } = require("../middlewares/uploads")
 
 router.get("/get-all", limiters.courseLimiter, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
 
@@ -32,7 +32,7 @@ router.patch(
     checkUserBan,
     checkRoles(["admin", "teacher"]),
     checkSelfs.checkSelfCourseAuthor(false),
-    thumbnailUpload.single("thumbnail"),
+    imageUpload.single("thumbnail"),
     courseController.updateCourseThumbnail
 )
 

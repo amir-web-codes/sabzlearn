@@ -1,9 +1,7 @@
-const avatarUpload = require("./avatarUpload")
-const thumbnailUpload = require("./thumbnailUpload")
+const imageUpload = require("./imageUpload")
 const videoUpload = require("./videoUpload")
 
 module.exports = {
-    avatarUpload,
-    thumbnailUpload,
+    imageUpload,
     videoUpload
 }

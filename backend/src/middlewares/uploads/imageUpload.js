@@ -1,6 +1,6 @@
 const multer = require("multer")
 
-const thumbnailUpload = multer({
+const imageUpload = multer({
     storage: multer.memoryStorage(),
     fileFilter(req, file, cb) {
         const allowed = [
@@ -16,8 +16,8 @@ const thumbnailUpload = multer({
         cb(null, true)
     },
     limits: {
-        fileSize: 1024 * 1024 * 3
+        fileSize: 1024 * 1024 * 2
     }
 })
 
-module.exports = thumbnailUpload
+module.exports = imageUpload
