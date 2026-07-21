@@ -74,15 +74,16 @@ async function getCart(userId, session) {
         const course = courseMap.get(item.courseId.toString())
 
         // if the course was deleted / unpublished -> drop it silently from the cart
-        if (!course) {
+        if (!course || course.isDeleted) {
             needsSave = true
             continue
         }
 
-        if (item.price !== course.price) {
+
+        if (item.price !== course.finalPrice) {
             item.oldPrice = item.price
             item.priceChanged = true
-            item.price = course.price
+            item.price = course.finalPrice
             needsSave = true
         } else if (item.priceChanged) {
             // price matches again (or is being synced for the first time) -> clear the flag
@@ -96,7 +97,7 @@ async function getCart(userId, session) {
             needsSave = true
         }
 
-        totalPrice += course.price
+        totalPrice += course.finalPrice
         validItems.push(item)
     }
 
@@ -141,7 +142,7 @@ async function createItem(userId, course) {
                 items: {
                     title: course.title,
                     courseId: course._id,
-                    price: course.price,
+                    price: course.finalPrice,
                     oldPrice: 0,
                     priceChanged: false
                 }

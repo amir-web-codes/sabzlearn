@@ -180,7 +180,7 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
 
     const sortFieldMap = {
         createdAt: "createdAt",
-        price: "price",
+        price: "finalPrice",
         students: "studentsCount",
         rating: "rating.average",
         title: "title"
@@ -205,9 +205,9 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
     if (status) query.status = status
 
     if (minPrice !== undefined || maxPrice !== undefined) {
-        query.price = {}
-        if (minPrice !== undefined) query.price.$gte = Number(minPrice)
-        if (maxPrice !== undefined) query.price.$lte = Number(maxPrice)
+        query.finalPrice = {}
+        if (minPrice !== undefined) query.finalPrice.$gte = Number(minPrice)
+        if (maxPrice !== undefined) query.finalPrice.$lte = Number(maxPrice)
     }
 
     const data = await courseModel

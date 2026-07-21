@@ -106,12 +106,11 @@ const courseSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-courseSchema.pre("save", function (next) {
+courseSchema.pre("save", function () {
     if (this.isModified("price") || this.isModified("discountPrecentage")) {
         const discountAmount = this.price * (this.discountPrecentage / 100)
         this.finalPrice = Math.round((this.price - discountAmount) * 100) / 100
     }
-    next()
 })
 
 const courseModel = mongoose.model("Course", courseSchema)

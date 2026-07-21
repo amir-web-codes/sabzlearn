@@ -9,7 +9,11 @@ const baseSchema = z.object({
 
 const createSchema = baseSchema
 
-const updateSchema = baseSchema.partial()
+const updateSchema = z.object({
+    title: z.string().min(3).max(60),
+    text: z.string().min(3).max(300),
+    rating: z.enum(["Very Bad", "Bad", "Medium", "Good", "Very Good"])
+}).partial()
 
 const getUserCommentsQuerySchema = z.object({
     ...paginationFields(),
