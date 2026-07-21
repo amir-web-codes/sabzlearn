@@ -283,15 +283,13 @@ async function findUserCourses(userId, page, limit, sort = {}) {
     data = await enrollmentModel
         .find({ status: "active" })
         .select("courseId")
-        .populate("courseId", "title slug price")
+        .populate("courseId", "title slug price discountPrecentage")
         .sort({ [sortBy]: sortDirection })
         .skip((page - 1) * limit)
         .limit(limit)
         .lean()
 
     totalNumber = await enrollmentModel.countDocuments({ userId })
-
-    console.log(data)
 
     const hasNonDefaultFilters = sortBy !== "createdAt" || sortOrder !== "desc"
     await client.set(key, JSON.stringify(data), { EX: resolveTTL(hasNonDefaultFilters) })

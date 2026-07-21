@@ -96,7 +96,7 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, discountPrice, level, language, status }, userId) {
+async function createCourse({ title, description, price, discountPrecentage, level, language, status }, userId) {
     const slug = await generateUniqueSlug(title)
     let selectedPrice;
 
@@ -111,7 +111,7 @@ async function createCourse({ title, description, price, discountPrice, level, l
         slug,
         description,
         price: selectedPrice,
-        discountPrice: discountPrice || 0,
+        discountPrecentage: Number(discountPrecentage) || 0,
         instructor: userId,
         level,
         language,
@@ -176,7 +176,7 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
 
     const sortFieldMap = {
         createdAt: "createdAt",
-        price: "price",
+        price: "finalPrice",
         students: "studentsCount",
         rating: "rating.average",
         title: "title"

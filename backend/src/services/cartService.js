@@ -73,7 +73,7 @@ async function getCart(userId, session) {
     for (const item of cart.items) {
         const course = courseMap.get(item.courseId.toString())
 
-        // course was deleted / unpublished -> drop it silently from the cart
+        // if the course was deleted / unpublished -> drop it silently from the cart
         if (!course) {
             needsSave = true
             continue

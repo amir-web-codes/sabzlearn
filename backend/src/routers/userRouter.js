@@ -12,8 +12,8 @@ const { avatarUpload } = require("../middlewares/uploads")
 
 router.route("/me")
     .get(checkToken, userController.getUserProfile)
-    .delete(checkToken, checkUserBan, userController.deleteUserProfile)
     .patch(checkToken, checkUserBan, avatarUpload.single("newAvatar"), validator(userValidations.updateUserSchema), userController.updateUserProfile)
+    .delete(checkToken, checkUserBan, userController.deleteUserProfile)
 
 router.delete("/me/delete-avatar", checkToken, checkUserBan, userController.deleteUserAvatar)
 
