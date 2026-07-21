@@ -315,7 +315,7 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
 
     foundCourse = await findCourseBySlug(slug)
 
-    foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1 }).lean()
+    foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1, createdAt: -1 }).lean()
 
     if (foundLessons.length > 0) {
         totalDuration = foundLessons.reduce(
