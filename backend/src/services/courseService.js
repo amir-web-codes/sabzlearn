@@ -8,6 +8,9 @@ const slugify = require("slugify")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
+const { uploadImage, uploadVideo, deleteFile } = require("./fileService")
+
+const DEFAULT_THUMBNAIL_URL = "/images/default-thumbnail.png"
 
 function generateSlug(title) {
     return slugify(title, {
@@ -147,7 +150,7 @@ async function removeCourseFromDb(slug, deletedById) {
     await invalidatePattern("courses:*")
 }
 
-async function updateCourse({ title, description, price, level, language, status }, slug) {
+async function updateCourse({ title, description, price, discountPrecentage, level, language, status }, slug) {
 
     const foundCourse = await courseModel.findOne({ slug })
 
@@ -159,6 +162,7 @@ async function updateCourse({ title, description, price, level, language, status
 
     if (description !== undefined) foundCourse.description = description
     if (price !== undefined) foundCourse.price = price
+    if (discountPrecentage !== undefined) foundCourse.discountPrecentage = discountPrecentage
     if (level !== undefined) foundCourse.level = level
     if (language !== undefined) foundCourse.language = language
     if (status !== undefined) foundCourse.status = status
@@ -176,7 +180,7 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
 
     const sortFieldMap = {
         createdAt: "createdAt",
-        price: "finalPrice",
+        price: "price",
         students: "studentsCount",
         rating: "rating.average",
         title: "title"
@@ -352,6 +356,110 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
     return { foundCourse, totalDuration }
 }
 
+async function updateCourseThumbnail(slug, file) {
+    if (!file) {
+        const err = new Error("thumbnail file is required")
+        err.status = 400
+        throw err
+    }
+
+    const foundCourse = await findCourseBySlug(slug)
+    const oldPublicId = foundCourse.thumbnail.publicId
+
+    const uploadedFile = await uploadImage(file, `sabzlearn/courses/${foundCourse._id}/thumbnail`)
+
+    foundCourse.thumbnail = {
+        url: uploadedFile.secure_url,
+        publicId: uploadedFile.public_id
+    }
+
+    await foundCourse.save()
+
+    if (oldPublicId) {
+        await deleteFile(oldPublicId, "image").catch(() => { })
+    }
+
+    await invalidatePattern("courses:*")
+
+    return foundCourse
+}
+
+async function deleteCourseThumbnail(slug) {
+    const foundCourse = await findCourseBySlug(slug)
+
+    if (!foundCourse.thumbnail.publicId) {
+        const err = new Error("this course doesn't have a custom thumbnail")
+        err.status = 409
+        throw err
+    }
+
+    const oldPublicId = foundCourse.thumbnail.publicId
+
+    foundCourse.thumbnail = {
+        url: DEFAULT_THUMBNAIL_URL,
+        publicId: null
+    }
+
+    await foundCourse.save()
+    await deleteFile(oldPublicId, "image").catch(() => { })
+
+    await invalidatePattern("courses:*")
+
+    return foundCourse
+}
+
+async function updateCourseCoverVideo(slug, file) {
+    if (!file) {
+        const err = new Error("cover video file is required")
+        err.status = 400
+        throw err
+    }
+
+    const foundCourse = await findCourseBySlug(slug)
+    const oldPublicId = foundCourse.coverVideoURL.publicId
+
+    const uploadedFile = await uploadVideo(file, `sabzlearn/courses/${foundCourse._id}/cover`)
+
+    foundCourse.coverVideoURL = {
+        url: uploadedFile.secure_url,
+        publicId: uploadedFile.public_id
+    }
+
+    await foundCourse.save()
+
+    if (oldPublicId) {
+        await deleteFile(oldPublicId, "video").catch(() => { })
+    }
+
+    await invalidatePattern("courses:*")
+
+    return foundCourse
+}
+
+async function deleteCourseCoverVideo(slug) {
+    const foundCourse = await findCourseBySlug(slug)
+
+    if (!foundCourse.coverVideoURL.publicId) {
+        const err = new Error("this course doesn't have a cover video")
+        err.status = 409
+        throw err
+    }
+
+    const oldPublicId = foundCourse.coverVideoURL.publicId
+
+    foundCourse.coverVideoURL = {
+        url: null,
+        publicId: null
+    }
+
+    await foundCourse.save()
+    await deleteFile(oldPublicId, "video").catch(() => { })
+
+    await invalidatePattern("courses:*")
+
+    return foundCourse
+}
+
 module.exports = {
     findCourseBySlug,
     createCourse,
@@ -363,5 +471,9 @@ module.exports = {
     findCourseStudents,
     findCourseComments,
     updateCourseRating,
-    getCourseDetails
+    getCourseDetails,
+    updateCourseThumbnail,
+    deleteCourseThumbnail,
+    updateCourseCoverVideo,
+    deleteCourseCoverVideo
 }
