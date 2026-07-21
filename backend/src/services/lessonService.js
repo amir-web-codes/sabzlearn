@@ -3,6 +3,7 @@ const lessonModel = require("../models/lessonModel")
 const { client } = require("../configs/redis")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { buildCacheKey, resolveTTL } = require("../utils/listCache")
+const { uploadVideo, deleteFile } = require("./fileService")
 
 async function findById(id) {
     const data = await lessonModel.findById(id)
@@ -16,9 +17,16 @@ async function findById(id) {
     return data
 }
 
-async function createLesson(userId, courseId, { title, description, duration, order }, slug) {
+async function createLesson(userId, courseId, { title, description, duration, order }, slug, file) {
     const lastOrder = await lessonModel.find({ courseId }).sort({ order: -1 }).limit(1)
     const newOrder = lastOrder.length ? lastOrder[0].order + 100 : 100
+
+    let video = { url: null, publicId: null }
+
+    if (file) {
+        const uploadedFile = await uploadVideo(file, `sabzlearn/lessons/${courseId}`)
+        video = { url: uploadedFile.secure_url, publicId: uploadedFile.public_id }
+    }
 
     await invalidatePattern(`courses:${slug}:*`)
 
@@ -28,11 +36,12 @@ async function createLesson(userId, courseId, { title, description, duration, or
         courseId,
         publisherId: userId,
         duration: duration,
-        order: order !== undefined ? order : newOrder
+        order: order !== undefined ? order : newOrder,
+        video
     })
 }
 
-async function editById(lessonId, { title, description, duration, order }) {
+async function editById(lessonId, { title, description, duration, order, removeVideo }, file) {
     const data = await findById(lessonId)
 
     if (title !== undefined) data.title = title
@@ -40,7 +49,20 @@ async function editById(lessonId, { title, description, duration, order }) {
     if (duration !== undefined) data.duration = duration
     if (order !== undefined) data.order = order
 
+    const oldPublicId = data.video.publicId
+
+    if (file) {
+        const uploadedFile = await uploadVideo(file, `sabzlearn/lessons/${data.courseId}`)
+        data.video = { url: uploadedFile.secure_url, publicId: uploadedFile.public_id }
+    } else if (removeVideo === "true" && oldPublicId) {
+        data.video = { url: null, publicId: null }
+    }
+
     await data.save()
+
+    if (oldPublicId && (file || removeVideo === "true")) {
+        await deleteFile(oldPublicId, "video").catch(() => { })
+    }
 
     await invalidatePattern("courses:*")
     await invalidatePattern("lessons:*")
@@ -55,6 +77,10 @@ async function deleteById(lessonId) {
         const err = new Error("lesson not found")
         err.status = 404
         throw err
+    }
+
+    if (result.video.publicId) {
+        await deleteFile(result.video.publicId, "video").catch(() => { })
     }
 
     await invalidatePattern("courses:*")
