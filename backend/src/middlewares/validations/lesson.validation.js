@@ -10,7 +10,9 @@ const baseSchema = z.object({
 
 const createSchema = baseSchema;
 
-const editSchema = baseSchema.partial()
+const editSchema = baseSchema.partial().extend({
+    removeVideo: z.enum(["true", "false"]).optional()
+})
 
 const getAllLessonsQuerySchema = z.object({
     ...paginationFields(),
@@ -22,6 +24,8 @@ const getCourseLessonsQuerySchema = z.object({
     ...paginationFields(),
     ...sortFields(["order", "duration", "createdAt"], "order")
 })
+
+
 
 module.exports = {
     createSchema,

@@ -33,7 +33,7 @@ const lessonSchema = new mongoose.Schema({
             type: String,
             default: null
         }
-    }
+    },
     duration: {
         type: Number,
         default: 0,

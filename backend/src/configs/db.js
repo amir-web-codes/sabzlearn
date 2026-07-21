@@ -10,6 +10,7 @@ async function getDB() {
     } catch (err) {
         console.log(`database connection error: ${err}`)
         logger.error({ err }, "database connection error")
+        process.exit(1)
     }
 }
 

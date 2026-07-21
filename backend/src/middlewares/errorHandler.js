@@ -1,5 +1,5 @@
 const logger = require("../utils/logger")
-const fs = require("fs")
+const { deleteFile } = require("../services/fileService")
 
 const errorHandler = async (err, req, res, next) => {
     const status = err.status || 500
@@ -25,7 +25,11 @@ const errorHandler = async (err, req, res, next) => {
     }
 
     if (req.uploadedFile) {
-        await deleteFile(req.uploadedFile.public_id)
+        try {
+            await deleteFile(req.uploadedFile.public_id, req.uploadedFile.resource_type || "image")
+        } catch (cleanupErr) {
+            logger.error({ err: cleanupErr }, "failed to cleanup orphaned uploaded file")
+        }
     }
 
     res.status(status).json({
