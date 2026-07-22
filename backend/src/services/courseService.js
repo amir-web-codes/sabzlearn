@@ -170,7 +170,7 @@ async function updateCourse({ title, description, price, discountPrecentage, lev
     return foundCourse
 }
 
-async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
+async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}, isAdmin = false) {
     const { level, language, status, minPrice, maxPrice, category } = filters
     const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
@@ -199,22 +199,22 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
         if (cached) return JSON.parse(cached)
     }
 
-    const query = {
-        isDeleted: false,
-        status: "published"
-    }
-
-    const isAdmin = req.user?.role === "admin"
+    const query = { isDeleted: false }
 
     if (level) query.level = level
     if (language) query.language = language
-    if (status && status !== "published" && isAdmin) {
+
+    if (status) {
+        if (status !== "published" && !isAdmin) {
+            const err = new Error("you don't have permission to filter by this status")
+            err.status = 403
+            throw err
+        }
         query.status = status
     } else {
-        const err = new Error("you don't have permission")
-        err.status = 403
-        throw err
+        query.status = "published"
     }
+
     if (categoryIds) query.category = { $in: categoryIds }
 
     if (minPrice !== undefined || maxPrice !== undefined) {

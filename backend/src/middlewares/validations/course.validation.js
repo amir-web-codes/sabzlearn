@@ -9,7 +9,8 @@ const baseSchema = z.object({
     level: z.enum(["beginner", "intermediate", "advanced"]).default("beginner"),
     language: z.enum(["en", "fa"]).default("fa"),
     status: z.enum(["draft", "published", "archived", "closed"]).default("draft"),
-    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug").optional()
+    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug").optional(),
+    tags: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId")).max(5, "a course can have at most 5 tags").optional()
 })
 
 const createSchema = baseSchema
@@ -22,7 +23,8 @@ const editSchema = z.object({
     level: z.enum(["beginner", "intermediate", "advanced"]),
     language: z.enum(["en", "fa"]),
     status: z.enum(["draft", "published", "archived", "closed"]),
-    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug")
+    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug"),
+    tags: z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId")).max(5, "a course can have at most 5 tags").optional()
 }).partial()
 
 const getAllCoursesQuerySchema = z.object({

@@ -57,12 +57,14 @@ async function getAllCourses(req, res) {
 
     const page = req.query.page || 1
     const limit = req.query.limit || 20
+    const isAdmin = req.user?.role === "admin"
 
     const { data, totalNumber } = await courseService.getAllCourses(
         page,
         limit,
         { level, language, status, minPrice, maxPrice, category },
-        { sortBy, sortOrder }
+        { sortBy, sortOrder },
+        isAdmin
     )
 
     res.json({
