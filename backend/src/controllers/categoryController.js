@@ -39,7 +39,7 @@ async function getBySlug(req, res) {
 }
 
 async function createCategory(req, res) {
-    console.log(1)
+
     const data = await categoryService.createCategory(req.body, req.file, req.user.id)
 
     res.status(201).json({

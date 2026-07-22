@@ -11,7 +11,7 @@ const { checkSelfCourseAuthor } = require("../middlewares/checkSelfs")
 
 const { imageUpload, videoUpload } = require("../middlewares/uploads")
 
-router.get("/get-all", limiters.courseLimiter, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
+router.get("/get-all", limiters.courseLimiter, checkToken, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
 
 router.get("/:slug/get-students", validator(courseValidations.getCourseStudentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
 
@@ -22,9 +22,9 @@ router.route("/:slug")
     .patch(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), validator(courseValidations.editSchema), courseController.editCourseDetails)
     .delete(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse)
 
-router.post("/create", checkToken, validator(courseValidations.createSchema), checkUserBan, checkRoles(["admin", "teacher"]), courseController.createCourse)
+router.post("/create", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), validator(courseValidations.createSchema), courseController.createCourse)
 
-router.post("/:slug/enroll/:id", validateId, checkToken, checkUserBan, limiters.enrollLimiter, checkSelfCourseAuthor(false), courseController.registerUserInCourseByTeacher)
+router.post("/:slug/enroll/:id", validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), limiters.enrollLimiter, checkSelfCourseAuthor(false), courseController.registerUserInCourseByTeacher)
 
 router.patch(
     "/:slug/thumbnail",

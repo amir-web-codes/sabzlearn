@@ -131,10 +131,8 @@ async function deleteCourse(slug, deletedById) {
         }
     )
 
-    console.log(deletedData)
+    await lessonModel.deleteMany({ courseId: deletedData._id })
 
-    const test = await lessonModel.deleteMany({ courseId: deletedData._id })
-    console.log(test)
     await invalidatePattern("courses:*")
 }
 
@@ -201,11 +199,22 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
         if (cached) return JSON.parse(cached)
     }
 
-    const query = { isDeleted: false }
+    const query = {
+        isDeleted: false,
+        status: "published"
+    }
+
+    const isAdmin = req.user?.role === "admin"
 
     if (level) query.level = level
     if (language) query.language = language
-    if (status) query.status = status || "published"
+    if (status && status !== "published" && isAdmin) {
+        query.status = status
+    } else {
+        const err = new Error("you don't have permission")
+        err.status = 403
+        throw err
+    }
     if (categoryIds) query.category = { $in: categoryIds }
 
     if (minPrice !== undefined || maxPrice !== undefined) {

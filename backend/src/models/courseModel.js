@@ -41,6 +41,17 @@ const courseSchema = new mongoose.Schema({
         default: null,
         index: true
     },
+    tags: {
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Tag"
+        }],
+        validate: {
+            validator: value => value.length <= 5,
+            message: "a course can have at most 5 tags"
+        },
+        default: []
+    },
     instructor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -118,6 +129,8 @@ courseSchema.pre("save", function () {
         this.finalPrice = Math.round((this.price - discountAmount) * 100) / 100
     }
 })
+
+courseSchema.index({ tags: 1 })
 
 const courseModel = mongoose.model("Course", courseSchema)
 

@@ -10,7 +10,7 @@ const { imageUpload } = require("../middlewares/uploads")
 
 const { createSchema, updateSchema, slugParamSchema, getAllQuerySchema } = require("../middlewares/validations/category.validation")
 
-router.get("/admin/all", validator(getAllQuerySchema, "query"), categoryController.getAllCategories)
+router.get("/get-all", checkToken, validator(getAllQuerySchema, "query"), categoryController.getAllCategories)
 
 
 router.post("/admin/create", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, imageUpload.single("icon"), validator(createSchema), categoryController.createCategory)
