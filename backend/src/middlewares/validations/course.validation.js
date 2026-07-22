@@ -8,7 +8,8 @@ const baseSchema = z.object({
     discountPrecentage: z.coerce.number().min(0).max(100).default(0),
     level: z.enum(["beginner", "intermediate", "advanced"]).default("beginner"),
     language: z.enum(["en", "fa"]).default("fa"),
-    status: z.enum(["draft", "published", "archived", "closed"]).default("draft")
+    status: z.enum(["draft", "published", "archived", "closed"]).default("draft"),
+    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug").optional()
 })
 
 const createSchema = baseSchema
@@ -20,7 +21,8 @@ const editSchema = z.object({
     discountPrecentage: z.coerce.number().min(0).max(100),
     level: z.enum(["beginner", "intermediate", "advanced"]),
     language: z.enum(["en", "fa"]),
-    status: z.enum(["draft", "published", "archived", "closed"])
+    status: z.enum(["draft", "published", "archived", "closed"]),
+    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug")
 }).partial()
 
 const getAllCoursesQuerySchema = z.object({

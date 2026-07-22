@@ -8,7 +8,6 @@ const categorySchema = new mongoose.Schema({
         minlength: 2,
         maxlength: 50
     },
-
     slug: {
         type: String,
         required: true,
@@ -17,19 +16,21 @@ const categorySchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-
     description: {
         type: String,
         default: ""
     },
-
     parent: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
         default: null,
         index: true
     },
-
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
     icon: {
         url: {
             type: String,
@@ -40,12 +41,10 @@ const categorySchema = new mongoose.Schema({
             default: null
         }
     },
-
     sortOrder: {
         type: Number,
         default: 0
     },
-
     status: {
         type: String,
         enum: ["active", "inactive"],
@@ -56,6 +55,8 @@ const categorySchema = new mongoose.Schema({
     timestamps: true
 })
 
+categorySchema.index({ parent: 1, status: 1 })
+categorySchema.index({ status: 1, sortOrder: 1 })
 
 const categoryModel = mongoose.model("Category", categorySchema)
 

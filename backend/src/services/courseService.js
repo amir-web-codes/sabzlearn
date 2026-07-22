@@ -10,6 +10,7 @@ const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
 const { uploadImage, uploadVideo, deleteFile } = require("./fileService")
+const categoryModel = require("../models/categoryModel")
 
 const DEFAULT_THUMBNAIL_URL = "/images/default-thumbnail.png"
 
@@ -81,8 +82,8 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, discountPrecentage, level, language, status }, userId) {
-    const slug = await generateUniqueSlug(title)
+async function createCourse({ title, description, price, discountPrecentage, category, level, language, status }, userId) {
+    const slug = await generateUniqueSlug(courseModel, title)
     let selectedPrice;
 
     if (price) {
@@ -91,12 +92,18 @@ async function createCourse({ title, description, price, discountPrecentage, lev
         selectedPrice = 0
     }
 
+    let newCategory;
+    if (category) {
+        newCategory = await checkAvailableCategory(category)
+    }
+
     const data = await courseModel.create({
         title,
         slug,
         description,
         price: selectedPrice,
         discountPrecentage: Number(discountPrecentage) || 0,
+        category: newCategory ? newCategory._id : null,
         instructor: userId,
         level,
         language,
@@ -130,13 +137,25 @@ async function deleteCourse(slug, deletedById) {
     await invalidatePattern("courses:*")
 }
 
-async function updateCourse({ title, description, price, discountPrecentage, level, language, status }, slug) {
+async function checkAvailableCategory(categoryName) {
+    const newCategory = await categoryModel.findOne({ slug: categoryName }).lean()
+
+    if (!newCategory) {
+        const err = new Error("category not found")
+        err.status = 404
+        throw err
+    }
+
+    return newCategory
+}
+
+async function updateCourse({ title, description, price, discountPrecentage, category, level, language, status }, slug) {
 
     const foundCourse = await courseModel.findOne({ slug })
 
     if (title !== undefined && title.trim() !== foundCourse.title) {
         foundCourse.title = title
-        const sluged = await generateUniqueSlug(title)
+        const sluged = await generateUniqueSlug(courseModel, title)
         foundCourse.slug = sluged
     }
 
@@ -146,6 +165,10 @@ async function updateCourse({ title, description, price, discountPrecentage, lev
     if (level !== undefined) foundCourse.level = level
     if (language !== undefined) foundCourse.language = language
     if (status !== undefined) foundCourse.status = status
+    if (category !== undefined) {
+        const newCategory = await checkAvailableCategory(category)
+        foundCourse.category = newCategory._id
+    }
 
     await foundCourse.save()
 

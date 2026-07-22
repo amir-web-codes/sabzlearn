@@ -77,7 +77,6 @@ async function getAllCourses(req, res) {
 }
 
 async function registerUserInCourseByTeacher(req, res) {
-
     await courseService.enrollUserInCourse(req.params.slug.toLowerCase().trim(), req.params.id)
 
     res.status(201).json({
@@ -87,7 +86,6 @@ async function registerUserInCourseByTeacher(req, res) {
 }
 
 async function getCourseStudents(req, res) {
-
     const { page, limit, sortBy, sortOrder } = req.query
 
     const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit, { sortBy, sortOrder })

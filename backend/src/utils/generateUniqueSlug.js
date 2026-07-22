@@ -1,20 +1,20 @@
-const courseModel = require("../models/courseModel")
 const slugify = require("slugify")
 
-function generateSlug(title) {
-    return slugify(title, {
+function generateSlug(value) {
+    return slugify(value, {
         lower: true,
         strict: true,
         trim: true
     })
 }
 
-async function generateUniqueSlug(title) {
-    const baseSlug = generateSlug(title)
+async function generateUniqueSlug(model, value) {
+    const baseSlug = generateSlug(value)
+
     let slug = baseSlug
     let counter = 1
 
-    while (await courseModel.exists({ slug })) {
+    while (await model.exists({ slug })) {
         slug = `${baseSlug}-${counter}`
         counter++
     }

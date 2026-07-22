@@ -35,6 +35,12 @@ const courseSchema = new mongoose.Schema({
         default: 0,
         index: true
     },
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        default: null,
+        index: true
+    },
     instructor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
