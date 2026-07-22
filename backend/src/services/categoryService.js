@@ -35,6 +35,42 @@ async function checkDuplicateSiblingName(name, parentId, excludeId = null) {
     }
 }
 
+async function getDescendantCategoryIds(categorySlug) {
+    const result = await categoryModel.aggregate([
+        { $match: { slug: categorySlug } },
+        {
+            $graphLookup: {
+                from: "categories",
+                startWith: "$_id",
+                connectFromField: "_id",
+                connectToField: "parent",
+                as: "descendants"
+            }
+        }
+    ])
+
+    if (!result.length) {
+        const err = new Error("category not found")
+        err.status = 404
+        throw err
+    }
+
+    const [{ _id, descendants }] = result
+    return [_id, ...descendants.map(d => d._id)]
+}
+
+async function resolveCategoryId(categorySlug) {
+    const found = await categoryModel.findOne({ slug: categorySlug }).select("_id")
+
+    if (!found) {
+        const err = new Error("category not found")
+        err.status = 404
+        throw err
+    }
+
+    return found._id
+}
+
 async function validateParentCategory(parentId, currentCategoryId = null) {
     if (!parentId) return null
 
@@ -315,5 +351,7 @@ module.exports = {
     getAllCategories,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    getDescendantCategoryIds,
+    resolveCategoryId
 }
