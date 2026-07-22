@@ -2,8 +2,11 @@ const categoryService = require("../services/categoryService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
 async function getAllCategories(req, res) {
-    const { page, limit, search, inactive, sortBy, sortOrder } = req.query
+    const { search, inactive, sortBy, sortOrder } = req.query
     const isAdmin = req.user?.role === "admin"
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await categoryService.getAllCategories(
         { page, limit, search, inactive, sortBy, sortOrder },

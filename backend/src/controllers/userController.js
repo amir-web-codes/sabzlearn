@@ -251,7 +251,10 @@ async function changeUserPassword(req, res) {
 }
 
 async function getUserCourses(req, res) {
-    const { page, limit, sortBy, sortOrder } = req.query
+    const { sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await userService.findUserCourses(req.user.id, page, limit, { sortBy, sortOrder })
     const students = data.map(object => object.courseId)
@@ -270,7 +273,10 @@ async function getUserCourses(req, res) {
 }
 
 async function getUserComments(req, res) {
-    const { page, limit, rating, sortBy, sortOrder } = req.query
+    const { rating, sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await userService.findUserComments(req.user.id, page, limit, { rating }, { sortBy, sortOrder })
 
@@ -324,7 +330,10 @@ async function requestNewRole(req, res) {
 }
 
 async function getPendingRequests(req, res) {
-    const { page, limit, sortBy, sortOrder } = req.query
+    const { sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await userService.findPendingRequests(page, limit, { sortBy, sortOrder })
 
@@ -342,7 +351,10 @@ async function getPendingRequests(req, res) {
 }
 
 async function getAllRequests(req, res) {
-    const { page, limit, status, requestedRole, sortBy, sortOrder } = req.query
+    const { status, requestedRole, sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await userService.getAllRequests(page, limit, { status, requestedRole }, { sortBy, sortOrder })
 

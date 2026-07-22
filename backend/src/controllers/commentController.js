@@ -2,8 +2,11 @@ const commentService = require("../services/commentService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
 async function getUserComments(req, res) {
-    const { page, limit, rating, sortBy, sortOrder } = req.query
+    const { rating, sortBy, sortOrder } = req.query
     const userId = req.params.id
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await commentService.findUserComments(userId, page, limit, { rating }, { sortBy, sortOrder })
 

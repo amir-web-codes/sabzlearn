@@ -45,7 +45,10 @@ async function deleteLesson(req, res) {
 }
 
 async function getAllLessons(req, res) {
-    const { page, limit, courseId, sortBy, sortOrder } = req.query
+    const { courseId, sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await lessonService.findAll(page, limit, { courseId }, { sortBy, sortOrder })
 
@@ -63,7 +66,10 @@ async function getAllLessons(req, res) {
 }
 
 async function getCourseLessons(req, res) {
-    const { page, limit, sortBy, sortOrder } = req.query
+    const { sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const foundCourse = await courseService.findCourseBySlug(req.params.slug)
 

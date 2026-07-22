@@ -3,6 +3,7 @@ const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const lessonModel = require("../models/lessonModel")
 const userModel = require("../models/userModel")
+const categoryService = require("../services/categoryService")
 
 
 const generateUniqueSlug = require("../utils/generateUniqueSlug")
@@ -10,7 +11,6 @@ const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
 const { uploadImage, uploadVideo, deleteFile } = require("./fileService")
-const categoryModel = require("../models/categoryModel")
 
 const DEFAULT_THUMBNAIL_URL = "/images/default-thumbnail.png"
 
@@ -82,7 +82,7 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, discountPrecentage, category, level, language, status }, userId) {
+async function createCourse({ title, description, price, discountPrecentage, level, language, status, category }, userId) {
     const slug = await generateUniqueSlug(courseModel, title)
     let selectedPrice;
 
@@ -92,9 +92,9 @@ async function createCourse({ title, description, price, discountPrecentage, cat
         selectedPrice = 0
     }
 
-    let newCategory;
+    let categoryId = null
     if (category) {
-        newCategory = await checkAvailableCategory(category)
+        categoryId = await categoryService.resolveCategoryId(category)
     }
 
     const data = await courseModel.create({
@@ -103,8 +103,8 @@ async function createCourse({ title, description, price, discountPrecentage, cat
         description,
         price: selectedPrice,
         discountPrecentage: Number(discountPrecentage) || 0,
-        category: newCategory ? newCategory._id : null,
         instructor: userId,
+        category: categoryId,
         level,
         language,
         status,
@@ -131,27 +131,22 @@ async function deleteCourse(slug, deletedById) {
         }
     )
 
+    console.log(deletedData)
 
-    lessonModel.deleteMany({ courseId: deletedData._id })
-
+    const test = await lessonModel.deleteMany({ courseId: deletedData._id })
+    console.log(test)
     await invalidatePattern("courses:*")
 }
 
-async function checkAvailableCategory(categoryName) {
-    const newCategory = await categoryModel.findOne({ slug: categoryName }).lean()
+async function updateCourse({ title, description, price, discountPrecentage, level, language, status, category }, slug) {
 
-    if (!newCategory) {
-        const err = new Error("category not found")
+    const foundCourse = await courseModel.findOne({ slug })
+
+    if (!foundCourse) {
+        const err = new Error("course not found")
         err.status = 404
         throw err
     }
-
-    return newCategory
-}
-
-async function updateCourse({ title, description, price, discountPrecentage, category, level, language, status }, slug) {
-
-    const foundCourse = await courseModel.findOne({ slug })
 
     if (title !== undefined && title.trim() !== foundCourse.title) {
         foundCourse.title = title
@@ -165,9 +160,9 @@ async function updateCourse({ title, description, price, discountPrecentage, cat
     if (level !== undefined) foundCourse.level = level
     if (language !== undefined) foundCourse.language = language
     if (status !== undefined) foundCourse.status = status
+
     if (category !== undefined) {
-        const newCategory = await checkAvailableCategory(category)
-        foundCourse.category = newCategory._id
+        foundCourse.category = await categoryService.resolveCategoryId(category)
     }
 
     await foundCourse.save()
@@ -178,7 +173,7 @@ async function updateCourse({ title, description, price, discountPrecentage, cat
 }
 
 async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
-    const { level, language, status, minPrice, maxPrice } = filters
+    const { level, language, status, minPrice, maxPrice, category } = filters
     const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
     const sortFieldMap = {
@@ -191,9 +186,14 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
     const sortField = sortFieldMap[sortBy] || "createdAt"
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
+    let categoryIds = null
+    if (category) {
+        categoryIds = await categoryService.getDescendantCategoryIds(category)
+    }
+
     const skipCache = hasUnboundedParams({ minPrice, maxPrice })
     const cacheKey = buildCacheKey("courses:list", {
-        page, limit, level, language, status, sortBy, sortOrder
+        page, limit, level, language, status, category, sortBy, sortOrder
     })
 
     if (!skipCache) {
@@ -205,7 +205,8 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
 
     if (level) query.level = level
     if (language) query.language = language
-    if (status) query.status = status
+    if (status) query.status = status || "published"
+    if (categoryIds) query.category = { $in: categoryIds }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
         query.finalPrice = {}
@@ -224,7 +225,7 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}) {
     const result = { data, totalNumber }
 
     if (!skipCache) {
-        const hasNonDefaultFilters = Boolean(level || language || status || sortBy !== "createdAt")
+        const hasNonDefaultFilters = Boolean(level || language || status || category || sortBy !== "createdAt")
         await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
     }
 
@@ -322,7 +323,7 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
             ? JSON.parse(cachedLessons)
             : null
 
-        if (foundLessons.length > 0) {
+        if (foundLessons && foundLessons.length > 0) {
             totalDuration = foundLessons.reduce(
                 (sum, lesson) => sum + lesson.duration,
                 0

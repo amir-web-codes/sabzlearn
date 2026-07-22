@@ -30,6 +30,7 @@ const getAllCoursesQuerySchema = z.object({
     level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
     language: z.enum(["en", "fa"]).optional(),
     status: z.enum(["draft", "published", "archived", "closed"]).optional(),
+    category: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug").optional(),
     minPrice: z.coerce.number().nonnegative().optional(),
     maxPrice: z.coerce.number().nonnegative().optional(),
     ...sortFields(["createdAt", "price", "students", "rating", "title"], "createdAt")

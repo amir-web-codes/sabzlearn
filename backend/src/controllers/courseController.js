@@ -33,7 +33,6 @@ async function createCourse(req, res) {
 }
 
 async function deleteCourse(req, res) {
-    console.log("deletedData")
 
     await courseService.deleteCourse(req.params.slug.toLowerCase().trim(), req.user.id)
 
@@ -54,12 +53,15 @@ async function editCourseDetails(req, res) {
 }
 
 async function getAllCourses(req, res) {
-    const { page, limit, level, language, status, minPrice, maxPrice, sortBy, sortOrder } = req.query
+    const { level, language, status, minPrice, maxPrice, category, sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await courseService.getAllCourses(
         page,
         limit,
-        { level, language, status, minPrice, maxPrice },
+        { level, language, status, minPrice, maxPrice, category },
         { sortBy, sortOrder }
     )
 
@@ -70,8 +72,8 @@ async function getAllCourses(req, res) {
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
-            page,
-            limit
+            page: page,
+            limit: limit
         }
     })
 }
@@ -86,7 +88,10 @@ async function registerUserInCourseByTeacher(req, res) {
 }
 
 async function getCourseStudents(req, res) {
-    const { page, limit, sortBy, sortOrder } = req.query
+    const { sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit, { sortBy, sortOrder })
     const students = data.map(object => object.userId)
@@ -99,14 +104,17 @@ async function getCourseStudents(req, res) {
             rating: req.course.rating,
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
-            page,
-            limit
+            page: page,
+            limit: limit
         }
     })
 }
 
 async function getCourseComments(req, res) {
-    const { page, limit, rating, sortBy, sortOrder } = req.query
+    const { rating, sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await courseService.findCourseComments(req.course, page, limit, { rating }, { sortBy, sortOrder })
 
@@ -118,8 +126,8 @@ async function getCourseComments(req, res) {
             rating: req.course.rating,
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
-            page,
-            limit
+            page: page,
+            limit: limit
         }
     })
 }
