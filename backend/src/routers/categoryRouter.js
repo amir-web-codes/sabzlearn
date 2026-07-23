@@ -12,7 +12,6 @@ const { createSchema, updateSchema, slugParamSchema, getAllQuerySchema } = requi
 
 router.get("/get-all", checkToken, validator(getAllQuerySchema, "query"), categoryController.getAllCategories)
 
-
 router.post("/admin/create", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, imageUpload.single("icon"), validator(createSchema), categoryController.createCategory)
 
 router.route("/:slug")

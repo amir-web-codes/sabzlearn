@@ -22,4 +22,7 @@ async function generateUniqueSlug(model, value) {
     return slug
 }
 
-module.exports = generateUniqueSlug
+module.exports = {
+    generateSlug,
+    generateUniqueSlug
+}

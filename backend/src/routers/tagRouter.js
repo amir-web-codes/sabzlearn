@@ -5,7 +5,9 @@ const tagController = require("../controllers/tagController")
 const validator = require("../middlewares/validator")
 
 const { checkToken, checkUserBan, checkRoles, limiters } = require("../middlewares")
-const { slugParamSchema, createSchema, updateSchema, getTagCoursesQuerySchema } = require("../middlewares/validations/tag.validation")
+const { slugParamSchema, createSchema, updateSchema, getTagCoursesQuerySchema, getAllTagsQuerySchema } = require("../middlewares/validations/tag.validation")
+
+router.get("/get-all", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), validator(getAllTagsQuerySchema, "query"), tagController.getAllTags)
 
 router.post("/create", checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, validator(createSchema), tagController.createTag)
 

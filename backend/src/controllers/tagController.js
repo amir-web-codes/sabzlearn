@@ -43,7 +43,10 @@ async function deleteTag(req, res) {
 }
 
 async function getTagCourses(req, res) {
-    const { page, limit, sortBy, sortOrder } = req.query
+    const { sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
 
     const { data, totalNumber } = await tagService.getTagCourses(req.params.slug, { page, limit, sortBy, sortOrder })
 
@@ -60,10 +63,32 @@ async function getTagCourses(req, res) {
     })
 }
 
+async function getAllTags(req, res) {
+    const { search, sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
+
+    const { data, totalNumber } = await tagService.getAllTags({ page, limit, search, sortBy, sortOrder })
+
+    res.json({
+        success: true,
+        message: "tags fetched successfully",
+        data,
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getBySlug: asyncWrapper(getBySlug),
     createTag: asyncWrapper(createTag),
     updateTag: asyncWrapper(updateTag),
     deleteTag: asyncWrapper(deleteTag),
-    getTagCourses: asyncWrapper(getTagCourses)
+    getTagCourses: asyncWrapper(getTagCourses),
+    getAllTags: asyncWrapper(getAllTags)
 }

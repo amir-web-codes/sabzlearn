@@ -3,7 +3,7 @@ const mongoose = require("mongoose")
 const categoryModel = require("../models/categoryModel")
 const courseModel = require("../models/courseModel")
 
-const generateUniqueSlug = require("../utils/generateUniqueSlug")
+const { generateUniqueSlug } = require("../utils/generateUniqueSlug")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
@@ -60,10 +60,10 @@ async function getDescendantCategoryIds(categorySlug) {
 }
 
 async function resolveCategoryId(categorySlug) {
-    const found = await categoryModel.findOne({ slug: categorySlug }).select("_id")
+    const found = await categoryModel.findOne({ slug: categorySlug, status: { $ne: "inactive" } }).select("_id")
 
     if (!found) {
-        const err = new Error("category not found")
+        const err = new Error("category not found or is inactive")
         err.status = 404
         throw err
     }

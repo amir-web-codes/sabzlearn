@@ -3,10 +3,11 @@ const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
 const lessonModel = require("../models/lessonModel")
 const userModel = require("../models/userModel")
-const categoryService = require("../services/categoryService")
+const categoryService = require("./categoryService")
+const tagService = require("./tagService")
 
 
-const generateUniqueSlug = require("../utils/generateUniqueSlug")
+const { generateUniqueSlug } = require("../utils/generateUniqueSlug")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
@@ -82,7 +83,7 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, discountPrecentage, level, language, status, category }, userId) {
+async function createCourse({ title, description, price, discountPrecentage, level, language, status, category, tags }, userId) {
     const slug = await generateUniqueSlug(courseModel, title)
     let selectedPrice;
 
@@ -97,6 +98,8 @@ async function createCourse({ title, description, price, discountPrecentage, lev
         categoryId = await categoryService.resolveCategoryId(category)
     }
 
+    const tagIds = await tagService.validateTags(tags)
+
     const data = await courseModel.create({
         title,
         slug,
@@ -105,6 +108,7 @@ async function createCourse({ title, description, price, discountPrecentage, lev
         discountPrecentage: Number(discountPrecentage) || 0,
         instructor: userId,
         category: categoryId,
+        tags: tagIds,
         level,
         language,
         status,
@@ -136,7 +140,7 @@ async function deleteCourse(slug, deletedById) {
     await invalidatePattern("courses:*")
 }
 
-async function updateCourse({ title, description, price, discountPrecentage, level, language, status, category }, slug) {
+async function updateCourse({ title, description, price, discountPrecentage, level, language, status, category, tags }, slug) {
 
     const foundCourse = await courseModel.findOne({ slug })
 
@@ -161,6 +165,10 @@ async function updateCourse({ title, description, price, discountPrecentage, lev
 
     if (category !== undefined) {
         foundCourse.category = await categoryService.resolveCategoryId(category)
+    }
+
+    if (tags !== undefined) {
+        foundCourse.tags = await tagService.validateTags(tags)
     }
 
     await foundCourse.save()

@@ -3,10 +3,11 @@ const mongoose = require("mongoose")
 const tagModel = require("../models/tagModel")
 const courseModel = require("../models/courseModel")
 
-const generateUniqueSlug = require("../utils/generateUniqueSlug")
-const { generateSlug } = require("../utils/generateUniqueSlug")
+const { generateUniqueSlug, generateSlug } = require("../utils/generateUniqueSlug")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
+
+const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
 
 function escapeRegex(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -174,10 +175,55 @@ async function getTagCourses(slug, { page = 1, limit = 20, sortBy = "createdAt",
     return { data, totalNumber }
 }
 
+async function getAllTags({ page = 1, limit = 20, search, sortBy = "createdAt", sortOrder = "desc" }) {
+    const cacheKey = buildCacheKey("tags:list", { page, limit, search, sortBy, sortOrder })
+
+    const cached = await client.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+
+    const query = {}
+    if (search) {
+        query.name = { $regex: escapeRegex(search), $options: "i" }
+    }
+
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const data = await tagModel
+        .find(query)
+        .sort({ [sortBy]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await tagModel.countDocuments(query)
+    const result = { data, totalNumber }
+
+    const hasNonDefaultFilters = Boolean(search || sortBy !== "createdAt")
+    await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
+
+    return result
+}
+
+async function validateTags(tagIds) {
+    if (!tagIds || tagIds.length === 0) return []
+
+    const foundTags = await tagModel.find({ _id: { $in: tagIds } }).select("_id")
+
+    if (foundTags.length !== tagIds.length) {
+        const err = new Error("one or more tags not found")
+        err.status = 404
+        throw err
+    }
+
+    return foundTags.map(t => t._id)
+}
+
 module.exports = {
     findTagBySlug,
     createTag,
     updateTag,
     deleteTag,
-    getTagCourses
+    getTagCourses,
+    getAllTags,
+    validateTags
 }
