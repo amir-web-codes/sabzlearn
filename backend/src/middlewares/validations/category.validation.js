@@ -33,9 +33,17 @@ const getAllQuerySchema = z.object({
     sortOrder: z.enum(["asc", "desc"]).default("asc")
 }).strict()
 
+const getCategoryCoursesQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    sortBy: z.enum(["createdAt", "price", "students", "rating", "title"]).default("createdAt"),
+    sortOrder: z.enum(["asc", "desc"]).default("desc")
+}).strict()
+
 module.exports = {
     createSchema,
     updateSchema,
     slugParamSchema,
-    getAllQuerySchema
+    getAllQuerySchema,
+    getCategoryCoursesQuerySchema
 }

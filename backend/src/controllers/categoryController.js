@@ -70,10 +70,32 @@ async function deleteCategory(req, res) {
     })
 }
 
+async function getCategoryCourses(req, res) {
+    const { sortBy, sortOrder } = req.query
+
+    const page = req.query.page || 1
+    const limit = req.query.limit || 20
+
+    const { data, totalNumber } = await categoryService.getCategoryCourses(req.params.slug, { page, limit, sortBy, sortOrder })
+
+    res.json({
+        success: true,
+        message: "courses fetched successfully",
+        data,
+        meta: {
+            totalNumber,
+            totalPages: Math.ceil(totalNumber / limit),
+            page,
+            limit
+        }
+    })
+}
+
 module.exports = {
     getAllCategories: asyncWrapper(getAllCategories),
     getBySlug: asyncWrapper(getBySlug),
     createCategory: asyncWrapper(createCategory),
     updateCategory: asyncWrapper(updateCategory),
-    deleteCategory: asyncWrapper(deleteCategory)
+    deleteCategory: asyncWrapper(deleteCategory),
+    getCategoryCourses: asyncWrapper(getCategoryCourses)
 }

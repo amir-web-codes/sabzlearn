@@ -187,6 +187,37 @@ async function getAllCategories({ page = 1, limit = 20, search, inactive, sortBy
     return result
 }
 
+async function getCategoryCourses(slug, { page = 1, limit = 20, sortBy = "createdAt", sortOrder = "desc" }) {
+    const categoryIds = await getDescendantCategoryIds(slug)
+
+    const sortFieldMap = {
+        createdAt: "createdAt",
+        price: "finalPrice",
+        students: "studentsCount",
+        rating: "rating.average",
+        title: "title"
+    }
+    const sortField = sortFieldMap[sortBy] || "createdAt"
+    const sortDirection = sortOrder === "asc" ? 1 : -1
+
+    const query = {
+        category: { $in: categoryIds },
+        isDeleted: false,
+        status: "published"
+    }
+
+    const data = await courseModel
+        .find(query)
+        .sort({ [sortField]: sortDirection })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+
+    const totalNumber = await courseModel.countDocuments(query)
+
+    return { data, totalNumber }
+}
+
 async function createCategory({ name, description, parent, sortOrder, status }, file, userId) {
     const parentCategory = await validateParentCategory(parent)
     const parentId = parentCategory ? parentCategory._id : null
@@ -353,5 +384,6 @@ module.exports = {
     updateCategory,
     deleteCategory,
     getDescendantCategoryIds,
-    resolveCategoryId
+    resolveCategoryId,
+    getCategoryCourses
 }
