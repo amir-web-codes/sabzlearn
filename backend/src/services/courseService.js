@@ -330,9 +330,9 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
 
         foundLessons = cachedLessons
             ? JSON.parse(cachedLessons)
-            : null
+            : []
 
-        if (foundLessons && foundLessons.length > 0) {
+        if (foundLessons.length > 0) {
             totalDuration = foundLessons.reduce(
                 (sum, lesson) => sum + lesson.duration,
                 0
