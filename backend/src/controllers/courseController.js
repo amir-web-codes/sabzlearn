@@ -175,6 +175,17 @@ async function deleteCourseCoverVideo(req, res) {
     })
 }
 
+async function getRelatedCourses(req, res) {
+    const foundCourse = await courseService.findCourseBySlug(req.params.slug.toLowerCase().trim())
+    const data = await courseService.getRelatedCourses(foundCourse)
+
+    res.json({
+        success: true,
+        message: "related courses fetched successfully",
+        data
+    })
+}
+
 module.exports = {
     getCourseBySlug: asyncWrapper(getCourseBySlug),
     createCourse: asyncWrapper(createCourse),
@@ -187,5 +198,6 @@ module.exports = {
     updateCourseThumbnail: asyncWrapper(updateCourseThumbnail),
     deleteCourseThumbnail: asyncWrapper(deleteCourseThumbnail),
     updateCourseCoverVideo: asyncWrapper(updateCourseCoverVideo),
-    deleteCourseCoverVideo: asyncWrapper(deleteCourseCoverVideo)
+    deleteCourseCoverVideo: asyncWrapper(deleteCourseCoverVideo),
+    getRelatedCourses: asyncWrapper(getRelatedCourses)
 }

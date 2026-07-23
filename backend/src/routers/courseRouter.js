@@ -14,8 +14,8 @@ const { imageUpload, videoUpload } = require("../middlewares/uploads")
 router.get("/get-all", limiters.courseLimiter, checkToken, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
 
 router.get("/:slug/get-students", validator(courseValidations.getCourseStudentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
-
 router.get("/:slug/get-comments", validator(courseValidations.getCourseCommentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
+router.get("/:slug/get-related", checkToken, checkUserBan, checkRoles(["admin", "teacher"]), courseController.getRelatedCourses)
 
 router.route("/:slug")
     .get(limiters.courseLimiter, checkToken, courseController.getCourseBySlug)
