@@ -1,4 +1,5 @@
 const { z } = require("zod")
+const { paginationFields, sortFields } = require("./common.validation")
 
 const slugParamSchema = z.object({
     slug: z.string().trim().min(2).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug")
@@ -14,16 +15,21 @@ const updateSchema = z.object({
     message: "No fields to update"
 })
 
+const getAllTagsQuerySchema = z.object({
+    ...paginationFields(),
+    search: z.string().trim().max(100).optional(),
+    ...sortFields(["name", "createdAt"], "createdAt")
+}).strict()
+
 const getTagCoursesQuerySchema = z.object({
-    page: z.coerce.number().int().min(1).default(1),
-    limit: z.coerce.number().int().min(1).max(100).default(20),
-    sortBy: z.enum(["createdAt", "price", "students", "rating", "title"]).default("createdAt"),
-    sortOrder: z.enum(["asc", "desc"]).default("desc")
+    ...paginationFields(),
+    ...sortFields(["createdAt", "price", "students", "rating", "title"], "createdAt")
 }).strict()
 
 module.exports = {
     slugParamSchema,
     createSchema,
     updateSchema,
-    getTagCoursesQuerySchema
+    getTagCoursesQuerySchema,
+    getAllTagsQuerySchema
 }
