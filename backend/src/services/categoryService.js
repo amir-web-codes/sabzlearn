@@ -63,7 +63,7 @@ async function resolveCategoryId(categorySlug) {
     const found = await categoryModel.findOne({ slug: categorySlug, status: { $ne: "inactive" } }).select("_id")
 
     if (!found) {
-        const err = new Error("category not found or is inactive")
+        const err = new Error("no active category found with the provided slug")
         err.status = 404
         throw err
     }
@@ -316,6 +316,7 @@ async function updateCategory(slug, { name, description, parent, sortOrder, stat
     }
 
     await invalidatePattern("categories:*")
+    await invalidatePattern("courses:*")
 
     return foundCategory
 }
@@ -360,6 +361,7 @@ async function deleteCategory(slug, { force = false } = {}) {
 
         await categoryModel.deleteOne({ _id: foundCategory._id }, { session })
 
+
         await session.commitTransaction()
     } catch (err) {
         await session.abortTransaction()
@@ -373,6 +375,7 @@ async function deleteCategory(slug, { force = false } = {}) {
     }
 
     await invalidatePattern("categories:*")
+    await invalidatePattern("courses:*")
 
     return foundCategory
 }

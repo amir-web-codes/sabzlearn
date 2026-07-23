@@ -88,6 +88,7 @@ async function updateTag(slug, { name }) {
     await foundTag.save()
 
     await invalidatePattern("tags:*")
+    await invalidatePattern("courses:*")
 
     return foundTag
 }

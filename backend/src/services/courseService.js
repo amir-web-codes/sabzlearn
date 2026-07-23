@@ -318,12 +318,63 @@ async function findCourseComments(course, page = 1, limit = 20, filters = {}, so
     return { data, totalNumber }
 }
 
+async function getRelatedCourses(course) {
+    const categoryId = course.category?._id || course.category || null
+    const tagIds = (course.tags || []).map(tag => tag._id || tag)
+
+    const pipeline = [
+        {
+            $match: {
+                _id: { $ne: course._id },
+                isDeleted: false,
+                status: "published"
+            }
+        },
+        {
+            $addFields: {
+                score: {
+                    $add: [
+                        {
+                            $cond: [
+                                { $and: [{ $ne: [categoryId, null] }, { $eq: ["$category", categoryId] }] },
+                                2,
+                                0
+                            ]
+                        },
+                        { $size: { $setIntersection: ["$tags", tagIds] } },
+                        { $cond: [{ $eq: ["$instructor", course.instructor] }, 2, 0] },
+                        { $cond: [{ $eq: ["$level", course.level] }, 1, 0] }
+                    ]
+                }
+            }
+        },
+        { $match: { score: { $gt: 0 } } },
+        { $sort: { score: -1, "rating.average": -1 } },
+        { $limit: 15 },
+        {
+            $project: {
+                title: 1,
+                slug: 1,
+                thumbnail: 1,
+                price: 1,
+                finalPrice: 1,
+                level: 1,
+                rating: 1,
+                studentsCount: 1,
+                score: 1
+            }
+        }
+    ]
+
+    return courseModel.aggregate(pipeline)
+}
+
 async function getCourseDetails(slug, lessonsIncluded = "true") {
     const courseKey = `courses:${slug}:lessons:${lessonsIncluded}`
+    const relatedKey = `courses:${slug}:related`
     const lessonsKey = `courses:${slug}:lessons`
 
     const cached = await client.get(courseKey)
-
 
     let foundLessons;
     let totalDuration = 0;
@@ -347,14 +398,35 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
             )
         }
 
+        const relatedCoursesCached = await client.get(relatedKey)
+
+        const relatedCourses = relatedCoursesCached
+            ? JSON.parse(relatedCoursesCached)
+            : []
+
+        const result = {
+            foundCourse,
+            totalDuration,
+            relatedCourses
+        }
         if (lessonsIncluded === "true") {
-            return { foundCourse, foundLessons, totalDuration }
+            result.foundLessons = foundLessons
         }
 
-        return { foundCourse, totalDuration }
+        return result
     }
 
-    foundCourse = await findCourseBySlug(slug)
+    foundCourse = await courseModel
+        .findOne({ slug, isDeleted: false })
+        .populate("category", "name slug")
+        .populate("tags", "name slug")
+        .lean()
+
+    if (!foundCourse) {
+        const err = new Error("course not found")
+        err.status = 404
+        throw err
+    }
 
     foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1, createdAt: -1 }).lean()
 
@@ -365,16 +437,24 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
         )
     }
 
+    const relatedCourses = await getRelatedCourses(foundCourse)
+    console.log(relatedCourses)
+
     await client.set(courseKey, JSON.stringify(foundCourse), { EX: 600 })
+    await client.set(relatedKey, JSON.stringify(relatedCourses), { EX: 600 })
     await client.set(lessonsKey, JSON.stringify(foundLessons), { EX: 600 })
 
-    if (lessonsIncluded === "true") {
-        return { foundCourse, foundLessons, totalDuration }
+    const result = {
+        foundCourse,
+        totalDuration,
+        relatedCourses
     }
 
+    if (lessonsIncluded === "true") {
+        result.foundLessons = foundLessons
+    }
 
-
-    return { foundCourse, totalDuration }
+    return result
 }
 
 async function updateCourseThumbnail(slug, file) {
@@ -492,6 +572,7 @@ module.exports = {
     findCourseStudents,
     findCourseComments,
     updateCourseRating,
+    getRelatedCourses,
     getCourseDetails,
     updateCourseThumbnail,
     deleteCourseThumbnail,
