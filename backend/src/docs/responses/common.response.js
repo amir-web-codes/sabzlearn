@@ -93,46 +93,31 @@ module.exports = {
             }
         }
     },
-    TooManyLoginAttempts: {
-        description: "Too many login/signup attempts",
+    TooManyRequestsGlobal: {
+        description: "Rate limit exceeded — the global limiter (100 requests / 20 minutes, applies to every endpoint) and, on /admin/* list/read routes, the admin limiter (250 requests / 20 minutes) share this exact message.",
         content: {
             "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                example: {
-                    success: false,
-                    message: "too many login attempts, please try again later"
+                schema: { $ref: "#/components/schemas/Error" },
+                example: { success: false, message: "you're sending too many requests, slow down cowboy🤠" }
+            }
+        }
+    },
+    TooManyRequestsGlobalOrGeneric: {
+        description: "Rate limit exceeded — either the global limiter (100 requests / 20 minutes) or this endpoint's specific limiter was triggered",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                    global: {
+                        summary: "global rate limit (100 requests / 20 minutes)",
+                        value: { success: false, message: "you're sending too many requests, slow down cowboy🤠" }
+                    },
+                    specific: {
+                        summary: "endpoint-specific rate limit",
+                        value: { success: false, message: "too many requests, please try again later" }
+                    }
                 }
             }
         }
     },
-    TooManyRequestsGeneric: {
-        description: "Too many requests",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                example: {
-                    success: false,
-                    message: "too many requests, please try again later"
-                }
-            }
-        }
-    },
-    TooManyAdminRequests: {
-        description: "Too many requests (admin rate limit)",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                example: {
-                    success: false,
-                    message: "you're sending too many requests, slow down cowboy🤠"
-                }
-            }
-        }
-    }
 }
