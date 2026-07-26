@@ -1,40 +1,38 @@
 module.exports = {
     "/users/auth/signup": {
         post: {
-            description: "user login for the first time",
-            summary: "user sign up",
-            tags: ["Users", "Auth"],
+            tags: ["Auth"],
+            operationId: "signUp",
+            summary: "Sign up",
+            description: "Creates a new user (role: user), issues an access token, and sets refreshToken + deviceId cookies. If an avatar is uploaded but fails to process, signup still succeeds with the default avatar (the failure is only logged server-side).",
+            security: [],
             requestBody: {
                 required: true,
                 content: {
-                    "application/json": {
-                        schema: { $ref: "#/components/schemas/UserSignUp" },
-                        example: {
-                            username: "amir",
-                            email: "amir@gmail.com",
-                            password: "StrongPassword123",
-                            rememberMe: false
-                        }
+                    "multipart/form-data": {
+                        schema: { $ref: "#/components/schemas/UserSignUpMultipart" }
                     }
                 }
             },
             responses: {
                 201: {
-                    description: "user signed up successfully",
+                    description: "User created successfully",
+                    headers: {
+                        "Set-Cookie": {
+                            description: "Sets `refreshToken` (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day) and `deviceId` (httpOnly, 1 year). Two separate Set-Cookie header lines are sent.",
+                            schema: { type: "string" }
+                        }
+                    },
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/AuthSuccess" },
-                            example: {
-                                success: true,
-                                message: "user signed up successfully",
-                                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                            }
+                            example: { success: true, message: "user signed up successfully", accessToken: "eyJhbGciOiJIUzI1NiIs..." }
                         }
                     }
                 },
                 400: { $ref: "#/components/responses/FailedValidation" },
                 409: { $ref: "#/components/responses/EmailAlreadyExists" },
-                429: { $ref: "#/components/responses/TooManyLoginAttempts" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrLogin" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -42,40 +40,39 @@ module.exports = {
 
     "/users/auth/login": {
         post: {
-            description: "user login with email and password",
-            summary: "user login",
-            tags: ["Users", "Auth"],
+            tags: ["Auth"],
+            operationId: "login",
+            summary: "Log in",
+            description: "Issues an access token and sets refreshToken + deviceId cookies. If a deviceId cookie already exists it's reused, otherwise a new one is issued.",
+            security: [],
             requestBody: {
                 required: true,
                 content: {
                     "application/json": {
-                        schema: { $ref: "#/components/schemas/UserLogin" },
-                        example: {
-                            email: "amir@gmail.com",
-                            password: "StrongPassword123",
-                            rememberMe: false
-                        }
+                        schema: { $ref: "#/components/schemas/UserLogin" }
                     }
                 }
             },
             responses: {
-                201: {
-                    description: "login successful",
+                200: {
+                    description: "Login successful",
+                    headers: {
+                        "Set-Cookie": {
+                            description: "Sets `refreshToken` (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day) and `deviceId` (httpOnly, 1 year, only if not already present).",
+                            schema: { type: "string" }
+                        }
+                    },
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/AuthSuccess" },
-                            example: {
-                                success: true,
-                                message: "login successful",
-                                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                            }
+                            example: { success: true, message: "login successful", accessToken: "eyJhbGciOiJIUzI1NiIs..." }
                         }
                     }
                 },
                 400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/WrongCredentials" },
                 404: { $ref: "#/components/responses/UserDeleted" },
-                429: { $ref: "#/components/responses/TooManyLoginAttempts" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrLogin" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -83,24 +80,24 @@ module.exports = {
 
     "/users/auth/logout": {
         post: {
-            description: "log out user from current device (revoke refresh tokens for this deviceId)",
-            summary: "user log out",
-            tags: ["Users", "Auth"],
+            tags: ["Auth"],
+            operationId: "logOut",
+            summary: "Log out",
+            description: "Revokes all refresh tokens for the current device and clears the refreshToken cookie. Requires the deviceId cookie set at login.",
+            security: [{ bearerAuth: [], deviceIdCookie: [] }],
             responses: {
                 200: {
-                    description: "logged out successfully",
+                    description: "Logged out successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
-                            example: {
-                                success: true,
-                                message: "user logged out successfully, please remove access token"
-                            }
+                            example: { success: true, message: "user logged out successfully, please remove access token" }
                         }
                     }
                 },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/NotLoggedIn" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -108,91 +105,39 @@ module.exports = {
 
     "/users/refresh-token": {
         post: {
-            description: "get a new access token & refresh token pair using the refreshToken cookie",
-            summary: "get access token",
-            tags: ["Users", "Auth"],
+            tags: ["Auth"],
+            operationId: "refreshToken",
+            summary: "Refresh the access token",
+            description: "Rotates the refresh token: the old one is revoked and a new one is issued. Reusing an already-revoked refresh token revokes all tokens for that device (401, `faked refresh token`). Requires the refreshToken and deviceId cookies set at signup/login.",
+            security: [{ refreshTokenCookie: [], deviceIdCookie: [] }],
             requestBody: {
                 required: false,
                 content: {
                     "application/json": {
-                        schema: { $ref: "#/components/schemas/RefreshTokenBody" },
-                        example: { rememberMe: true }
+                        schema: { $ref: "#/components/schemas/RefreshTokenBody" }
                     }
                 }
             },
             responses: {
                 200: {
-                    description: "token refreshed successfully",
+                    description: "Token refreshed successfully",
+                    headers: {
+                        "Set-Cookie": {
+                            description: "Sets a new `refreshToken` cookie (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day). deviceId is not reissued.",
+                            schema: { type: "string" }
+                        }
+                    },
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/AuthSuccess" },
-                            example: {
-                                success: true,
-                                message: "token refreshed successfully",
-                                accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                            }
+                            example: { success: true, message: "token refreshed successfully", accessToken: "eyJhbGciOiJIUzI1NiIs..." }
                         }
                     }
                 },
                 400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/FakedRefreshToken" },
-                403: {
-                    description: "not logged in / token missing / invalid or expired refresh token",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                tokenNotAvailable: {
-                                    summary: "refresh token cookie missing",
-                                    value: { success: false, message: "token not available or expired" }
-                                },
-                                notLoggedIn: {
-                                    summary: "deviceId cookie missing",
-                                    value: { success: false, message: "you're not logged in" }
-                                },
-                                invalidOrExpired: {
-                                    summary: "invalid or expired refresh token",
-                                    value: { success: false, message: "invaild or expired token" }
-                                }
-                            }
-                        }
-                    }
-                },
-                500: { $ref: "#/components/responses/InternalServerError" }
-            }
-        }
-    },
-
-    "/users/change-password": {
-        patch: {
-            description: "change current user's password. this revokes all refresh tokens and clears the refreshToken cookie, forcing the user to log in again",
-            summary: "change password",
-            tags: ["Users"],
-            requestBody: {
-                required: true,
-                content: {
-                    "application/json": {
-                        schema: { $ref: "#/components/schemas/ChangePassword" },
-                        example: { password: "NewStrongPassword123" }
-                    }
-                }
-            },
-            responses: {
-                200: {
-                    description: "password changed successfully",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Success" },
-                            example: {
-                                success: true,
-                                message: "password changed successfully, please Login again"
-                            }
-                        }
-                    }
-                },
-                400: { $ref: "#/components/responses/FailedValidation" },
-                401: { $ref: "#/components/responses/Unauthorized" },
-                404: { $ref: "#/components/responses/UserNotFound" },
+                403: { $ref: "#/components/responses/RefreshTokenForbidden" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -200,59 +145,39 @@ module.exports = {
 
     "/users/me": {
         get: {
-            description: "Get user profile based on its JWT token ID",
-            summary: "Get user profile",
             tags: ["Users"],
+            operationId: "getUserProfile",
+            summary: "Get the current user's profile",
+            security: [{ bearerAuth: [] }],
             responses: {
                 200: {
-                    description: "success",
+                    description: "User fetched successfully",
                     content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/GetUserProfile" }
-                        }
+                        "application/json": { schema: { $ref: "#/components/schemas/GetUserProfile" } }
                     }
                 },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                404: { $ref: "#/components/responses/UserNotFound" },
-                500: { $ref: "#/components/responses/InternalServerError" }
-            }
-        },
-        delete: {
-            description: "Soft-deletes the authenticated user's account (sets isDeleted flag and removes all refresh tokens)",
-            summary: "Delete current user",
-            tags: ["Users"],
-            responses: {
-                200: {
-                    description: "user deleted successfully",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Success" },
-                            example: { success: true, message: "user deleted successfully" }
-                        }
-                    }
-                },
-                401: { $ref: "#/components/responses/Unauthorized" },
-                403: { $ref: "#/components/responses/UserBanned" },
-                404: { $ref: "#/components/responses/UserNotFound" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         },
         patch: {
-            description: "Update authenticated user's username and/or email",
-            summary: "Update current user",
             tags: ["Users"],
+            operationId: "updateUserProfile",
+            summary: "Update the current user's profile",
+            description: "All fields optional. If a new email is provided, it must not already belong to another user. If a new avatar is uploaded, the previous one is deleted from storage.",
+            security: [{ bearerAuth: [] }],
             requestBody: {
-                required: true,
+                required: false,
                 content: {
-                    "application/json": {
-                        schema: { $ref: "#/components/schemas/UpdateUser" },
-                        example: { username: "amir_new", email: "new-amir@gmail.com" }
+                    "multipart/form-data": {
+                        schema: { $ref: "#/components/schemas/UpdateUserMultipart" }
                     }
                 }
             },
             responses: {
                 200: {
-                    description: "user updated successfully",
+                    description: "User updated successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -262,25 +187,57 @@ module.exports = {
                 },
                 400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: {
-                    description: "user is banned OR email already exists",
+                403: { $ref: "#/components/responses/UserBanned" },
+                409: { $ref: "#/components/responses/EmailAlreadyExists" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
+                500: { $ref: "#/components/responses/InternalServerError" }
+            }
+        },
+        delete: {
+            tags: ["Users"],
+            operationId: "deleteUserProfile",
+            summary: "Delete (soft-delete) the current user's account",
+            description: "Admin accounts cannot be deleted this way — attempting to do so returns 404.",
+            security: [{ bearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "User deleted successfully",
                     content: {
                         "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                banned: {
-                                    summary: "user is banned",
-                                    value: { success: false, message: "you are permanently banned. Reason: violating rules" }
-                                },
-                                emailExists: {
-                                    summary: "email already exists",
-                                    value: { success: false, message: "email already exists" }
-                                }
-                            }
+                            schema: { $ref: "#/components/schemas/Success" },
+                            example: { success: true, message: "user deleted successfully" }
                         }
                     }
                 },
-                404: { $ref: "#/components/responses/UserNotFound" },
+                401: { $ref: "#/components/responses/Unauthorized" },
+                403: { $ref: "#/components/responses/UserBanned" },
+                404: { $ref: "#/components/responses/UserNotFoundOrWasAdmin" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
+                500: { $ref: "#/components/responses/InternalServerError" }
+            }
+        }
+    },
+
+    "/users/me/delete-avatar": {
+        delete: {
+            tags: ["Users"],
+            operationId: "deleteUserAvatar",
+            summary: "Delete the current user's avatar",
+            description: "Removes the avatar from storage (if any) and resets it to the default avatar.",
+            security: [{ bearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "Avatar deleted successfully",
+                    content: {
+                        "application/json": {
+                            schema: { $ref: "#/components/schemas/Success" },
+                            example: { success: true, message: "avatar deleted successfully" }
+                        }
+                    }
+                },
+                401: { $ref: "#/components/responses/Unauthorized" },
+                403: { $ref: "#/components/responses/UserBanned" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -288,40 +245,24 @@ module.exports = {
 
     "/users/me/get-courses": {
         get: {
-            description: "Get the list of courses the authenticated user is enrolled in",
-            summary: "Get current user's courses",
-            tags: ["Users", "Courses"],
+            tags: ["Users"],
+            operationId: "getUserCourses",
+            summary: "List the current user's enrolled courses",
+            security: [{ bearerAuth: [] }],
             parameters: [
-                {
-                    $ref: "#/components/parameters/PageParameter"
-                },
-                {
-                    $ref: "#/components/parameters/LimitParameter"
-                }
+                { $ref: "#/components/parameters/PageParameter" },
+                { $ref: "#/components/parameters/LimitParameter" },
+                { $ref: "#/components/parameters/UserCourseSortByParameter" },
+                { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
                 200: {
-                    description: "courses fetched successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "courses fetched successfully" },
-                                    data: {
-                                        oneOf: [
-                                            { type: "array", items: { $ref: "#/components/schemas/UserCourse" } },
-                                            { type: "string", example: "no course found" }
-                                        ]
-                                    },
-                                    meta: { $ref: "#/components/schemas/PaginationMeta" }
-                                }
-                            }
-                        }
-                    }
+                    description: "Courses fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/UserCoursesListResponse" } } }
                 },
+                400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -329,40 +270,25 @@ module.exports = {
 
     "/users/me/get-comments": {
         get: {
-            description: "Get comments written by the authenticated user",
-            summary: "Get current user's comments",
-            tags: ["Users", "Comments"],
+            tags: ["Users"],
+            operationId: "getUserComments",
+            summary: "List the current user's comments",
+            security: [{ bearerAuth: [] }],
             parameters: [
-                {
-                    $ref: "#/components/parameters/PageParameter"
-                },
-                {
-                    $ref: "#/components/parameters/LimitParameter"
-                }
+                { $ref: "#/components/parameters/PageParameter" },
+                { $ref: "#/components/parameters/LimitParameter" },
+                { $ref: "#/components/parameters/CommentRatingFilterParameter" },
+                { $ref: "#/components/parameters/UserCommentSortByParameter" },
+                { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
                 200: {
-                    description: "comments fetched successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "comments fetched successfully" },
-                                    data: {
-                                        oneOf: [
-                                            { type: "array", items: { type: "object" } },
-                                            { type: "string", example: "you don't have any comment" }
-                                        ]
-                                    },
-                                    meta: { $ref: "#/components/schemas/PaginationMeta" }
-                                }
-                            }
-                        }
-                    }
+                    description: "Comments fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/UserCommentsListResponse" } } }
                 },
+                400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -370,49 +296,70 @@ module.exports = {
 
     "/users/me/dashboard": {
         get: {
-            description: "Get a summary dashboard (stats, account status, pending requests) for the authenticated user",
-            summary: "Get current user's dashboard",
             tags: ["Users"],
+            operationId: "getUserDashboard",
+            summary: "Get the current user's dashboard summary",
+            description: "Returns basic profile info plus aggregate stats (enrolled courses count, comments count, pending role requests count).",
+            security: [{ bearerAuth: [] }],
             responses: {
                 200: {
-                    description: "dashboard fetched successfully",
+                    description: "Dashboard fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/UserDashboardResponse" } } }
+                },
+                401: { $ref: "#/components/responses/Unauthorized" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
+                500: { $ref: "#/components/responses/InternalServerError" }
+            }
+        }
+    },
+
+    "/users/change-password": {
+        patch: {
+            tags: ["Users"],
+            operationId: "changeUserPassword",
+            summary: "Change the current user's password",
+            description: "Revokes every refresh token for this user (all devices) and clears the current refreshToken cookie. The user must log in again afterwards. Works even if the account is currently banned.",
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": { schema: { $ref: "#/components/schemas/ChangePassword" } }
+                }
+            },
+            responses: {
+                200: {
+                    description: "Password changed successfully",
                     content: {
                         "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "dashboard fetched successfully" },
-                                    data: { $ref: "#/components/schemas/UserDashboard" }
-                                }
-                            }
+                            schema: { $ref: "#/components/schemas/Success" },
+                            example: { success: true, message: "password changed successfully, please Login again" }
                         }
                     }
                 },
+                400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                404: { $ref: "#/components/responses/UserNotFound" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
     },
 
     "/users/request-role": {
-        patch: {
-            description: "Request a role change (user -> teacher). Maximum 3 stored requests per user, and only one pending request at a time is allowed",
-            summary: "Request a new role",
-            tags: ["Users", "Requests"],
+        post: {
+            tags: ["Users"],
+            operationId: "requestNewRole",
+            summary: "Request a role change (to teacher or admin)",
+            description: "A user may only have one pending request at a time; the oldest of up to 3 stored requests is dropped once a 4th is created.",
+            security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
                 content: {
-                    "application/json": {
-                        schema: { $ref: "#/components/schemas/RequestRole" },
-                        example: { newRole: "teacher" }
-                    }
+                    "application/json": { schema: { $ref: "#/components/schemas/RequestRole" } }
                 }
             },
             responses: {
                 200: {
-                    description: "request sent successfully",
+                    description: "Request sent successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -424,8 +371,7 @@ module.exports = {
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/PendingRequestExists" },
                 409: { $ref: "#/components/responses/AlreadyHasRole" },
-                422: { $ref: "#/components/responses/InvalidRequestedRole" },
-                429: { $ref: "#/components/responses/TooManyRequestsGeneric" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrGeneric" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -433,37 +379,25 @@ module.exports = {
 
     "/users/admin/requests/get-pending": {
         get: {
-            description: "Get all pending role-change requests (admin only)",
-            summary: "Get pending requests",
-            tags: ["Users", "Admin", "Requests"],
+            tags: ["Admins"],
+            operationId: "getPendingRequests",
+            summary: "List pending role-change requests",
+            security: [{ bearerAuth: [] }],
             parameters: [
-                {
-                    $ref: "#/components/parameters/PageParameter"
-                },
-                {
-                    $ref: "#/components/parameters/LimitParameter"
-                }
+                { $ref: "#/components/parameters/PageParameter" },
+                { $ref: "#/components/parameters/LimitParameter" },
+                { $ref: "#/components/parameters/RequestSortByParameter" },
+                { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
                 200: {
-                    description: "requests fetched successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "requests fetched successfully" },
-                                    data: { type: "array", items: { $ref: "#/components/schemas/Request" } },
-                                    meta: { $ref: "#/components/schemas/PaginationMeta" }
-                                }
-                            }
-                        }
-                    }
+                    description: "Requests fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/RequestsListResponse" } } }
                 },
+                400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/Forbidden" },
-                429: { $ref: "#/components/responses/TooManyAdminRequests" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -471,37 +405,27 @@ module.exports = {
 
     "/users/admin/requests/get-all": {
         get: {
-            description: "Get all role-change requests regardless of status (admin only)",
-            summary: "Get all requests",
-            tags: ["Users", "Admin", "Requests"],
+            tags: ["Admins"],
+            operationId: "getAllRequests",
+            summary: "List all role-change requests, with optional filters",
+            security: [{ bearerAuth: [] }],
             parameters: [
-                {
-                    $ref: "#/components/parameters/PageParameter"
-                },
-                {
-                    $ref: "#/components/parameters/LimitParameter"
-                }
+                { $ref: "#/components/parameters/PageParameter" },
+                { $ref: "#/components/parameters/LimitParameter" },
+                { $ref: "#/components/parameters/RequestStatusFilterParameter" },
+                { $ref: "#/components/parameters/RequestedRoleFilterParameter" },
+                { $ref: "#/components/parameters/RequestSortByParameter" },
+                { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
                 200: {
-                    description: "requests fetched successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "requests fetched successfully" },
-                                    data: { type: "array", items: { $ref: "#/components/schemas/Request" } },
-                                    meta: { $ref: "#/components/schemas/PaginationMeta" }
-                                }
-                            }
-                        }
-                    }
+                    description: "Requests fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/RequestsListResponse" } } }
                 },
+                400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/Forbidden" },
-                429: { $ref: "#/components/responses/TooManyAdminRequests" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -509,34 +433,21 @@ module.exports = {
 
     "/users/admin/requests/{id}": {
         get: {
-            description: "Get a single role-change request by id, populated with requester & processor info (admin only)",
-            summary: "Get request by id",
-            tags: ["Users", "Admin", "Requests"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            tags: ["Admins"],
+            operationId: "getRequestById",
+            summary: "Get a single role-change request by id",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             responses: {
                 200: {
-                    description: "request fetched successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "request fetched successfully" },
-                                    data: { $ref: "#/components/schemas/Request" }
-                                }
-                            }
-                        }
-                    }
+                    description: "Request fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/RequestByIdResponse" } } }
                 },
                 400: { $ref: "#/components/responses/InvalidId" },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/Forbidden" },
-                429: { $ref: "#/components/responses/TooManyAdminRequests" },
+                404: { $ref: "#/components/responses/RequestNotFound" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -544,17 +455,15 @@ module.exports = {
 
     "/users/admin/requests/{id}/accept": {
         patch: {
-            description: "Accept a pending role-change request and apply the new role to the requesting user (admin only)",
-            summary: "Accept a role request",
-            tags: ["Users", "Admin", "Requests"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            tags: ["Admins"],
+            operationId: "acceptRequest",
+            summary: "Accept a pending role-change request",
+            description: "Sets the request status to accepted and applies requestedRole to the target user.",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             responses: {
                 200: {
-                    description: "request accepted successfully",
+                    description: "Request accepted successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -564,20 +473,9 @@ module.exports = {
                 },
                 400: { $ref: "#/components/responses/InvalidId" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: {
-                    description: "no permission OR request already processed",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                forbidden: { summary: "no permission", value: { success: false, message: "you don't have permission" } },
-                                alreadyProcessed: { summary: "already processed", value: { success: false, message: "this request has already been processed" } }
-                            }
-                        }
-                    }
-                },
+                403: { $ref: "#/components/responses/ProcessRequestForbidden" },
                 404: { $ref: "#/components/responses/RequestNotFound" },
-                429: { $ref: "#/components/responses/TooManyAdminRequests" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -585,17 +483,14 @@ module.exports = {
 
     "/users/admin/requests/{id}/reject": {
         patch: {
-            description: "Reject a pending role-change request (admin only)",
-            summary: "Reject a role request",
-            tags: ["Users", "Admin", "Requests"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            tags: ["Admins"],
+            operationId: "rejectRequest",
+            summary: "Reject a pending role-change request",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             responses: {
                 200: {
-                    description: "request rejected successfully",
+                    description: "Request rejected successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -605,20 +500,9 @@ module.exports = {
                 },
                 400: { $ref: "#/components/responses/InvalidId" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: {
-                    description: "no permission OR request already processed",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                forbidden: { summary: "no permission", value: { success: false, message: "you don't have permission" } },
-                                alreadyProcessed: { summary: "already processed", value: { success: false, message: "this request has already been processed" } }
-                            }
-                        }
-                    }
-                },
+                403: { $ref: "#/components/responses/ProcessRequestForbidden" },
                 404: { $ref: "#/components/responses/RequestNotFound" },
-                429: { $ref: "#/components/responses/TooManyAdminRequests" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -626,50 +510,34 @@ module.exports = {
 
     "/users/admin/{id}": {
         get: {
-            description: "Get any user's profile by id (admin only)",
-            summary: "Get user by id",
-            tags: ["Users", "Admin"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            tags: ["Admins"],
+            operationId: "getUserById",
+            summary: "Get any user by id",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             responses: {
                 200: {
-                    description: "user fetched successfully",
-                    content: {
-                        "application/json": {
-                            schema: {
-                                type: "object",
-                                properties: {
-                                    success: { type: "boolean", example: true },
-                                    message: { type: "string", example: "user fetched successfully" },
-                                    data: { $ref: "#/components/schemas/User" }
-                                }
-                            }
-                        }
-                    }
+                    description: "User fetched successfully",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/GetUserById" } } }
                 },
                 400: { $ref: "#/components/responses/InvalidId" },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/Forbidden" },
                 404: { $ref: "#/components/responses/UserNotFound" },
-                429: { $ref: "#/components/responses/TooManyAdminRequests" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         },
         delete: {
-            description: "Soft-delete any user's account by id (admin only)",
-            summary: "Delete user by id",
-            tags: ["Users", "Admin"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            tags: ["Admins"],
+            operationId: "deleteUserById",
+            summary: "Delete (soft-delete) any user by id",
+            description: "Admins cannot be deleted through this endpoint — the target's role is checked and the operation returns 404 in that case (not 403).",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             responses: {
                 200: {
-                    description: "user deleted successfully",
+                    description: "User deleted successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -680,8 +548,8 @@ module.exports = {
                 400: { $ref: "#/components/responses/InvalidId" },
                 401: { $ref: "#/components/responses/Unauthorized" },
                 403: { $ref: "#/components/responses/Forbidden" },
-                404: { $ref: "#/components/responses/UserNotFound" },
-                429: { $ref: "#/components/responses/TooManyRequestsGeneric" },
+                404: { $ref: "#/components/responses/UserNotFoundOrWasAdmin" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrGeneric" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -689,26 +557,21 @@ module.exports = {
 
     "/users/admin/{id}/ban": {
         patch: {
-            description: "Ban a user for a number of days (admin only, cannot ban another admin)",
+            tags: ["Admins"],
+            operationId: "banUser",
             summary: "Ban a user",
-            tags: ["Users", "Admin"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            description: "Admins cannot be banned. banDays=0 or omitted means a permanent ban.",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             requestBody: {
-                required: true,
+                required: false,
                 content: {
-                    "application/json": {
-                        schema: { $ref: "#/components/schemas/BanUser" },
-                        example: { banDays: 7 }
-                    }
+                    "application/json": { schema: { $ref: "#/components/schemas/BanUser" } }
                 }
             },
             responses: {
                 200: {
-                    description: "user banned successfully",
+                    description: "User banned successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -716,46 +579,11 @@ module.exports = {
                         }
                     }
                 },
-                400: {
-                    description: "invalid id path parameter OR request body failed validation",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                invalidId: {
-                                    summary: "invalid id",
-                                    value: { success: false, message: "invalid id" }
-                                },
-                                failedValidation: {
-                                    summary: "body validation failed",
-                                    value: {
-                                        success: false,
-                                        message: "validation failed",
-                                        errors: [
-                                            { code: "too_small", path: ["banDays"], message: "Number must be greater than or equal to 1" }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
+                400: { $ref: "#/components/responses/InvalidIdOrValidationFailed" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: {
-                    description: "no permission OR cannot ban an admin",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                forbidden: { summary: "no permission", value: { success: false, message: "you don't have permission" } },
-                                cannotBanAdmin: { summary: "cannot ban admin", value: { success: false, message: "you can't ban an admin" } }
-                            }
-                        }
-                    }
-                },
+                403: { $ref: "#/components/responses/BanUserForbidden" },
                 404: { $ref: "#/components/responses/UserNotFound" },
-                422: { $ref: "#/components/responses/InvalidBanDays" },
-                429: { $ref: "#/components/responses/TooManyRequestsGeneric" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrGeneric" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -763,17 +591,14 @@ module.exports = {
 
     "/users/admin/{id}/unban": {
         patch: {
-            description: "Remove a ban from a user (admin only)",
+            tags: ["Admins"],
+            operationId: "unBanUser",
             summary: "Unban a user",
-            tags: ["Users", "Admin"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             responses: {
                 200: {
-                    description: "user unbanned successfully",
+                    description: "User unbanned successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
@@ -786,7 +611,7 @@ module.exports = {
                 403: { $ref: "#/components/responses/Forbidden" },
                 404: { $ref: "#/components/responses/UserNotFound" },
                 409: { $ref: "#/components/responses/UserNotBanned" },
-                429: { $ref: "#/components/responses/TooManyRequestsGeneric" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrGeneric" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
@@ -794,75 +619,33 @@ module.exports = {
 
     "/users/admin/{id}/change-role": {
         patch: {
-            description: "Change a user's role directly (admin only, cannot change another admin's role)",
-            summary: "Change user role",
-            tags: ["Users", "Admin"],
-            parameters: [
-                {
-                    $ref: "#/components/parameters/IdParameter"
-                }
-            ],
+            tags: ["Admins"],
+            operationId: "changeUserRole",
+            summary: "Change a user's role",
+            description: "Another admin's role cannot be changed through this endpoint. Note: this endpoint returns 201 rather than 200, even though no new resource is created — kept as-is to match current behavior.",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             requestBody: {
                 required: true,
                 content: {
-                    "application/json": {
-                        schema: { $ref: "#/components/schemas/ChangeUserRole" },
-                        example: { newRole: "teacher" }
-                    }
+                    "application/json": { schema: { $ref: "#/components/schemas/ChangeUserRole" } }
                 }
             },
             responses: {
                 201: {
-                    description: "role changed successfully",
+                    description: "Role changed successfully",
                     content: {
                         "application/json": {
                             schema: { $ref: "#/components/schemas/Success" },
-                            example: {
-                                success: true,
-                                message: "user \"amir: amir@gmail.com\" role changed to \"teacher\" successfully"
-                            }
+                            example: { success: true, message: "user amir: amir@gmail.com role changed to teacher successfully" }
                         }
                     }
                 },
-                400: {
-                    description: "invalid id path parameter OR request body failed validation",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                invalidId: {
-                                    summary: "invalid id",
-                                    value: { success: false, message: "invalid id" }
-                                },
-                                failedValidation: {
-                                    summary: "body validation failed",
-                                    value: {
-                                        success: false,
-                                        message: "validation failed",
-                                        errors: [
-                                            { code: "invalid_enum_value", path: ["newRole"], message: "Invalid enum value. Expected 'user' | 'teacher' | 'admin', received 'moderator'" }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
+                400: { $ref: "#/components/responses/InvalidIdOrValidationFailed" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: {
-                    description: "no permission OR cannot change another admin's role",
-                    content: {
-                        "application/json": {
-                            schema: { $ref: "#/components/schemas/Error" },
-                            examples: {
-                                forbidden: { summary: "no permission", value: { success: false, message: "you don't have permission" } },
-                                cannotChangeAdmin: { summary: "cannot change admin role", value: { success: false, message: "you can't change another admin role" } }
-                            }
-                        }
-                    }
-                },
+                403: { $ref: "#/components/responses/ChangeRoleForbidden" },
                 404: { $ref: "#/components/responses/UserNotFound" },
-                429: { $ref: "#/components/responses/TooManyRequestsGeneric" },
+                429: { $ref: "#/components/responses/TooManyRequestsGlobalOrGeneric" },
                 500: { $ref: "#/components/responses/InternalServerError" }
             }
         }
