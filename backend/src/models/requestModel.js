@@ -18,7 +18,7 @@ const requestSchema = new mongoose.Schema({
     },
     requestedRole: {
         type: String,
-        enum: ["user", "teacher"],
+        enum: ["teacher", "admin"],
         default: "teacher"
     },
     currentRole: {

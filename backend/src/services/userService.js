@@ -111,8 +111,10 @@ async function createTokens(user, rememberMe, deviceId, userAgent, isLogin) {
 
     await revokeUserToken(user._id, deviceId)
 
+    const hashedToken = await bcrypt.hash(refreshToken, 12)
+
     await tokenModel.create({
-        hashedToken: refreshToken,
+        hashedToken,
         userId: user._id,
         revoked: false,
         deviceId: String(deviceId),
@@ -175,7 +177,7 @@ async function unBanUser(bannedId) {
 
 async function deleteUser(userId, deletedById) {
     const deletedData = await userModel.findOneAndUpdate(
-        { _id: userId, isDeleted: false },
+        { _id: userId, role: { $ne: "admin" }, isDeleted: false },
         {
             $set: {
                 isDeleted: true,
@@ -187,7 +189,7 @@ async function deleteUser(userId, deletedById) {
     )
 
     if (!deletedData) {
-        const err = new Error("user not found")
+        const err = new Error("user not found or was an admin")
         err.status = 404
         throw err
     }
@@ -204,7 +206,7 @@ async function updateUser(req, user, { username, email }, file) {
 
         if (foundEmail && email !== user.email) {
             const err = new Error("email already exists")
-            err.status = 403
+            err.status = 409
             throw err
         }
 
@@ -281,7 +283,7 @@ async function findUserCourses(userId, page, limit, sort = {}) {
     }
 
     data = await enrollmentModel
-        .find({ status: "active" })
+        .find({ userId })
         .select("courseId")
         .populate("courseId", "title slug price discountPrecentage")
         .sort({ [sortBy]: sortDirection })
@@ -480,7 +482,14 @@ async function getAllRequests(page, limit, filters = {}, sort = {}) {
 }
 
 async function findRequestById(requestId) {
-    const data = requestModel.findById(requestId).populate("processedBy userId", "username email").lean()
+    const data = await requestModel.findById(requestId).populate("processedBy userId", "username email").lean()
+
+    if (!data) {
+        const err = new Error("request not found")
+        err.status = 404
+        throw err
+    }
+
     return data
 }
 

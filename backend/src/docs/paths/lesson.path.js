@@ -1,9 +1,9 @@
 module.exports = {
-    "/lessons/admin/getAll": {
+    "/lessons/admin/get-all": {
         get: {
             description: "Get all lessons across all courses, paginated (admin only). Results are cached in Redis for 10 minutes.",
             summary: "Get all lessons (admin)",
-            tags: ["Lessons", "Admin"],
+            tags: ["Lessons", "Admins"],
             parameters: [
                 { $ref: "#/components/parameters/PageParameter" },
                 { $ref: "#/components/parameters/LimitParameter" }

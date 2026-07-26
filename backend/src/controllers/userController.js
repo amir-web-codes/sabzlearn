@@ -97,7 +97,7 @@ async function login(req, res) {
                 maxAge: 1000 * 60 * 60 * 24 * 365
             })
 
-            return res.status(201).json({
+            return res.json({
                 success: true,
                 message: "login successful",
                 accessToken
@@ -138,12 +138,6 @@ async function banUser(req, res) {
     const foundUser = await userService.findUserById(req.params.id)
 
     const banDays = Number(req.body.banDays) ?? 0
-
-    if (banDays !== undefined && (!Number.isInteger(Number(banDays)) || banDays < 0)) {
-        const err = new Error("invalid ban days")
-        err.status = 422
-        throw err
-    }
 
     await userService.banUser(foundUser, banDays, req.body.banReason, req.user.id)
 

@@ -30,11 +30,12 @@ const updateUserSchema = baseSchema.pick({
 }).partial()
 
 const requestRoleSchema = z.object({
-    newRole: z.enum(["teacher", "admin"])
+    newRole: z.enum(["user", "teacher", "admin"])
 })
 
 const banUserSchema = z.object({
-    banDays: z.coerce.number().min(0).default(0)
+    banDays: z.coerce.number().min(0).default(0),
+    banReason: z.string().max(200).default(null)
 })
 
 const refreshTokenSchema = z.object({
@@ -55,7 +56,7 @@ const getUserTicketsQuerySchema = z.object({
 const getAllRequestsQuerySchema = z.object({
     ...paginationFields(),
     status: z.enum(["pending", "accepted", "rejected"]).optional(),
-    requestedRole: z.enum(["user", "teacher"]).optional(),
+    requestedRole: z.enum(["teacher", "admin"]).optional(),
     ...sortFields(["createdAt"], "createdAt")
 })
 

@@ -295,7 +295,7 @@ module.exports = {
         get: {
             description: "Get all tickets relevant to the requesting staff member — teachers see tickets assigned to them, admins see tickets addressed to admins (for: \"admin\")",
             summary: "Get all tickets (staff)",
-            tags: ["Tickets", "Admin"],
+            tags: ["Tickets", "Admins"],
             parameters: [
                 { $ref: "#/components/parameters/PageParameter" },
                 { $ref: "#/components/parameters/LimitParameter" },

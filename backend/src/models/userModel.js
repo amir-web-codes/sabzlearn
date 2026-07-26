@@ -47,6 +47,7 @@ const userSchema = new mongoose.Schema({
     },
     banReason: {
         type: String,
+        maxlength: 200,
         default: null
     },
     bannedBy: {

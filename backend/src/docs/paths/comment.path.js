@@ -3,7 +3,7 @@ module.exports = {
         get: {
             description: "Get all comments authored by a specific user, by user id (admin only)",
             summary: "Get a user's comments (admin)",
-            tags: ["Comments", "Admin"],
+            tags: ["Comments", "Admins"],
             parameters: [
                 { $ref: "#/components/parameters/IdParameter" },
                 { $ref: "#/components/parameters/PageParameter" },

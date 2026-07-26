@@ -27,7 +27,7 @@ router.get("/admin/requests/get-pending", validator(userValidations.getPendingRe
 router.get("/admin/requests/get-all", validator(userValidations.getAllRequestsQuerySchema, "query"), checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getAllRequests)
 router.get("/admin/requests/:id", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getRequestById)
 
-router.patch("/request-role", limiters.requestLimiter, validator(userValidations.requestRoleSchema), checkToken, userController.requestNewRole)
+router.post("/request-role", limiters.requestLimiter, validator(userValidations.requestRoleSchema), checkToken, userController.requestNewRole)
 
 router.patch("/admin/requests/:id/accept", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.acceptRequest)
 router.patch("/admin/requests/:id/reject", validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.rejectRequest)
