@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const { validateId, checkToken, checkRoles, checkUserBan, checkSelfs, limiters } = require("../middlewares")
+const { validateId, checkToken, checkTokenOptional, checkRoles, checkUserBan, checkSelfs, limiters } = require("../middlewares")
 
 const courseController = require("../controllers/courseController")
 
@@ -11,7 +11,7 @@ const { checkSelfCourseAuthor } = require("../middlewares/checkSelfs")
 
 const { imageUpload, videoUpload } = require("../middlewares/uploads")
 
-router.get("/get-all", limiters.courseLimiter, checkToken, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
+router.get("/get-all", limiters.courseLimiter, checkTokenOptional, validator(courseValidations.getAllCoursesQuerySchema, "query"), courseController.getAllCourses)
 
 router.get("/:slug/get-students", validator(courseValidations.getCourseStudentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseStudents)
 router.get("/:slug/get-comments", validator(courseValidations.getCourseCommentsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.getCourseComments)
