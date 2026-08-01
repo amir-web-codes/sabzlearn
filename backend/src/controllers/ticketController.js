@@ -78,7 +78,7 @@ async function getAllTickets(req, res) {
 async function changeTicketStatus(req, res) {
     await ticketService.changeStatus(req.user, req.params.id, req.body.newStatus)
 
-    res.status(201).json({
+    res.status(200).json({
         success: true,
         message: "ticket status changed successfully"
     })

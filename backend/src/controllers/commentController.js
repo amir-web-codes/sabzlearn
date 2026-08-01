@@ -41,7 +41,7 @@ async function deleteCommentById(req, res) {
 }
 
 async function editCommentById(req, res) {
-    await commentService.updateCommentById(req.comment, req.params.id, req.body)
+    await commentService.updateCommentById(req.params.id, req.body)
 
     res.json({
         success: true,

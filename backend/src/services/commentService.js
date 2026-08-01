@@ -43,41 +43,39 @@ async function deleteCommentById(id) {
     await updateRating(result.courseId)
 }
 
-async function updateCommentById(comment, id, { title, text, rating }) {
-    let newRating;
-    const avaiableRatings = ["Very Bad", "Bad", "Medium", "Good", "Very Good"]
+async function updateCommentById(id, { title, text, rating }) {
+    const query = {}
 
-    if (avaiableRatings.includes(rating)) {
-        newRating = rating
-    } else {
-        newRating = comment.rating
+    if (title !== undefined) query.title = title
+    if (text !== undefined) query.text = text
+    if (rating !== undefined) query.rating = rating
+
+    const result = await commentModel.findOneAndUpdate(
+        { _id: id },
+        { $set: query },
+        { runValidators: true }
+    )
+
+    if (!result) {
+        const err = new Error("comment not found")
+        err.status = 404
+        throw err
     }
 
-    const result = await commentModel.findByIdAndUpdate(id, {
-        $set: { title, text, rating: newRating }
-    })
-
-    await updateRating(result.courseId)
+    if (rating !== undefined) {
+        await updateRating(result.courseId)
+    }
 }
 
 async function createComment(slug, userId, { title, text, rating }) {
     const foundCourse = await courseService.findCourseBySlug(slug)
-
-    let selectedRating;
-    const avaiableRatings = ["Very Bad", "Bad", "Medium", "Good", "Very Good"]
-
-    if (avaiableRatings.includes(rating)) {
-        selectedRating = rating
-    } else {
-        selectedRating = "Medium"
-    }
 
     await commentModel.create({
         title,
         text,
         authorId: userId,
         courseId: foundCourse._id,
-        rating: selectedRating
+        rating
     })
 
     await updateRating(foundCourse._id)

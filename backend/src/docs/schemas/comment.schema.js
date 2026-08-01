@@ -37,5 +37,33 @@ module.exports = {
             text: { type: "string", minLength: 3, maxLength: 300, example: "Updated review text." },
             rating: { type: "string", enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"], example: "Very Good" }
         }
+    },
+
+    CommentByIdResponse: {
+        type: "object",
+        properties: {
+            success: { type: "boolean", example: true },
+            message: { type: "string", example: "comment fetched successfully" },
+            data: { $ref: "#/components/schemas/Comment" }
+        },
+        required: ["success", "message", "data"]
+    },
+
+    CommentsListResponse: {
+        type: "object",
+        description: "GET /comments/{id}/comments — a specific user's comments (admin only)",
+        properties: {
+            success: { type: "boolean", example: true },
+            message: { type: "string", example: "comments fetched successfully" },
+            data: {
+                oneOf: [
+                    { type: "array", items: { $ref: "#/components/schemas/Comment" } },
+                    { type: "string", example: "no comments found" }
+                ],
+                description: "An array of the user's comments, or the literal string \"no comments found\" when there are none"
+            },
+            meta: { $ref: "#/components/schemas/PaginationMeta" }
+        },
+        required: ["success", "message", "data", "meta"]
     }
 }

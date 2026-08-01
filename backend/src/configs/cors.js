@@ -34,12 +34,9 @@ const corsOptions = {
     allowedHeaders: [
         "Content-Type",
         "Authorization",
-        "X-Requested-With",
-        "X-CSRF-Token",
         "Accept",
-        "Accept-Language",
-        "Content-Language",
-        "X-API-Key"
+        "X-Requested-With",
+        "deviceId"
     ],
 
     exposedHeaders: [
