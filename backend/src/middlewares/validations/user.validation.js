@@ -56,7 +56,7 @@ const getUserTicketsQuerySchema = z.object({
 const getAllRequestsQuerySchema = z.object({
     ...paginationFields(),
     status: z.enum(["pending", "accepted", "rejected"]).optional(),
-    requestedRole: z.enum(["teacher", "admin"]).optional(),
+    requestedRole: z.enum(["user", "teacher", "admin"]).optional(),
     ...sortFields(["createdAt"], "createdAt")
 })
 

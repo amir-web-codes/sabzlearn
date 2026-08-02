@@ -307,7 +307,7 @@ async function changeUserRole(req, res) {
 }
 
 async function requestNewRole(req, res) {
-    const newRole = req.body.newRole || "teacher"
+    const newRole = req.body.newRole
 
     if (req.user.role === newRole) {
         const err = new Error("user already has this role")
