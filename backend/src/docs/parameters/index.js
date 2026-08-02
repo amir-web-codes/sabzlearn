@@ -5,6 +5,7 @@ const slugParameter = require("./slug.parameter")
 const userParameter = require("./user.parameter")
 const sortParameter = require("./sort.parameter")
 const commentParameter = require("./comment.parameter")
+const lessonParameter = require("./lesson.parameter")
 
 module.exports = {
     ...idParameter,
@@ -13,5 +14,6 @@ module.exports = {
     ...slugParameter,
     ...userParameter,
     ...sortParameter,
-    ...commentParameter
+    ...commentParameter,
+    ...lessonParameter
 }
