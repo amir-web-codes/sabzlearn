@@ -1,13 +1,4 @@
 module.exports = {
-    SortOrderParameter: {
-        name: "sortOrder",
-        in: "query",
-        required: false,
-        description: "Sort direction",
-        schema: { type: "string", enum: ["asc", "desc"], default: "desc" },
-        example: "desc"
-    },
-
     UserCourseSortByParameter: {
         name: "sortBy",
         in: "query",
@@ -17,22 +8,6 @@ module.exports = {
         example: "createdAt"
     },
 
-    UserCommentSortByParameter: {
-        name: "sortBy",
-        in: "query",
-        required: false,
-        description: "Field to sort the current user's comments by",
-        schema: { type: "string", enum: ["createdAt", "rating"], default: "createdAt" },
-        example: "createdAt"
-    },
-    CommentRatingFilterParameter: {
-        name: "rating",
-        in: "query",
-        required: false,
-        description: "Filter the current user's comments by rating",
-        schema: { type: "string", enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"] },
-        example: "Good"
-    },
     RequestSortByParameter: {
         name: "sortBy",
         in: "query",
