@@ -112,6 +112,7 @@ module.exports = {
             "lastLogin"
         ]
     },
+
     GetUserProfile: {
         type: "object",
         description: "GET /users/me — includes the extra `meta` block (only present on this endpoint, not on the admin get-by-id one)",
@@ -129,6 +130,7 @@ module.exports = {
         },
         required: ["success", "message", "data"]
     },
+
     GetUserById: {
         type: "object",
         description: "GET /users/admin/{id} — admin fetching any user; no `meta` block here, unlike GET /users/me",
@@ -139,6 +141,7 @@ module.exports = {
         },
         required: ["success", "message", "data"]
     },
+
     AuthSuccess: {
         type: "object",
         properties: {
@@ -161,6 +164,7 @@ module.exports = {
             "accessToken"
         ]
     },
+
     UserSignUp: {
         type: "object",
         description: "Kept for reference. The actual signup endpoint requires multipart/form-data — see UserSignUpMultipart.",
@@ -172,6 +176,7 @@ module.exports = {
         },
         required: ["username", "email", "password"]
     },
+
     UserSignUpMultipart: {
         type: "object",
         description: "multipart/form-data body. Field name for the file must be exactly `avatar`.",
@@ -188,6 +193,7 @@ module.exports = {
         },
         required: ["username", "email", "password"]
     },
+
     UserLogin: {
         type: "object",
         properties: {
@@ -197,6 +203,7 @@ module.exports = {
         },
         required: ["email", "password"]
     },
+
     UpdateUser: {
         type: "object",
         description: "Kept for reference. The actual update-profile endpoint requires multipart/form-data — see UpdateUserMultipart.",
@@ -205,6 +212,7 @@ module.exports = {
             email: { type: "string", format: "email", minLength: 5, maxLength: 50, example: "new-amir@gmail.com" }
         }
     },
+
     UpdateUserMultipart: {
         type: "object",
         description: "multipart/form-data body. All fields optional. Field name for the file must be exactly `newAvatar`.",
@@ -218,6 +226,7 @@ module.exports = {
             }
         }
     },
+
     ChangePassword: {
         type: "object",
         properties: {
@@ -225,9 +234,10 @@ module.exports = {
         },
         required: ["password"]
     },
+
     RequestRole: {
         type: "object",
-        description: "Request for changing role, Current available roles: user, teacher, admin",
+        description: "A user can only request to become a teacher or admin (never back to plain user through this flow)",
         properties: {
             newRole: { type: "string", enum: ["user", "teacher", "admin"], example: "teacher" }
         },
@@ -272,7 +282,7 @@ module.exports = {
             userId: { type: "string", example: "6857e4d1e5d82d0d1f5d8c32" },
             processedBy: { type: "string", nullable: true, example: null },
             processedAt: { type: "string", format: "date-time", nullable: true, example: null },
-            requestedRole: { type: "string", enum: ["teacher", "admin"], example: "teacher" },
+            requestedRole: { type: "string", enum: ["user", "teacher", "admin"], example: "teacher" },
             currentRole: { type: "string", enum: ["user", "teacher", "admin"], example: "user" },
             status: { type: "string", enum: ["pending", "accepted", "rejected"], example: "pending" },
             createdAt: { type: "string", format: "date-time" },
@@ -334,6 +344,7 @@ module.exports = {
             discountPrecentage: { type: "number", example: 20 }
         }
     },
+
     UserCoursesListResponse: {
         type: "object",
         properties: {
@@ -350,22 +361,7 @@ module.exports = {
         },
         required: ["success", "message", "data", "meta"]
     },
-    UserCommentsListResponse: {
-        type: "object",
-        properties: {
-            success: { type: "boolean", example: true },
-            message: { type: "string", example: "comments fetched successfully" },
-            data: {
-                oneOf: [
-                    { type: "array", items: { $ref: "#/components/schemas/Comment" } },
-                    { type: "string", example: "you don't have any comment" }
-                ],
-                description: "An array of the user's comments, or the literal string \"you don't have any comment\" when there are none"
-            },
-            meta: { $ref: "#/components/schemas/PaginationMeta" }
-        },
-        required: ["success", "message", "data", "meta"]
-    },
+
     RequestsListResponse: {
         type: "object",
         description: "Shared shape for both GET /admin/requests/get-pending and GET /admin/requests/get-all",
