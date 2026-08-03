@@ -237,7 +237,7 @@ module.exports = {
 
     RequestRole: {
         type: "object",
-        description: "A user can only request to become a teacher or admin (never back to plain user through this flow)",
+        description: "Request for changing role to: user, teacher, admin",
         properties: {
             newRole: { type: "string", enum: ["user", "teacher", "admin"], example: "teacher" }
         },

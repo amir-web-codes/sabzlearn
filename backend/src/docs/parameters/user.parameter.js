@@ -29,7 +29,7 @@ module.exports = {
         in: "query",
         required: false,
         description: "Filter role-change requests by the role being requested",
-        schema: { type: "string", enum: ["teacher", "admin"] },
+        schema: { type: "string", enum: ["user", "teacher", "admin"] },
         example: "teacher"
     }
 }

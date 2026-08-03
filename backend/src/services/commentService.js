@@ -40,6 +40,13 @@ async function updateRating(courseId) {
 
 async function deleteCommentById(id) {
     const result = await commentModel.findByIdAndDelete(id)
+
+    if (!result) {
+        const err = new Error("comment not found")
+        err.status = 404
+        throw err
+    }
+
     await updateRating(result.courseId)
 }
 
