@@ -162,7 +162,7 @@ async function unBanUser(bannedId) {
     const foundUser = await findUserById(bannedId)
 
     if (!foundUser.isBanned) {
-        const err = new Error("this user wasn't ban")
+        const err = new Error("this user is not ban")
         err.status = 409
         throw err
     }

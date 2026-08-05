@@ -7,5 +7,5 @@ module.exports = {
     ...userPaths,
     ...ticketPaths,
     ...lessonPaths,
-    ...commentPaths
+    ...commentPaths,
 }

@@ -300,7 +300,7 @@ async function getUserDashboard(req, res) {
 async function changeUserRole(req, res) {
     const foundUser = await userService.changeRole(req.params.id, req.body.newRole)
 
-    res.status(201).json({
+    res.status(200).json({
         success: true,
         message: `user ${foundUser.username}: ${foundUser.email} role changed to ${foundUser.role} successfully`
     })

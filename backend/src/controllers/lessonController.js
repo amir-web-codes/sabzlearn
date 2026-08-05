@@ -28,7 +28,7 @@ async function createNewLesson(req, res) {
 async function editLesson(req, res) {
     const data = await lessonService.editById(req.params.id, req.body, req.file)
 
-    res.status(201).json({
+    res.json({
         success: true,
         message: "lesson edited successfully",
         data

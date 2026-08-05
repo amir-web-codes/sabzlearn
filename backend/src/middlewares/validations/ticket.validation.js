@@ -8,7 +8,7 @@ const objectIdSchema = z.string().regex(
 
 const baseSchema = z.object({
     title: z.string().min(3).max(150),
-    message: z.string().max(1000),
+    message: z.string().min(1).max(1000),
     assignedToId: objectIdSchema.optional()
 })
 

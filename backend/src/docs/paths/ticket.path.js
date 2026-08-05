@@ -3,6 +3,7 @@ module.exports = {
     "/tickets/create": {
         post: {
             tags: ["Tickets"],
+            operationId: "createTicket",
             summary: "Create a new ticket",
             description:
                 "Creates a new support ticket. If assignedToId is provided, the ticket will be assigned to that teacher/admin. Otherwise it will be assigned to admins.",
@@ -87,11 +88,12 @@ module.exports = {
         post: {
 
             tags: ["Tickets"],
+            operationId: "replyToTicket",
 
             summary: "Reply to a ticket",
 
             description:
-                "Adds a reply to an existing ticket. Closed tickets cannot receive replies.",
+                "Adds a reply to an existing ticket. Ticket owners may continue replying after assignment; their reply reopens a pending conversation. Closed tickets cannot receive replies.",
 
 
             security: [
@@ -224,6 +226,7 @@ module.exports = {
 
 
             tags: ["Tickets"],
+            operationId: "changeTicketStatus",
 
             summary: "Change ticket status",
 
@@ -343,6 +346,7 @@ module.exports = {
 
 
             tags: ["Tickets"],
+            operationId: "getCurrentUserTickets",
 
 
             summary: "Get my tickets",
@@ -374,7 +378,7 @@ module.exports = {
                 },
 
                 {
-                    $ref: "#/components/parameters/SortByParameter"
+                    $ref: "#/components/parameters/TicketSortByParameter"
                 },
 
                 {
@@ -431,6 +435,7 @@ module.exports = {
                 "Tickets",
                 "Admins"
             ],
+            operationId: "getAllTickets",
 
 
             summary:
@@ -473,7 +478,7 @@ module.exports = {
 
 
                 {
-                    $ref: "#/components/parameters/SortByParameter"
+                    $ref: "#/components/parameters/TicketSortByParameter"
                 },
 
 
@@ -529,6 +534,7 @@ module.exports = {
             tags: [
                 "Tickets"
             ],
+            operationId: "getTicketById",
 
 
             summary:

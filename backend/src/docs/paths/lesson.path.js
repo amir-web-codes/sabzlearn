@@ -32,7 +32,7 @@ module.exports = {
             tags: ["Lessons"],
             operationId: "getCourseLessons",
             summary: "Get all lessons of a course",
-            description: "Get all lessons belonging to a course, by course slug. Unlike the admin get-all endpoint, this always returns an array (even if empty), never a \"no lesson found\" string. Results are cached in Redis.",
+            description: "Get all lessons belonging to a course, by course slug. Available to active enrollees, the course instructor, and administrators. Unlike the admin get-all endpoint, this always returns an array (even if empty). Results are cached in Redis.",
             security: [{ bearerAuth: [] }],
             parameters: [
                 { $ref: "#/components/parameters/SlugParameter" },
@@ -48,7 +48,7 @@ module.exports = {
                 },
                 400: { $ref: "#/components/responses/FailedValidation" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: { $ref: "#/components/responses/UserBanned" },
+                403: { $ref: "#/components/responses/CourseContentForbidden" },
                 404: { $ref: "#/components/responses/CourseNotFound" },
                 429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
@@ -94,6 +94,7 @@ module.exports = {
             tags: ["Lessons"],
             operationId: "getLessonById",
             summary: "Get lesson by id",
+            description: "Returns lesson content to active enrollees, the course instructor, or an administrator.",
             security: [{ bearerAuth: [] }],
             parameters: [
                 { $ref: "#/components/parameters/IdParameter" }
@@ -105,7 +106,7 @@ module.exports = {
                 },
                 400: { $ref: "#/components/responses/InvalidId" },
                 401: { $ref: "#/components/responses/Unauthorized" },
-                403: { $ref: "#/components/responses/UserBanned" },
+                403: { $ref: "#/components/responses/CourseContentForbidden" },
                 404: { $ref: "#/components/responses/LessonNotFound" },
                 429: { $ref: "#/components/responses/TooManyRequestsGlobal" },
                 500: { $ref: "#/components/responses/InternalServerError" }
@@ -116,7 +117,7 @@ module.exports = {
             tags: ["Lessons"],
             operationId: "editLesson",
             summary: "Edit a lesson",
-            description: "Edit a lesson. Only the lesson's original publisher may edit it — admins cannot override this (unlike DELETE). Requires multipart/form-data. Note: this endpoint returns 201 rather than 200, even though no new resource is created — kept as-is to match current behavior.",
+            description: "Edit a lesson. Only the lesson's original publisher may edit it — admins cannot override this (unlike DELETE). Requires multipart/form-data.",
             security: [{ bearerAuth: [] }],
             parameters: [
                 { $ref: "#/components/parameters/IdParameter" }
@@ -130,7 +131,7 @@ module.exports = {
                 }
             },
             responses: {
-                201: {
+                200: {
                     description: "Lesson edited successfully",
                     content: { "application/json": { schema: { $ref: "#/components/schemas/LessonByIdResponse" } } }
                 },

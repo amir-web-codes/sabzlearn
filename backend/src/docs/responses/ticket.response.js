@@ -101,7 +101,7 @@ module.exports = {
 
                 example: {
                     success: false,
-                    message: "you can't assign a ticket to an user"
+                    message: "you can't assign a ticket to a regular user"
                 }
             }
         }

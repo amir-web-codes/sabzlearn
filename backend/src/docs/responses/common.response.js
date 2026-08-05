@@ -1,6 +1,6 @@
 module.exports = {
     Unauthorized: {
-        description: "Unauthrozied",
+        description: "Authentication is required or the access token is invalid",
         content: {
             "application/json": {
                 schema: {
@@ -151,7 +151,7 @@ module.exports = {
         }
     },
     TooManyRequestsGlobal: {
-        description: "Rate limit exceeded — the global limiter (100 requests / 20 minutes, applies to every endpoint) and, on /admin/* list/read routes, the admin limiter (250 requests / 20 minutes) share this exact message.",
+        description: "Rate limit exceeded — the global limiter (100 requests / 20 minutes; health checks are except) and, on /admin/* list/read routes, the admin limiter (250 requests / 20 minutes) share this message.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },

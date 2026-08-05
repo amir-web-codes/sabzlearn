@@ -2,7 +2,7 @@ module.exports = {
     "/comments/{id}/comments": {
         get: {
             tags: ["Comments", "Admins"],
-            operationId: "getUserComments",
+            operationId: "getCommentsByUserId",
             summary: "Get a user's comments (admin)",
             description: "Get all comments authored by a specific user, by user id (admin only).",
             security: [{ bearerAuth: [] }],

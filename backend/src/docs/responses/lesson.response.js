@@ -37,6 +37,25 @@ module.exports = {
         }
     },
 
+    CourseContentForbidden: {
+        description: "The caller is banned or is not enrolled in the course, its instructor, or an administrator",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                    notEnrolled: {
+                        summary: "course enrollment required",
+                        value: { success: false, message: "you must be enrolled to access lesson content" }
+                    },
+                    banned: {
+                        summary: "account is banned",
+                        value: { success: false, message: "you are permanently banned. Reason: Spam" }
+                    }
+                }
+            }
+        }
+    },
+
     AdminListLessonsForbidden: {
         description: "403 — either the caller is not an admin, or the requesting admin is banned",
         content: {
@@ -79,7 +98,7 @@ module.exports = {
                         value: { success: false, message: "you don't have permission" }
                     },
                     notCourseOwner: {
-                        summary: "not this course's owning teacher (ASSUMPTION — see NoAccessToCourse)",
+                        summary: "not this course's owning teacher",
                         value: { success: false, message: "you don't have access to this course" }
                     }
                 }

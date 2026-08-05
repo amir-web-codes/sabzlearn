@@ -77,7 +77,7 @@ module.exports = {
     },
 
     FakedRefreshToken: {
-        description: "Refresh token reuse/mismatch detected — all sessions for this device were revoked",
+        description: "Refresh token reuse or mismatch detected",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -153,7 +153,7 @@ module.exports = {
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "this user wasn't ban" }
+                example: { success: false, message: "this user is not banned" }
             }
         }
     },

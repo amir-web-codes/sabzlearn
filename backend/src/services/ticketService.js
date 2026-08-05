@@ -14,7 +14,7 @@ async function createTicket(userId, { title, message, assignedToId }) {
         }
 
         if (foundUser.role === "user") {
-            const err = new Error("you can't assign a ticket to an user")
+            const err = new Error("you can't assign a ticket to a regular user")
             err.status = 409
             throw err
         }

@@ -173,6 +173,7 @@ module.exports = {
 
             message: {
                 type: "string",
+                minLength: 1,
                 maxLength: 1000,
                 example: "I purchased a course but cannot access it."
             },
@@ -202,6 +203,7 @@ module.exports = {
 
             message: {
                 type: "string",
+                minLength: 1,
                 maxLength: 1000,
                 example: "We are checking your issue."
             }

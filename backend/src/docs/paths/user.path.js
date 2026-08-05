@@ -19,7 +19,7 @@ module.exports = {
                     description: "User created successfully",
                     headers: {
                         "Set-Cookie": {
-                            description: "Sets `refreshToken` (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day) and `deviceId` (httpOnly, 1 year). Two separate Set-Cookie header lines are sent.",
+                            description: "Sets `refreshToken` (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day) and `deviceId` (httpOnly, 1 year). SameSite follows COOKIE_SAME_SITE. Two Set-Cookie header lines are sent.",
                             schema: { type: "string" }
                         }
                     },
@@ -58,7 +58,7 @@ module.exports = {
                     description: "Login successful",
                     headers: {
                         "Set-Cookie": {
-                            description: "Sets `refreshToken` (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day) and `deviceId` (httpOnly, 1 year, only if not already present).",
+                            description: "Sets `refreshToken` (httpOnly, path=/users/refresh-token, 15 days if rememberMe else 1 day) and `deviceId` (httpOnly, 1 year). SameSite follows COOKIE_SAME_SITE.",
                             schema: { type: "string" }
                         }
                     },
@@ -108,7 +108,7 @@ module.exports = {
             tags: ["Auth"],
             operationId: "refreshToken",
             summary: "Refresh the access token",
-            description: "Rotates the refresh token: the old one is revoked and a new one is issued. Reusing an already-revoked refresh token revokes all tokens for that device (401, `faked refresh token`). Requires the refreshToken and deviceId cookies set at signup/login.",
+            description: "Atomically rotates the refresh token: the old token is claimed once and a new token is issued. A reused or mismatched token is rejected with 401. Requires the refreshToken and deviceId cookies set at signup/login.",
             security: [{ refreshTokenCookie: [], deviceIdCookie: [] }],
             requestBody: {
                 required: false,
@@ -622,7 +622,7 @@ module.exports = {
             tags: ["Admins"],
             operationId: "changeUserRole",
             summary: "Change a user's role",
-            description: "Another admin's role cannot be changed through this endpoint. Note: this endpoint returns 201 rather than 200, even though no new resource is created — kept as-is to match current behavior.",
+            description: "Another admin's role cannot be changed through this endpoint.",
             security: [{ bearerAuth: [] }],
             parameters: [{ $ref: "#/components/parameters/IdParameter" }],
             requestBody: {
@@ -632,7 +632,7 @@ module.exports = {
                 }
             },
             responses: {
-                201: {
+                200: {
                     description: "Role changed successfully",
                     content: {
                         "application/json": {
