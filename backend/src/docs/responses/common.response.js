@@ -1,21 +1,19 @@
 module.exports = {
     Unauthorized: {
-        description: "Authentication is required or the access token is invalid",
+        description: "The access token is missing, invalid, or expired",
         content: {
             "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
+                schema: { $ref: "#/components/schemas/Error" },
                 examples: {
                     noToken: {
-                        summary: "no token",
+                        summary: "Authorization bearer token is missing",
                         value: {
                             success: false,
                             message: "no token provided"
                         }
                     },
-                    expiredToken: {
-                        summary: "invalid or expired token",
+                    invalidOrExpiredToken: {
+                        summary: "Bearer token cannot be verified",
                         value: {
                             success: false,
                             message: "invalid or expired token"
@@ -25,13 +23,12 @@ module.exports = {
             }
         }
     },
+
     Forbidden: {
-        description: "No access",
+        description: "The authenticated user does not have the required role",
         content: {
             "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
+                schema: { $ref: "#/components/schemas/Error" },
                 example: {
                     success: false,
                     message: "you don't have permission"
@@ -39,13 +36,12 @@ module.exports = {
             }
         }
     },
+
     InvalidId: {
-        description: "Invalid id",
+        description: "The `id` path parameter is not a valid MongoDB ObjectId",
         content: {
             "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
+                schema: { $ref: "#/components/schemas/Error" },
                 example: {
                     success: false,
                     message: "invalid id"
@@ -53,78 +49,56 @@ module.exports = {
             }
         }
     },
-    InternalServerError: {
-        description: "internal server error",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                example: {
-                    success: false,
-                    message: "internal server error"
-                }
-            }
-        }
-    },
+
     FailedValidation: {
-        description: "Request body validation failed",
+        description: "The request body or query parameters failed Zod validation",
         content: {
             "application/json": {
-                schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean", example: false },
-                        message: { type: "string", example: "validation failed" },
-                        errors: {
-                            type: "array",
-                            items: { $ref: "#/components/schemas/ValidationErrorItem" }
-                        }
-                    },
-                    required: ["success", "message", "errors"]
-                },
+                schema: { $ref: "#/components/schemas/ValidationError" },
                 example: {
                     success: false,
                     message: "validation failed",
                     errors: [
-                        { code: "too_small", path: ["password"], message: "String must contain at least 5 character(s)" }
+                        {
+                            code: "too_small",
+                            path: ["password"],
+                            message: "Too small: expected string to have >=5 characters"
+                        }
                     ]
                 }
             }
         }
     },
+
     InvalidIdOrValidationFailed: {
-        description: "400 — either the `id` path parameter is not a valid MongoDB ObjectId, or the request body/query failed validation",
+        description: "The `id` path parameter is invalid, or the request body/query failed validation",
         content: {
             "application/json": {
                 schema: {
                     oneOf: [
                         { $ref: "#/components/schemas/Error" },
-                        {
-                            type: "object",
-                            properties: {
-                                success: { type: "boolean", example: false },
-                                message: { type: "string", example: "validation failed" },
-                                errors: {
-                                    type: "array",
-                                    items: { $ref: "#/components/schemas/ValidationErrorItem" }
-                                }
-                            }
-                        }
+                        { $ref: "#/components/schemas/ValidationError" }
                     ]
                 },
                 examples: {
                     invalidId: {
-                        summary: "invalid id",
-                        value: { success: false, message: "invalid id" }
+                        summary: "Invalid MongoDB ObjectId",
+                        value: {
+                            success: false,
+                            message: "invalid id"
+                        }
                     },
                     validationFailed: {
-                        summary: "body/query validation failed",
+                        summary: "Body or query validation failed",
                         value: {
                             success: false,
                             message: "validation failed",
                             errors: [
-                                { code: "too_small", path: ["limit"], message: "Number must be greater than or equal to 1" }
+                                {
+                                    code: "too_small",
+                                    path: ["limit"],
+                                    message: "Too small: expected number to be >0"
+                                }
                             ]
                         }
                     }
@@ -132,49 +106,106 @@ module.exports = {
             }
         }
     },
+
     UserBanned: {
-        description: "User is banned",
+        description: "The authenticated user is currently banned",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
                 examples: {
                     permanentBan: {
-                        summary: "permanent ban",
-                        value: { success: false, message: "you are permanently banned. Reason: Spam" }
+                        summary: "Permanent ban",
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
                     },
                     temporaryBan: {
-                        summary: "temporary ban",
-                        value: { success: false, message: "you are temporary banned until: 2026-08-01T12:00:00.000Z. Reason: Spam" }
+                        summary: "Temporary ban",
+                        value: {
+                            success: false,
+                            message: "you are temporary banned until: 2026-08-01T12:00:00.000Z. Reason: Spam"
+                        }
                     }
                 }
             }
         }
     },
-    TooManyRequestsGlobal: {
-        description: "Rate limit exceeded — the global limiter (100 requests / 20 minutes; health checks are except) and, on /admin/* list/read routes, the admin limiter (250 requests / 20 minutes) share this message.",
+
+    UserNotFound: {
+        description: "User not found",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "you're sending too many requests, slow down cowboy🤠" }
+                example: {
+                    success: false,
+                    message: "user not found"
+                }
             }
         }
     },
+
+    CourseNotFound: {
+        description: "Course with the supplied slug was not found",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                    success: false,
+                    message: "course not found"
+                }
+            }
+        }
+    },
+
+    InternalServerError: {
+        description: "An unexpected server error occurred",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                    success: false,
+                    message: "internal server error"
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobal: {
+        description: "The global rate limit was exceeded (100 requests per IP per 20 minutes). It applies to every route, including `/health` and `/api-docs`.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                    success: false,
+                    message: "you're sending too many requests, slow down cowboy🤠"
+                }
+            }
+        }
+    },
+
     TooManyRequestsGlobalOrGeneric: {
-        description: "Rate limit exceeded — either the global limiter (100 requests / 20 minutes) or this endpoint's specific limiter was triggered",
+        description: "The global limiter or an endpoint-specific limiter was exceeded",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
                 examples: {
                     global: {
-                        summary: "global rate limit (100 requests / 20 minutes)",
-                        value: { success: false, message: "you're sending too many requests, slow down cowboy🤠" }
+                        summary: "Global limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
                     },
-                    specific: {
-                        summary: "endpoint-specific rate limit",
-                        value: { success: false, message: "too many requests, please try again later" }
+                    endpointSpecific: {
+                        summary: "Endpoint-specific limit",
+                        value: {
+                            success: false,
+                            message: "too many requests, please try again later"
+                        }
                     }
                 }
             }
         }
-    },
+    }
 }
