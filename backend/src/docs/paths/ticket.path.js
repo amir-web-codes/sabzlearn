@@ -1,5 +1,4 @@
 module.exports = {
-
     "/tickets/create": {
         post: {
             tags: ["Tickets"],
