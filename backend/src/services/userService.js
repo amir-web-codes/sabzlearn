@@ -477,12 +477,30 @@ async function acceptRequest(adminId, requestId) {
 }
 
 async function rejectRequest(adminId, requestId) {
-    const foundRequest = await checkPendingRequest(requestId)
+    const foundRequest = await requestModel.findOneAndUpdate(
+        {
+            _id: requestId,
+            status: "pending"
+        },
+        {
+            $set: {
+                status: "rejected",
+                processedBy: adminId,
+                processedAt: new Date()
+            }
+        },
+        {
+            new: true,
+            runValidators: true
+        }
+    )
 
-    foundRequest.status = "rejected"
-    foundRequest.processedBy = adminId
-    foundRequest.processedAt = new Date()
-    await foundRequest.save()
+    if (!foundRequest) {
+        res.status(404).json({
+            success: false,
+            message: "no pending request found"
+        })
+    }
 }
 
 async function getAllRequests(page, limit, filters = {}, sort = {}) {
