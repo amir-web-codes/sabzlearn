@@ -3,7 +3,7 @@ module.exports = {
         name: "status",
         in: "query",
         required: false,
-        description: "Filter tickets by their current status",
+        description: "Filter tickets by their current status.",
         schema: {
             type: "string",
             enum: ["open", "pending", "closed"]
@@ -15,7 +15,7 @@ module.exports = {
         name: "availableOnly",
         in: "query",
         required: false,
-        description: "When true, returns only tickets that are not closed. Used by staff ticket listing endpoint.",
+        description: "Staff-list option. Defaults to `true`. It is used only when `status` is omitted: `true` excludes closed tickets, while `false` applies no status filter. When `status` is supplied, the explicit status filter takes precedence and `availableOnly` is ignored.",
         schema: {
             type: "string",
             enum: ["true", "false"],
