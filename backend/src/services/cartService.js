@@ -116,7 +116,7 @@ async function createItem(userId, course) {
     const foundEnrollment = await enrollmentModel.exists({
         userId,
         courseId: course._id,
-        status: { $ne: "closed" }
+        status: "active"
     })
 
     if (foundEnrollment) {
@@ -279,9 +279,25 @@ async function completeOrder(orderId, userId) {
 
             for (const item of order.items) {
                 await enrollmentModel.updateOne(
-                    { userId, courseId: item.courseId },
-                    { $setOnInsert: { userId, courseId: item.courseId, status: "active" } },
-                    { upsert: true, session }
+                    {
+                        userId,
+                        courseId: item.courseId
+                    },
+                    {
+                        $set: {
+                            status: "active",
+                            lastAccessedAt: new Date()
+                        },
+
+                        $setOnInsert: {
+                            userId,
+                            courseId: item.courseId
+                        }
+                    },
+                    {
+                        upsert: true,
+                        session
+                    }
                 )
             }
 

@@ -270,10 +270,12 @@ async function enrollUserInCourse(slug, userId) {
         { upsert: true, setDefaultsOnInsert: true, runValidators: true }
     )
 
-    const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id })
+    const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id, status: "active" })
 
     foundCourse.studentsCount = totalNumber
     await foundCourse.save()
+
+    await invalidatePattern(`courses:users:${userId}:*`)
 }
 
 async function findCourseStudents(course, page = 1, limit = 20, sort = {}) {
@@ -284,7 +286,7 @@ async function findCourseStudents(course, page = 1, limit = 20, sort = {}) {
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
     const data = await enrollmentModel
-        .find({ courseId: course._id })
+        .find({ courseId: course._id, status: "active" })
         .select("userId createdAt lastAccessedAt")
         .populate("userId", "username email")
         .sort({ [sortField]: sortDirection })
