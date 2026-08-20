@@ -4,7 +4,7 @@ module.exports = {
             tags: ["Auth"],
             operationId: "signUp",
             summary: "Sign up",
-            description: "Creates a user with role=user, returns a 5-minute access token, and sets refreshToken + deviceId cookies. JSON is supported when no avatar is needed. For avatar upload use multipart/form-data; with the current validator, rememberMe must be omitted from multipart and therefore defaults to false. Browser clients making cross-origin requests must include credentials for cookies to be stored.",
+            description: "Creates a user with role=user, returns a 5-minute access token, and sets refreshToken + deviceId cookies. JSON is supported when no avatar is needed. For avatar upload use multipart/form-data; with the current validator, rememberMe must be omitted from multipart and therefore defaults to false. Browser clients making cross-origin requests must include credentials for cookies to be stored. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`, so both cookies are available to the refresh flow.",
             security: [],
 
             requestBody: {
@@ -31,7 +31,7 @@ module.exports = {
 
                     headers: {
                         "Set-Cookie": {
-                            description: "Two Set-Cookie headers are sent: refreshToken (httpOnly, SameSite=Strict, path=/users/refresh-token, 15 days when rememberMe=true otherwise 1 day) and deviceId (httpOnly, SameSite=Lax, 1 year). Secure is enabled in production.",
+                            description: "Two Set-Cookie headers are sent: refreshToken (httpOnly, SameSite=Strict, path=/users/refresh-token, 15 days when rememberMe=true otherwise 1 day) and deviceId (httpOnly, SameSite=Lax, path=/users, 1 year). Secure is enabled in production.",
                             schema: {
                                 type: "string"
                             }
@@ -77,7 +77,7 @@ module.exports = {
             tags: ["Auth"],
             operationId: "login",
             summary: "Log in",
-            description: "Validates email/password, rejects a soft-deleted account only after the credentials match, updates lastLogin, returns a 5-minute access token, and sets refreshToken + deviceId cookies. An existing deviceId cookie is reused. Browser clients making cross-origin requests must include credentials.",
+            description: "Validates email/password, rejects a soft-deleted account only after the credentials match, updates lastLogin, returns a 5-minute access token, and sets refreshToken + deviceId cookies. An existing deviceId cookie is reused. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`. Browser clients making cross-origin requests must include credentials.", description: "Validates email/password, rejects a soft-deleted account only after the credentials match, updates lastLogin, returns a 5-minute access token, and sets refreshToken + deviceId cookies. An existing deviceId cookie is reused. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`. Browser clients making cross-origin requests must include credentials.",
             security: [],
 
             requestBody: {
@@ -98,7 +98,7 @@ module.exports = {
 
                     headers: {
                         "Set-Cookie": {
-                            description: "refreshToken is httpOnly, SameSite=Strict, path=/users/refresh-token, and lasts 15 days when rememberMe=true otherwise 1 day. deviceId is httpOnly, SameSite=Lax, lasts 1 year, and is reused if already present. Secure is enabled in production.",
+                            description: "refreshToken is httpOnly, SameSite=Strict, path=/users/refresh-token, and lasts 15 days when rememberMe=true otherwise 1 day. deviceId is httpOnly, SameSite=Lax, path=/users, lasts 1 year, and is reused if already present. Secure is enabled in production.",
                             schema: {
                                 type: "string"
                             }
@@ -199,7 +199,7 @@ module.exports = {
             tags: ["Auth"],
             operationId: "refreshToken",
             summary: "Refresh the access token",
-            description: "Requires refreshToken + deviceId cookies. The backend verifies the JWT, checks the latest token for this user/device, compares the supplied token with the stored bcrypt hash, revokes the previous token, and issues a new access/refresh-token pair. The implementation is sequential, not an atomic database transaction. Send at least `{}` as the JSON body so the Zod object validator can apply rememberMe=false. Browser clients making cross-origin requests must include credentials.",
+            description: "Requires refreshToken + deviceId cookies. The backend verifies the JWT, checks the latest token for this user/device, compares the supplied token with the stored bcrypt hash, revokes the previous token, and issues a new access/refresh-token pair. The implementation is sequential, not an atomic database transaction. Send at least `{}` as the JSON body so the Zod object validator can apply rememberMe=false. `refreshToken` is scoped to this route and `deviceId` is scoped to `/users`, so browser clients can send both when credentials are enabled for cross-origin requests.",
 
             security: [
                 {
@@ -397,7 +397,7 @@ module.exports = {
             tags: ["Users"],
             operationId: "deleteUserProfile",
             summary: "Soft-delete the current user's account",
-            description: "Requires a valid access token and passes through the ban check. Sets isDeleted/deletedBy/deletedAt, deletes all stored refresh tokens, and resets/deletes the custom avatar. Admin accounts cannot be deleted and return 404. The controller does not clear browser cookies or the current access token, so the frontend should clear local authentication state after success.",
+            description: "Requires a valid access token and passes through the ban check. Sets isDeleted/deletedBy/deletedAt, deletes all stored refresh tokens, resets/deletes the custom avatar, and clears both the refreshToken and deviceId cookies. Admin accounts cannot be deleted and return 404. The already-issued access token itself is not revoked server-side, so the frontend should still discard it after success.",
 
             security: [
                 {
@@ -505,7 +505,7 @@ module.exports = {
             tags: ["Users"],
             operationId: "getUserCourses",
             summary: "List the current user's enrolled courses",
-            description: "Reads Enrollment documents for the authenticated user, sorts by Enrollment.createdAt, and returns only course _id/title/slug/price/discountPrecentage. Empty results are returned as the literal string `no course found`, not an empty array.",
+            description: "Reads only active Enrollment documents for the authenticated user (`status=active`), sorts by Enrollment.createdAt, and returns only course _id/title/slug/price/discountPrecentage. Cancelled enrollments are excluded. Empty results are returned as the literal string `no course found`, not an empty array.",
 
             security: [
                 {
@@ -523,7 +523,7 @@ module.exports = {
                 },
 
                 {
-                    $ref: "#/components/parameters/UserCourseSortByParameter"
+                    $ref: "#/components/parameters/CreatedAtSortByParameter"
                 },
 
                 {
@@ -726,6 +726,10 @@ module.exports = {
                     $ref: "#/components/responses/Unauthorized"
                 },
 
+                403: {
+                    $ref: "#/components/responses/UserBanned"
+                },
+
                 404: {
                     $ref: "#/components/responses/UserNotFound"
                 },
@@ -746,7 +750,7 @@ module.exports = {
             tags: ["Users"],
             operationId: "requestNewRole",
             summary: "Request a role change",
-            description: "Requests a role change to user, teacher, or admin. Requesting the same role as the current access-token role returns 409. A user can have at most one pending request after the operation and the service retains at most three request records, deleting the oldest when three already exist.",
+            description: "Requests a role change to user, teacher, or admin. Requesting the same role as the current access-token role returns 409.",
             security: [
                 {
                     bearerAuth: []
@@ -759,7 +763,7 @@ module.exports = {
                 content: {
                     "application/json": {
                         schema: {
-                            $ref: "#/components/schemas/RequestRole"
+                            $ref: "#/components/schemas/UserRoleChangeBody"
                         }
                     }
                 }
@@ -792,7 +796,11 @@ module.exports = {
                 },
 
                 403: {
-                    $ref: "#/components/responses/PendingRequestExists"
+                    $ref: "#/components/responses/RequestRoleForbidden"
+                },
+
+                404: {
+                    $ref: "#/components/responses/UserNotFound"
                 },
 
                 409: {
@@ -812,7 +820,7 @@ module.exports = {
 
     "/users/admin/requests/get-pending": {
         get: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "getPendingRequests",
             summary: "List pending role-change requests",
             description: "Admin only. Query validation runs before authentication. Returns raw userId/processedBy ObjectIds rather than populated user objects. Empty results use the literal string `no request found`.",
@@ -833,7 +841,7 @@ module.exports = {
                 },
 
                 {
-                    $ref: "#/components/parameters/RequestSortByParameter"
+                    $ref: "#/components/parameters/CreatedAtSortByParameter"
                 },
 
                 {
@@ -879,7 +887,7 @@ module.exports = {
 
     "/users/admin/requests/get-all": {
         get: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "getAllRequests",
             summary: "List all role-change requests",
             description: "Admin only. Supports status/requestedRole filters plus pagination/sorting. Query validation runs before authentication. Empty results use the literal string `no request found`.",
@@ -908,7 +916,7 @@ module.exports = {
                 },
 
                 {
-                    $ref: "#/components/parameters/RequestSortByParameter"
+                    $ref: "#/components/parameters/CreatedAtSortByParameter"
                 },
 
                 {
@@ -954,7 +962,7 @@ module.exports = {
 
     "/users/admin/requests/{id}": {
         get: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "getRequestById",
             summary: "Get a role-change request by id",
             description: "Admin only. Unlike the list endpoints, userId and processedBy are populated with _id/username/email. processedBy remains null for an unprocessed request.",
@@ -1013,7 +1021,7 @@ module.exports = {
 
     "/users/admin/requests/{id}/accept": {
         patch: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "acceptRequest",
             summary: "Accept a pending role-change request",
             description: "Admin only. The request must still be pending. On success it becomes accepted, processedBy/processedAt are set, and the target user's database role becomes requestedRole. Existing access tokens keep their old role claim until a new access token is issued (for example through refresh/login).",
@@ -1077,7 +1085,7 @@ module.exports = {
 
     "/users/admin/requests/{id}/reject": {
         patch: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "rejectRequest",
             summary: "Reject a pending role-change request",
             description: "Admin only. The request must still be pending. On success it becomes rejected and processedBy/processedAt are set; the user's role is not changed.",
@@ -1141,7 +1149,7 @@ module.exports = {
 
     "/users/admin/{id}": {
         get: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "getUserById",
             summary: "Get a user by id",
             description: "Admin only. Returns the same User data shape as GET /users/me but without the profile meta block.",
@@ -1198,7 +1206,7 @@ module.exports = {
         },
 
         delete: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "deleteUserById",
             summary: "Soft-delete a user by id",
             description: "Admin only. Sets soft-delete fields, deletes the target user's stored refresh tokens, and resets/deletes the target avatar. Targets with role=admin cannot be deleted and return the same 404 used for not-found/already-deleted users.",
@@ -1262,7 +1270,7 @@ module.exports = {
 
     "/users/admin/{id}/ban": {
         patch: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "banUser",
             summary: "Ban a user",
             description: "Admin only. The JSON object must be sent, but `{}` is valid and creates a permanent ban with banReason=null. banDays=0 means permanent; a positive value sets banExpiresAt. A target admin cannot be banned.",
@@ -1338,7 +1346,7 @@ module.exports = {
 
     "/users/admin/{id}/unban": {
         patch: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "unBanUser",
             summary: "Unban a user",
             description: "Admin only. Clears isBanned, banReason, banExpiresAt, and bannedBy. If the target is not currently banned the backend returns 409 with the exact message `this user is not ban`.",
@@ -1406,7 +1414,7 @@ module.exports = {
 
     "/users/admin/{id}/change-role": {
         patch: {
-            tags: ["Admins"],
+            tags: ["Users", "Admins"],
             operationId: "changeUserRole",
             summary: "Change a user's role",
             description: "Admin only. newRole may be user/teacher/admin, but a target that is already an admin cannot be changed through this endpoint. Existing access tokens keep their previous role claim until the user obtains a new access token.",
@@ -1429,7 +1437,7 @@ module.exports = {
                 content: {
                     "application/json": {
                         schema: {
-                            $ref: "#/components/schemas/ChangeUserRole"
+                            $ref: "#/components/schemas/UserRoleChangeBody"
                         }
                     }
                 }

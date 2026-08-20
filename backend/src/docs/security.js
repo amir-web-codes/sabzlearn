@@ -17,6 +17,6 @@ module.exports = {
         type: "apiKey",
         in: "cookie",
         name: "deviceId",
-        description: "httpOnly device/session identifier. Signup creates a UUID; login reuses an existing deviceId cookie or creates one if missing. SameSite is `lax`, Secure is enabled in production, and Max-Age is 1 year. Required by POST /users/auth/logout and POST /users/refresh-token. Logout currently does not clear this cookie. Browser clients making cross-origin requests must include credentials."
+        description: "httpOnly device/session identifier. Signup creates a UUID; login reuses an existing deviceId cookie or creates one if missing. Cookie path is `/users`, SameSite is `lax`, Secure is enabled in production, and Max-Age is 1 year. This path allows the cookie to be sent to `/users/refresh-token` and the other `/users` routes that read it. Logout currently clears only `refreshToken`, so `deviceId` remains until it expires or is explicitly cleared; deleting the current user profile clears both cookies. Browser clients making cross-origin requests must include credentials."
     }
 }
