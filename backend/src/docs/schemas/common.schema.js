@@ -10,8 +10,12 @@ module.exports = {
                 items: { $ref: "#/components/schemas/ValidationErrorItem" }
             },
             code: {
-                description: "Optional application or library error code",
-                nullable: true
+                description: "Optional application/library/database error code. MongoDB errors may expose a numeric code such as 11000.",
+                nullable: true,
+                oneOf: [
+                    { type: "string" },
+                    { type: "integer" }
+                ]
             },
             details: {
                 type: "object",

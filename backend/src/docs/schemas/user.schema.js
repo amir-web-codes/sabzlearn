@@ -449,29 +449,9 @@ module.exports = {
         ]
     },
 
-    RequestRole: {
+    UserRoleChangeBody: {
         type: "object",
-        description: "Successful role-change request a role change to: user, teacher, admin",
-
-        properties: {
-            newRole: {
-                type: "string",
-                enum: [
-                    "user",
-                    "teacher",
-                    "admin"
-                ],
-                example: "teacher"
-            }
-        },
-
-        required: [
-            "newRole"
-        ]
-    },
-
-    ChangeUserRole: {
-        type: "object",
+        description: "Request body used when requesting or directly changing a user role.",
 
         properties: {
             newRole: {
@@ -737,6 +717,7 @@ module.exports = {
                     enrolledCourses: {
                         type: "integer",
                         minimum: 0,
+                        description: "Count of active Enrollment documents for the user (`status=active`); cancelled enrollments are excluded.",
                         example: 4
                     },
 

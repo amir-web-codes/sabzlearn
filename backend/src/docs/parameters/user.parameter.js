@@ -1,30 +1,4 @@
 module.exports = {
-    UserCourseSortByParameter: {
-        name: "sortBy",
-        in: "query",
-        required: false,
-        description: "Sort enrolled-course results by Enrollment.createdAt.",
-        schema: {
-            type: "string",
-            enum: ["createdAt"],
-            default: "createdAt"
-        },
-        example: "createdAt"
-    },
-
-    RequestSortByParameter: {
-        name: "sortBy",
-        in: "query",
-        required: false,
-        description: "Sort role-change requests by Request.createdAt.",
-        schema: {
-            type: "string",
-            enum: ["createdAt"],
-            default: "createdAt"
-        },
-        example: "createdAt"
-    },
-
     RequestStatusFilterParameter: {
         name: "status",
         in: "query",
@@ -42,12 +16,10 @@ module.exports = {
         in: "query",
         required: false,
         description: "Filter role-change requests by requested role.",
-
         schema: {
             type: "string",
             enum: ["user", "teacher", "admin"]
         },
-
         example: "teacher"
     }
 }

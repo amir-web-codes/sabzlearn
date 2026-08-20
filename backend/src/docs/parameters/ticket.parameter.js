@@ -1,17 +1,4 @@
 module.exports = {
-    TicketSortByParameter: {
-        name: "sortBy",
-        in: "query",
-        required: false,
-        description: "Field to sort tickets by",
-        schema: {
-            type: "string",
-            enum: ["createdAt"],
-            default: "createdAt"
-        },
-        example: "createdAt"
-    },
-
     TicketStatusParameter: {
         name: "status",
         in: "query",

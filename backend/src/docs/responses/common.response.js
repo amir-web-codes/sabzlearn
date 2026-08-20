@@ -108,7 +108,7 @@ module.exports = {
     },
 
     UserBanned: {
-        description: "The authenticated user is currently banned",
+        description: "The ban-check middleware blocks the request when the access token carries `isBanned=true` and the ban has not expired. The current middleware only queries the user record when that token claim is true.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -184,24 +184,121 @@ module.exports = {
         }
     },
 
-    TooManyRequestsGlobalOrGeneric: {
-        description: "The global limiter or an endpoint-specific limiter was exceeded",
+    TooManyRequestsGlobalOrLogin: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the signup/login limiter (10 requests / 5 minutes) was exceeded.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
+
                 examples: {
                     global: {
-                        summary: "Global limit",
+                        summary: "Global rate limit",
                         value: {
                             success: false,
                             message: "you're sending too many requests, slow down cowboy🤠"
                         }
                     },
-                    endpointSpecific: {
-                        summary: "Endpoint-specific limit",
+
+                    login: {
+                        summary: "Signup/login rate limit",
+                        value: {
+                            success: false,
+                            message: "too many login attempts, please try again later"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrAdmin: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the admin-route limiter (250 requests per authenticated user id / 20 minutes) was exceeded. The admin-route limiter runs after access-token authentication and before the admin-role check. Both limiters currently return the same response body.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                example: {
+                    success: false,
+                    message: "you're sending too many requests, slow down cowboy🤠"
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrRequestRole: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the role-request limiter (10 requests per IP / 60 minutes) was exceeded. The role-request limiter runs before body validation and authentication.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                examples: {
+                    global: {
+                        summary: "Global rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
+                    },
+
+                    requestRole: {
+                        summary: "Role-request rate limit",
                         value: {
                             success: false,
                             message: "too many requests, please try again later"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrAdminChange: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the admin-change limiter (3 requests per IP / 30 minutes) was exceeded. The admin-change limiter runs after access-token authentication and before the admin-role check.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                examples: {
+                    global: {
+                        summary: "Global rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
+                    },
+
+                    adminChange: {
+                        summary: "Admin-change rate limit",
+                        value: {
+                            success: false,
+                            message: "too many requests, please try again later"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrTicket: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the ticket-creation limiter (5 requests per IP / 30 minutes) was exceeded.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                examples: {
+                    global: {
+                        summary: "Global rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
+                    },
+
+                    ticketCreation: {
+                        summary: "Ticket creation rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many tickets, please try again later"
                         }
                     }
                 }
