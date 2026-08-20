@@ -1,5 +1,4 @@
 module.exports = {
-
     TicketNotFound: {
         description: "Ticket not found",
 
@@ -17,81 +16,8 @@ module.exports = {
         }
     },
 
-
-    TicketClosed: {
-        description: "Ticket is closed and cannot receive new replies",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "this ticket is closed"
-                }
-            }
-        }
-    },
-
-
-    NoAccessToTicket: {
-        description: "Authenticated user does not have access to this ticket",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "you don't have access to this ticket"
-                }
-            }
-        }
-    },
-
-
-    MaximumTicketsReached: {
-        description: "User reached maximum allowed tickets",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "maximum 3 tickets"
-                }
-            }
-        }
-    },
-
-
-    AssignedUserNotFound: {
-        description: "Assigned user does not exist",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "user not found"
-                }
-            }
-        }
-    },
-
-
     CannotAssignTicketToNormalUser: {
-        description: "Ticket cannot be assigned to a normal user",
+        description: "The supplied assignedToId belongs to a user whose current role is `user`; tickets can be assigned only to admins or teachers.",
 
         content: {
             "application/json": {
@@ -107,67 +33,11 @@ module.exports = {
         }
     },
 
-
-    TicketStatusAlreadySet: {
-        description: "Ticket already has requested status",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "ticket already has this status"
-                }
-            }
-        }
-    },
-
-
-    CannotChangeTicketStatus: {
-        description: "User does not have permission to change ticket status",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "you don't have permission to change this ticket"
-                }
-            }
-        }
-    },
-
-
-    CannotReopenTicket: {
-        description: "Only admins can reopen closed tickets",
-
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-
-                example: {
-                    success: false,
-                    message: "you can't reopen ticket"
-                }
-            }
-        }
-    },
-
-
     TicketCreatedSuccessfully: {
         description: "Ticket created successfully",
 
         content: {
             "application/json": {
-
                 schema: {
                     $ref: "#/components/schemas/TicketResponse"
                 },
@@ -175,55 +45,111 @@ module.exports = {
                 example: {
                     success: true,
                     message: "ticket created successfully",
+
                     data: {
                         _id: "6857e4d1e5d82d0d1f5d8c40",
                         title: "Cannot access my course",
                         message: "I purchased a course but cannot access it.",
+                        userId: "6857e4d1e5d82d0d1f5d8c32",
+                        assignedTo: null,
+                        responsedBy: null,
+                        for: "admin",
                         status: "open",
-                        for: "admin"
+                        replies: [],
+                        createdAt: "2026-08-21T10:00:00.000Z",
+                        updatedAt: "2026-08-21T10:00:00.000Z",
+                        __v: 0
                     }
                 }
             }
         }
     },
 
-
     ReplyCreatedSuccessfully: {
-        description: "Reply created successfully",
+        description: "Reply created successfully. A staff reply claims/keeps the ticket for that staff member and sets status to `pending`; an owner reply to an unassigned ticket does not change assignment/status.",
 
         content: {
             "application/json": {
-
                 schema: {
                     $ref: "#/components/schemas/TicketResponse"
                 },
 
-                example: {
-                    success: true,
-                    message: "reply created successfully",
-                    data: {
-                        _id: "6857e4d1e5d82d0d1f5d8c40",
-                        status: "pending",
-                        replies: [
-                            {
-                                message: "We are checking your issue.",
-                                senderId: "6857e4d1e5d82d0d1f5d8c32",
-                                createdAt: "2026-07-26T12:30:00.000Z"
+                examples: {
+                    staffReply: {
+                        summary: "Staff member replies",
+
+                        value: {
+                            success: true,
+                            message: "reply created successfully",
+
+                            data: {
+                                _id: "6857e4d1e5d82d0d1f5d8c40",
+                                title: "Cannot access my course",
+                                message: "I purchased a course but cannot access it.",
+                                userId: "6857e4d1e5d82d0d1f5d8c32",
+                                assignedTo: "6857e4d1e5d82d0d1f5d8c99",
+                                responsedBy: "6857e4d1e5d82d0d1f5d8c99",
+                                for: "admin",
+                                status: "pending",
+
+                                replies: [
+                                    {
+                                        _id: "6857e4d1e5d82d0d1f5d8c55",
+                                        message: "We are checking your issue.",
+                                        senderId: "6857e4d1e5d82d0d1f5d8c99",
+                                        createdAt: "2026-08-21T10:30:00.000Z"
+                                    }
+                                ],
+
+                                createdAt: "2026-08-21T10:00:00.000Z",
+                                updatedAt: "2026-08-21T10:30:00.000Z",
+                                __v: 1
                             }
-                        ]
+                        }
+                    },
+
+                    ownerReply: {
+                        summary: "Owner replies before the ticket is assigned",
+
+                        value: {
+                            success: true,
+                            message: "reply created successfully",
+
+                            data: {
+                                _id: "6857e4d1e5d82d0d1f5d8c40",
+                                title: "Cannot access my course",
+                                message: "I purchased a course but cannot access it.",
+                                userId: "6857e4d1e5d82d0d1f5d8c32",
+                                assignedTo: null,
+                                responsedBy: null,
+                                for: "admin",
+                                status: "open",
+
+                                replies: [
+                                    {
+                                        _id: "6857e4d1e5d82d0d1f5d8c56",
+                                        message: "Here is some more information.",
+                                        senderId: "6857e4d1e5d82d0d1f5d8c32",
+                                        createdAt: "2026-08-21T10:20:00.000Z"
+                                    }
+                                ],
+
+                                createdAt: "2026-08-21T10:00:00.000Z",
+                                updatedAt: "2026-08-21T10:20:00.000Z",
+                                __v: 1
+                            }
+                        }
                     }
                 }
             }
         }
     },
-
 
     TicketStatusChangedSuccessfully: {
         description: "Ticket status changed successfully",
 
         content: {
             "application/json": {
-
                 schema: {
                     $ref: "#/components/schemas/Success"
                 },
@@ -236,72 +162,31 @@ module.exports = {
         }
     },
 
-
-    TicketsFetchedSuccessfully: {
-        description: "Tickets fetched successfully",
-
-        content: {
-            "application/json": {
-
-                schema: {
-                    $ref: "#/components/schemas/TicketListResponse"
-                },
-
-                example: {
-                    success: true,
-                    message: "tickets fetched successfully",
-                    data: [],
-                    meta: {
-                        totalNumber: 0,
-                        totalPages: 0,
-                        page: 1,
-                        limit: 20
-                    }
-                }
-            }
-        }
-    },
-
-
-    TicketFetchedSuccessfully: {
-        description: "Single ticket fetched successfully",
-
-        content: {
-            "application/json": {
-
-                schema: {
-                    $ref: "#/components/schemas/SingleTicketResponse"
-                },
-
-                example: {
-                    success: true,
-                    message: "ticket fetched successfully",
-                    data: {
-                        _id: "6857e4d1e5d82d0d1f5d8c40",
-                        title: "Cannot access my course",
-                        status: "open"
-                    }
-                }
-            }
-        }
-    },
-
     CreateTicketBadRequest: {
-        description: "The create-ticket body failed validation, or the user already has three tickets.",
+        description: "The create-ticket body failed validation, or the authenticated user already has three ticket documents. The three-ticket limit counts open, pending, and closed tickets alike.",
+
         content: {
             "application/json": {
                 schema: {
                     oneOf: [
-                        { $ref: "#/components/schemas/ValidationError" },
-                        { $ref: "#/components/schemas/Error" }
+                        {
+                            $ref: "#/components/schemas/ValidationError"
+                        },
+
+                        {
+                            $ref: "#/components/schemas/Error"
+                        }
                     ]
                 },
 
                 examples: {
-                    validationFailed: {
+                    invalidTitle: {
+                        summary: "Title is too short",
+
                         value: {
                             success: false,
                             message: "validation failed",
+
                             errors: [
                                 {
                                     code: "too_small",
@@ -312,7 +197,26 @@ module.exports = {
                         }
                     },
 
+                    invalidAssignedToId: {
+                        summary: "assignedToId is not a MongoDB ObjectId",
+
+                        value: {
+                            success: false,
+                            message: "validation failed",
+
+                            errors: [
+                                {
+                                    code: "invalid_format",
+                                    path: ["assignedToId"],
+                                    message: "Invalid MongoDB ObjectId"
+                                }
+                            ]
+                        }
+                    },
+
                     maximumTickets: {
+                        summary: "User already has three tickets",
+
                         value: {
                             success: false,
                             message: "maximum 3 tickets"
@@ -324,7 +228,8 @@ module.exports = {
     },
 
     ReplyTicketForbidden: {
-        description: "The reply is blocked because the user is banned, lacks access to the ticket, or the ticket is closed.",
+        description: "Reply is forbidden when the user is banned, lacks access to the ticket, the ticket is closed, or the ticket has already been assigned to a different staff member. In particular, once staff has claimed a ticket, the owner is currently blocked from replying because assignedTo no longer matches the owner id.",
+
         content: {
             "application/json": {
                 schema: {
@@ -332,7 +237,9 @@ module.exports = {
                 },
 
                 examples: {
-                    banned: {
+                    permanentBan: {
+                        summary: "Permanent ban",
+
                         value: {
                             success: false,
                             message: "you are permanently banned. Reason: Spam"
@@ -340,6 +247,8 @@ module.exports = {
                     },
 
                     noAccess: {
+                        summary: "Ticket is not accessible to this user",
+
                         value: {
                             success: false,
                             message: "you don't have access to this ticket"
@@ -347,6 +256,8 @@ module.exports = {
                     },
 
                     ticketClosed: {
+                        summary: "Closed ticket",
+
                         value: {
                             success: false,
                             message: "this ticket is closed"
@@ -359,6 +270,7 @@ module.exports = {
 
     TicketStatusBadRequest: {
         description: "The id/body is invalid, or the ticket already has the requested status.",
+
         content: {
             "application/json": {
                 schema: {
@@ -366,6 +278,7 @@ module.exports = {
                         {
                             $ref: "#/components/schemas/Error"
                         },
+
                         {
                             $ref: "#/components/schemas/ValidationError"
                         }
@@ -374,16 +287,21 @@ module.exports = {
 
                 examples: {
                     invalidId: {
+                        summary: "Invalid MongoDB ObjectId",
+
                         value: {
                             success: false,
                             message: "invalid id"
                         }
                     },
 
-                    validationFailed: {
+                    invalidStatus: {
+                        summary: "newStatus is not pending/closed",
+
                         value: {
                             success: false,
                             message: "validation failed",
+
                             errors: [
                                 {
                                     code: "invalid_value",
@@ -395,6 +313,8 @@ module.exports = {
                     },
 
                     alreadySet: {
+                        summary: "Ticket already has this status",
+
                         value: {
                             success: false,
                             message: "ticket already has this status"
@@ -406,7 +326,8 @@ module.exports = {
     },
 
     ChangeTicketStatusForbidden: {
-        description: "The status change is blocked because the user is banned, lacks route/service permission, or a non-admin is trying to reopen a closed ticket.",
+        description: "Status change is forbidden when the user is banned, fails the route-level ticket access check, fails the service-level staff permission check, or a non-admin tries to reopen a closed ticket. The ticket owner can pass the route-level self check but normally fails the service-level permission check.",
+
         content: {
             "application/json": {
                 schema: {
@@ -414,7 +335,9 @@ module.exports = {
                 },
 
                 examples: {
-                    banned: {
+                    permanentBan: {
+                        summary: "Permanent ban",
+
                         value: {
                             success: false,
                             message: "you are permanently banned. Reason: Spam"
@@ -422,6 +345,8 @@ module.exports = {
                     },
 
                     noRouteAccess: {
+                        summary: "No route-level access to this ticket",
+
                         value: {
                             success: false,
                             message: "you don't have access to this ticket"
@@ -429,6 +354,8 @@ module.exports = {
                     },
 
                     cannotChange: {
+                        summary: "Service-level permission denied",
+
                         value: {
                             success: false,
                             message: "you don't have permission to change this ticket"
@@ -436,6 +363,8 @@ module.exports = {
                     },
 
                     cannotReopen: {
+                        summary: "Teacher tries to reopen a closed ticket",
+
                         value: {
                             success: false,
                             message: "you can't reopen ticket"
@@ -447,57 +376,97 @@ module.exports = {
     },
 
     UserTicketsFetchedSuccessfully: {
-        description: "Current user's tickets fetched successfully. An empty result is returned as the literal string `no ticket found`.",
+        description: "Current user's tickets fetched successfully. User references are raw ObjectIds. An empty result is returned as the literal string `no ticket found`.",
+
         content: {
             "application/json": {
                 schema: {
-                    type: "object",
+                    $ref: "#/components/schemas/UserTicketListResponse"
+                },
 
-                    properties: {
-                        success: {
-                            type: "boolean",
-                            enum: [true]
-                        },
+                examples: {
+                    withTickets: {
+                        summary: "One or more tickets",
 
-                        message: {
-                            type: "string",
-                            example: "tickets fetched successfully"
-                        },
+                        value: {
+                            success: true,
+                            message: "tickets fetched successfully",
 
-                        data: {
-                            oneOf: [
+                            data: [
                                 {
-                                    type: "array",
-                                    items: {
-                                        $ref: "#/components/schemas/Ticket"
-                                    }
-                                },
-
-                                {
-                                    type: "string",
-                                    enum: ["no ticket found"]
+                                    _id: "6857e4d1e5d82d0d1f5d8c40",
+                                    title: "Cannot access my course",
+                                    message: "I purchased a course but cannot access it.",
+                                    userId: "6857e4d1e5d82d0d1f5d8c32",
+                                    assignedTo: null,
+                                    responsedBy: null,
+                                    for: "admin",
+                                    status: "open",
+                                    replies: [],
+                                    createdAt: "2026-08-21T10:00:00.000Z",
+                                    updatedAt: "2026-08-21T10:00:00.000Z",
+                                    __v: 0
                                 }
-                            ]
-                        },
+                            ],
 
-                        meta: {
-                            $ref: "#/components/schemas/PaginationMeta"
+                            meta: {
+                                totalNumber: 1,
+                                totalPages: 1,
+                                page: 1,
+                                limit: 20
+                            }
                         }
                     },
 
-                    required: [
-                        "success",
-                        "message",
-                        "data",
-                        "meta"
-                    ]
+                    empty: {
+                        summary: "No matching tickets",
+
+                        value: {
+                            success: true,
+                            message: "tickets fetched successfully",
+                            data: "no ticket found",
+
+                            meta: {
+                                totalNumber: 0,
+                                totalPages: 0,
+                                page: 1,
+                                limit: 20
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    StaffTicketsFetchedSuccessfully: {
+        description: "Tickets visible to the authenticated admin/teacher were fetched successfully. User references are raw ObjectIds. Empty results are returned as an empty array.",
+
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/TicketListResponse"
+                },
+
+                example: {
+                    success: true,
+                    message: "tickets fetched successfully",
+                    data: [],
+
+                    meta: {
+                        totalNumber: 0,
+                        totalPages: 0,
+                        page: 1,
+                        limit: 20
+                    }
                 }
             }
         }
     },
 
     StaffTicketsForbidden: {
-        description: "The staff listing is blocked because the user is banned or is neither an admin nor a teacher.",
+        description: "Staff listing is forbidden when the authenticated user is banned or has neither `admin` nor `teacher` role.",
+
         content: {
             "application/json": {
                 schema: {
@@ -505,7 +474,9 @@ module.exports = {
                 },
 
                 examples: {
-                    banned: {
+                    permanentBan: {
+                        summary: "Permanent ban",
+
                         value: {
                             success: false,
                             message: "you are permanently banned. Reason: Spam"
@@ -513,6 +484,8 @@ module.exports = {
                     },
 
                     wrongRole: {
+                        summary: "Authenticated user is not admin/teacher",
+
                         value: {
                             success: false,
                             message: "you don't have permission"
@@ -523,8 +496,47 @@ module.exports = {
         }
     },
 
+    TicketFetchedSuccessfully: {
+        description: "Single ticket fetched successfully. userId, assignedTo, and responsedBy are populated with _id/username/email; replies[].senderId remains a raw ObjectId.",
+
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/SingleTicketResponse"
+                },
+
+                example: {
+                    success: true,
+                    message: "ticket fetched successfully",
+
+                    data: {
+                        _id: "6857e4d1e5d82d0d1f5d8c40",
+                        title: "Cannot access my course",
+                        message: "I purchased a course but cannot access it.",
+
+                        userId: {
+                            _id: "6857e4d1e5d82d0d1f5d8c32",
+                            username: "amir",
+                            email: "amir@example.com"
+                        },
+
+                        assignedTo: null,
+                        responsedBy: null,
+                        for: "admin",
+                        status: "open",
+                        replies: [],
+                        createdAt: "2026-08-21T10:00:00.000Z",
+                        updatedAt: "2026-08-21T10:00:00.000Z",
+                        __v: 0
+                    }
+                }
+            }
+        }
+    },
+
     TicketReadForbidden: {
-        description: "Reading the ticket is blocked because the user is banned or does not have access to the ticket.",
+        description: "Reading a ticket is forbidden when the user is banned or fails the ticket-access middleware. The current read middleware allows the owner, the assigned staff member, or any admin.",
+
         content: {
             "application/json": {
                 schema: {
@@ -532,7 +544,9 @@ module.exports = {
                 },
 
                 examples: {
-                    banned: {
+                    permanentBan: {
+                        summary: "Permanent ban",
+
                         value: {
                             success: false,
                             message: "you are permanently banned. Reason: Spam"
@@ -540,6 +554,8 @@ module.exports = {
                     },
 
                     noAccess: {
+                        summary: "No access to this ticket",
+
                         value: {
                             success: false,
                             message: "you don't have access to this ticket"
@@ -549,5 +565,4 @@ module.exports = {
             }
         }
     }
-
 }
