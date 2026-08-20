@@ -284,6 +284,270 @@ module.exports = {
                 }
             }
         }
+    },
+
+    CreateTicketBadRequest: {
+        description: "The create-ticket body failed validation, or the user already has three tickets.",
+        content: {
+            "application/json": {
+                schema: {
+                    oneOf: [
+                        { $ref: "#/components/schemas/ValidationError" },
+                        { $ref: "#/components/schemas/Error" }
+                    ]
+                },
+
+                examples: {
+                    validationFailed: {
+                        value: {
+                            success: false,
+                            message: "validation failed",
+                            errors: [
+                                {
+                                    code: "too_small",
+                                    path: ["title"],
+                                    message: "Too small: expected string to have >=3 characters"
+                                }
+                            ]
+                        }
+                    },
+
+                    maximumTickets: {
+                        value: {
+                            success: false,
+                            message: "maximum 3 tickets"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    ReplyTicketForbidden: {
+        description: "The reply is blocked because the user is banned, lacks access to the ticket, or the ticket is closed.",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+
+                examples: {
+                    banned: {
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
+                    },
+
+                    noAccess: {
+                        value: {
+                            success: false,
+                            message: "you don't have access to this ticket"
+                        }
+                    },
+
+                    ticketClosed: {
+                        value: {
+                            success: false,
+                            message: "this ticket is closed"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TicketStatusBadRequest: {
+        description: "The id/body is invalid, or the ticket already has the requested status.",
+        content: {
+            "application/json": {
+                schema: {
+                    oneOf: [
+                        {
+                            $ref: "#/components/schemas/Error"
+                        },
+                        {
+                            $ref: "#/components/schemas/ValidationError"
+                        }
+                    ]
+                },
+
+                examples: {
+                    invalidId: {
+                        value: {
+                            success: false,
+                            message: "invalid id"
+                        }
+                    },
+
+                    validationFailed: {
+                        value: {
+                            success: false,
+                            message: "validation failed",
+                            errors: [
+                                {
+                                    code: "invalid_value",
+                                    path: ["newStatus"],
+                                    message: "Invalid option"
+                                }
+                            ]
+                        }
+                    },
+
+                    alreadySet: {
+                        value: {
+                            success: false,
+                            message: "ticket already has this status"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    ChangeTicketStatusForbidden: {
+        description: "The status change is blocked because the user is banned, lacks route/service permission, or a non-admin is trying to reopen a closed ticket.",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+
+                examples: {
+                    banned: {
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
+                    },
+
+                    noRouteAccess: {
+                        value: {
+                            success: false,
+                            message: "you don't have access to this ticket"
+                        }
+                    },
+
+                    cannotChange: {
+                        value: {
+                            success: false,
+                            message: "you don't have permission to change this ticket"
+                        }
+                    },
+
+                    cannotReopen: {
+                        value: {
+                            success: false,
+                            message: "you can't reopen ticket"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    UserTicketsFetchedSuccessfully: {
+        description: "Current user's tickets fetched successfully. An empty result is returned as the literal string `no ticket found`.",
+        content: {
+            "application/json": {
+                schema: {
+                    type: "object",
+
+                    properties: {
+                        success: {
+                            type: "boolean",
+                            enum: [true]
+                        },
+
+                        message: {
+                            type: "string",
+                            example: "tickets fetched successfully"
+                        },
+
+                        data: {
+                            oneOf: [
+                                {
+                                    type: "array",
+                                    items: {
+                                        $ref: "#/components/schemas/Ticket"
+                                    }
+                                },
+
+                                {
+                                    type: "string",
+                                    enum: ["no ticket found"]
+                                }
+                            ]
+                        },
+
+                        meta: {
+                            $ref: "#/components/schemas/PaginationMeta"
+                        }
+                    },
+
+                    required: [
+                        "success",
+                        "message",
+                        "data",
+                        "meta"
+                    ]
+                }
+            }
+        }
+    },
+
+    StaffTicketsForbidden: {
+        description: "The staff listing is blocked because the user is banned or is neither an admin nor a teacher.",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+
+                examples: {
+                    banned: {
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
+                    },
+
+                    wrongRole: {
+                        value: {
+                            success: false,
+                            message: "you don't have permission"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TicketReadForbidden: {
+        description: "Reading the ticket is blocked because the user is banned or does not have access to the ticket.",
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+
+                examples: {
+                    banned: {
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
+                    },
+
+                    noAccess: {
+                        value: {
+                            success: false,
+                            message: "you don't have access to this ticket"
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

@@ -33,7 +33,7 @@ module.exports = {
                     $ref: "#/components/responses/UserNotFound"
                 },
                 409: {
-                    $ref: "#/components/responses/CannotAssignTicketToRegularUser"
+                    $ref: "#/components/responses/CannotAssignTicketToNormalUser"
                 },
                 429: {
                     $ref: "#/components/responses/TooManyRequestsGlobalOrTicket"
@@ -148,7 +148,7 @@ module.exports = {
                 { $ref: "#/components/parameters/PageParameter" },
                 { $ref: "#/components/parameters/LimitParameter" },
                 { $ref: "#/components/parameters/TicketStatusParameter" },
-                { $ref: "#/components/parameters/TicketSortByParameter" },
+                { $ref: "#/components/parameters/CreatedAtSortByParameter" },
                 { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
@@ -186,7 +186,7 @@ module.exports = {
                 { $ref: "#/components/parameters/LimitParameter" },
                 { $ref: "#/components/parameters/TicketStatusParameter" },
                 { $ref: "#/components/parameters/AvailableOnlyParameter" },
-                { $ref: "#/components/parameters/TicketSortByParameter" },
+                { $ref: "#/components/parameters/CreatedAtSortByParameter" },
                 { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
