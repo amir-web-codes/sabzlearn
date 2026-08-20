@@ -3,8 +3,12 @@ module.exports = {
         name: "sortBy",
         in: "query",
         required: false,
-        description: "Field to sort the current user's enrolled courses by",
-        schema: { type: "string", enum: ["createdAt"], default: "createdAt" },
+        description: "Sort enrolled-course results by Enrollment.createdAt.",
+        schema: {
+            type: "string",
+            enum: ["createdAt"],
+            default: "createdAt"
+        },
         example: "createdAt"
     },
 
@@ -12,24 +16,38 @@ module.exports = {
         name: "sortBy",
         in: "query",
         required: false,
-        description: "Field to sort role-change requests by",
-        schema: { type: "string", enum: ["createdAt"], default: "createdAt" },
+        description: "Sort role-change requests by Request.createdAt.",
+        schema: {
+            type: "string",
+            enum: ["createdAt"],
+            default: "createdAt"
+        },
         example: "createdAt"
     },
+
     RequestStatusFilterParameter: {
         name: "status",
         in: "query",
         required: false,
-        description: "Filter role-change requests by status. Only usable on the get-all endpoint (get-pending is always implicitly status=pending).",
-        schema: { type: "string", enum: ["pending", "accepted", "rejected"] },
+        description: "Filter role-change requests by status. Only available on /users/admin/requests/get-all; the pending endpoint always queries status=pending internally.",
+        schema: {
+            type: "string",
+            enum: ["pending", "accepted", "rejected"]
+        },
         example: "pending"
     },
+
     RequestedRoleFilterParameter: {
         name: "requestedRole",
         in: "query",
         required: false,
-        description: "Filter role-change requests by the role being requested",
-        schema: { type: "string", enum: ["user", "teacher", "admin"] },
+        description: "Filter role-change requests by requested role.",
+
+        schema: {
+            type: "string",
+            enum: ["user", "teacher", "admin"]
+        },
+
         example: "teacher"
     }
 }

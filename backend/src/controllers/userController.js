@@ -53,6 +53,7 @@ async function signUp(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
+        path: "/users",
         maxAge: 1000 * 60 * 60 * 24 * 365
     })
 
@@ -94,6 +95,7 @@ async function login(req, res) {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "lax",
+                path: "/users",
                 maxAge: 1000 * 60 * 60 * 24 * 365
             })
 
@@ -172,6 +174,20 @@ async function getUserProfile(req, res) {
 
 async function deleteUserProfile(req, res) {
     await userService.deleteUser(req.user.id, req.user.id)
+
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/users/refresh-token"
+    })
+
+    res.clearCookie("deviceId", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/users"
+    })
 
     res.json({
         success: true,

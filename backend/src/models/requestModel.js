@@ -18,7 +18,7 @@ const requestSchema = new mongoose.Schema({
     },
     requestedRole: {
         type: String,
-        enum: ["teacher", "admin"],
+        enum: ["user", "teacher", "admin"],
         default: "teacher"
     },
     currentRole: {
@@ -32,6 +32,20 @@ const requestSchema = new mongoose.Schema({
         default: "pending"
     }
 }, { timestamps: true })
+
+requestSchema.index(
+    {
+        userId: 1,
+        status: 1
+    },
+    {
+        unique: true,
+        partialFilterExpression: {
+            status: "pending"
+        },
+        name: "unique_pending_role_request_per_user"
+    }
+)
 
 const requestModel = mongoose.model("Request", requestSchema)
 

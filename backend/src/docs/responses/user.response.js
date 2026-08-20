@@ -1,16 +1,6 @@
 module.exports = {
-    UserNotFound: {
-        description: "User not found",
-        content: {
-            "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "user not found" }
-            }
-        }
-    },
-
     UserNotFoundOrWasAdmin: {
-        description: "User not found, already deleted, or is an admin (admins cannot be deleted through this endpoint, including deleting your own admin account via DELETE /me)",
+        description: "The target user does not exist, is already soft-deleted for delete operations, or has the admin role (admins cannot be deleted through these endpoints).",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -20,7 +10,7 @@ module.exports = {
     },
 
     UserDeleted: {
-        description: "User account has been soft-deleted (returned on login attempts)",
+        description: "Credentials were correct, but the user account has been soft-deleted.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/UserDeletedError" },
@@ -28,7 +18,11 @@ module.exports = {
                     success: false,
                     message: "user deleted",
                     details: {
-                        deletedBy: { _id: "6857e4d1e5d82d0d1f5d8c32", username: "amir", email: "amir@gmail.com" },
+                        deletedBy: {
+                            _id: "6857e4d1e5d82d0d1f5d8c32",
+                            username: "amir",
+                            email: "amir@gmail.com"
+                        },
                         deletedAt: "2026-07-01T10:00:00.000Z"
                     }
                 }
@@ -37,7 +31,7 @@ module.exports = {
     },
 
     EmailAlreadyExists: {
-        description: "Email already exists",
+        description: "The supplied email already belongs to another user.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -47,7 +41,7 @@ module.exports = {
     },
 
     WrongCredentials: {
-        description: "Wrong email or password",
+        description: "Email/password pair is invalid.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -57,7 +51,7 @@ module.exports = {
     },
 
     NotLoggedIn: {
-        description: "deviceId cookie missing, user is not logged in",
+        description: "The deviceId cookie is missing.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -66,18 +60,8 @@ module.exports = {
         }
     },
 
-    TokenNotAvailable: {
-        description: "Refresh token cookie missing or expired",
-        content: {
-            "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "token not available or expired" }
-            }
-        }
-    },
-
     FakedRefreshToken: {
-        description: "Refresh token reuse or mismatch detected",
+        description: "The refresh token does not match the latest active token for this user/device, or token reuse/revocation was detected.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -86,62 +70,60 @@ module.exports = {
         }
     },
 
-    InvalidOrExpiredRefreshToken: {
-        description: "Refresh token is invalid or expired",
-        content: {
-            "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "invalid or expired token" }
-            }
-        }
-    },
-
     RefreshTokenForbidden: {
-        description: "403 on POST /users/refresh-token — three possible causes sharing this status code",
+        description: "POST /users/refresh-token failed before a new token could be issued.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
                 examples: {
                     missingRefreshTokenCookie: {
-                        summary: "refreshToken cookie missing/expired",
-                        value: { success: false, message: "token not available or expired" }
+                        summary: "refreshToken cookie missing",
+                        value: {
+                            success: false,
+                            message: "token not available or expired"
+                        }
                     },
+
                     missingDeviceIdCookie: {
                         summary: "deviceId cookie missing",
-                        value: { success: false, message: "you're not logged in" }
+                        value: {
+                            success: false,
+                            message: "you're not logged in"
+                        }
                     },
-                    invalidToken: {
-                        summary: "token invalid/expired/mismatched (catch-all)",
-                        value: { success: false, message: "invalid or expired token" }
+
+                    invalidOrExpiredToken: {
+                        summary: "refresh token verification failed or another non-401 refresh failure occurred",
+                        value: {
+                            success: false,
+                            message: "invalid or expired token"
+                        }
                     }
                 }
             }
         }
     },
 
-    CannotBanAdmin: {
-        description: "Cannot ban a user with the admin role",
-        content: {
-            "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "you can't ban an admin" }
-            }
-        }
-    },
-
     BanUserForbidden: {
-        description: "403 on PATCH /users/admin/{id}/ban — either the caller lacks admin role, or the target is an admin",
+        description: "PATCH /users/admin/{id}/ban is forbidden because the caller is not an admin or the target user is an admin.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
                 examples: {
                     noPermission: {
-                        summary: "caller is not an admin",
-                        value: { success: false, message: "you don't have permission" }
+                        summary: "Caller is not an admin",
+                        value: {
+                            success: false,
+                            message: "you don't have permission"
+                        }
                     },
+
                     targetIsAdmin: {
-                        summary: "target user is an admin",
-                        value: { success: false, message: "you can't ban an admin" }
+                        summary: "Target user is an admin",
+                        value: {
+                            success: false,
+                            message: "you can't ban an admin"
+                        }
                     }
                 }
             }
@@ -149,38 +131,38 @@ module.exports = {
     },
 
     UserNotBanned: {
-        description: "Target user is not currently banned",
+        description: "The target user is not currently banned.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "this user is not banned" }
-            }
-        }
-    },
-
-    CannotChangeAdminRole: {
-        description: "Cannot change another admin's role",
-        content: {
-            "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "you can't change another admin role" }
+                example: {
+                    success: false,
+                    message: "this user is not ban"
+                }
             }
         }
     },
 
     ChangeRoleForbidden: {
-        description: "403 on PATCH /users/admin/{id}/change-role — either the caller lacks admin role, or the target is an admin",
+        description: "PATCH /users/admin/{id}/change-role is forbidden because the caller is not an admin or the target user is already an admin.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
                 examples: {
                     noPermission: {
-                        summary: "caller is not an admin",
-                        value: { success: false, message: "you don't have permission" }
+                        summary: "Caller is not an admin",
+                        value: {
+                            success: false,
+                            message: "you don't have permission"
+                        }
                     },
+
                     targetIsAdmin: {
-                        summary: "target user is an admin",
-                        value: { success: false, message: "you can't change another admin role" }
+                        summary: "Target user is an admin",
+                        value: {
+                            success: false,
+                            message: "you can't change another admin role"
+                        }
                     }
                 }
             }
@@ -188,58 +170,92 @@ module.exports = {
     },
 
     AlreadyHasRole: {
-        description: "User already has the requested role",
+        description: "The current access-token role already equals the requested role.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "user already has this role" }
+                example: {
+                    success: false,
+                    message: "user already has this role"
+                }
             }
         }
     },
 
     PendingRequestExists: {
-        description: "User already has a pending role-change request",
+        description: "The user already has a pending role-change request.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "you already have a pending request" }
+                example: {
+                    success: false,
+                    message: "you already have a pending request"
+                }
             }
         }
     },
 
     RequestNotFound: {
-        description: "Role-change request not found",
+        description: "Role-change request not found.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "request not found" }
+                example: {
+                    success: false,
+                    message: "request not found"
+                }
             }
         }
     },
 
-    RequestAlreadyProcessed: {
-        description: "Role-change request has already been accepted/rejected",
+    RequestOrUserNotFound: {
+        description: "The role-change request does not exist, or the user referenced by the request no longer exists.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { success: false, message: "this request has already been processed" }
+
+                examples: {
+                    requestNotFound: {
+                        summary: "Request not found",
+                        value: {
+                            success: false,
+                            message: "request not found"
+                        }
+                    },
+
+                    userNotFound: {
+                        summary: "Request exists but target user was not found",
+                        value: {
+                            success: false,
+                            message: "user not found"
+                        }
+                    }
+                }
             }
         }
     },
 
     ProcessRequestForbidden: {
-        description: "403 on PATCH /users/admin/requests/{id}/accept and /reject — either the caller lacks admin role, or the request was already processed",
+        description: "The caller is not an admin, or this role-change request has already been processed.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
+
                 examples: {
                     noPermission: {
-                        summary: "caller is not an admin",
-                        value: { success: false, message: "you don't have permission" }
+                        summary: "Caller is not an admin",
+                        value: {
+                            success: false,
+                            message: "you don't have permission"
+                        }
                     },
+
                     alreadyProcessed: {
-                        summary: "request already accepted/rejected",
-                        value: { success: false, message: "this request has already been processed" }
+                        summary: "Request is already accepted/rejected",
+                        value: {
+                            success: false,
+                            message: "this request has already been processed"
+                        }
                     }
                 }
             }
@@ -247,18 +263,94 @@ module.exports = {
     },
 
     TooManyRequestsGlobalOrLogin: {
-        description: "Rate limit exceeded — either the global limiter (100 requests / 20 minutes) or the login/signup limiter (10 requests / 5 minutes) was triggered",
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the signup/login limiter (10 requests / 5 minutes) was exceeded.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
+
                 examples: {
                     global: {
-                        summary: "global rate limit (100 requests / 20 minutes)",
-                        value: { success: false, message: "you're sending too many requests, slow down cowboy🤠" }
+                        summary: "Global rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
                     },
+
                     login: {
-                        summary: "login/signup rate limit",
-                        value: { success: false, message: "too many login attempts, please try again later" }
+                        summary: "Signup/login rate limit",
+                        value: {
+                            success: false,
+                            message: "too many login attempts, please try again later"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrAdmin: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the admin-route limiter (250 requests per authenticated user id / 20 minutes) was exceeded. The admin-route limiter runs after access-token authentication and before the admin-role check. Both limiters currently return the same response body.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                example: {
+                    success: false,
+                    message: "you're sending too many requests, slow down cowboy🤠"
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrRequestRole: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the role-request limiter (10 requests per IP / 60 minutes) was exceeded. The role-request limiter runs before body validation and authentication.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                examples: {
+                    global: {
+                        summary: "Global rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
+                    },
+
+                    requestRole: {
+                        summary: "Role-request rate limit",
+                        value: {
+                            success: false,
+                            message: "too many requests, please try again later"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    TooManyRequestsGlobalOrAdminChange: {
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the admin-change limiter (3 requests per IP / 30 minutes) was exceeded. The admin-change limiter runs after access-token authentication and before the admin-role check.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+
+                examples: {
+                    global: {
+                        summary: "Global rate limit",
+                        value: {
+                            success: false,
+                            message: "you're sending too many requests, slow down cowboy🤠"
+                        }
+                    },
+
+                    adminChange: {
+                        summary: "Admin-change rate limit",
+                        value: {
+                            success: false,
+                            message: "too many requests, please try again later"
+                        }
                     }
                 }
             }

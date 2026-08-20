@@ -111,10 +111,8 @@ async function createTokens(user, rememberMe, deviceId, userAgent, isLogin) {
 
     await revokeUserToken(user._id, deviceId)
 
-    const hashedToken = await bcrypt.hash(refreshToken, 12)
-
     await tokenModel.create({
-        hashedToken,
+        hashedToken: refreshToken,
         userId: user._id,
         revoked: false,
         deviceId: String(deviceId),
@@ -382,25 +380,53 @@ async function changeRole(userId, role) {
 }
 
 async function requestRole(userId, currentRole, role) {
-    const userRequests = await requestModel.find({ userId }).sort({ createdAt: 1 })
+    let createdRequest
 
-    if (userRequests.length >= 3) {
-        await requestModel.findByIdAndDelete(userRequests[0]._id)
-    }
-
-    const isExists = await requestModel.exists({ userId, status: "pending" })
-    if (!isExists) {
-        return await requestModel.create({
+    try {
+        createdRequest = await requestModel.create({
             userId,
             requestedRole: role,
             currentRole,
             status: "pending"
         })
-    } else {
-        const err = new Error("you already have a pending request")
-        err.status = 403
+    } catch (err) {
+        if (err?.code === 11000) {
+            const conflict = new Error(
+                "you already have a pending request"
+            )
+
+            conflict.status = 403
+            throw conflict
+        }
+
         throw err
     }
+
+    const processedRequests = await requestModel.find({
+        userId,
+        _id: {
+            $ne: createdRequest._id
+        },
+        status: {
+            $ne: "pending"
+        }
+    }).sort({ createdAt: 1 }).select("_id").lean()
+
+    const excess = processedRequests.length - 2
+
+    if (excess > 0) {
+        const idsToDelete = processedRequests
+            .slice(0, excess)
+            .map(request => request._id)
+
+        await requestModel.deleteMany({
+            _id: {
+                $in: idsToDelete
+            }
+        })
+    }
+
+    return createdRequest
 }
 
 async function findPendingRequests(page, limit, sort = {}) {

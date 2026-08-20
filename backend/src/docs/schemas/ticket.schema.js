@@ -1,18 +1,20 @@
 module.exports = {
-
     TicketReply: {
         type: "object",
         description: "A single reply inside a ticket conversation",
+
         properties: {
             message: {
                 type: "string",
                 example: "Thank you for your help."
             },
+
             senderId: {
                 type: "string",
                 nullable: true,
                 example: "6857e4d1e5d82d0d1f5d8c32"
             },
+
             createdAt: {
                 type: "string",
                 format: "date-time",
@@ -21,12 +23,11 @@ module.exports = {
         }
     },
 
-
     Ticket: {
         type: "object",
         description: "Support ticket object",
-        properties: {
 
+        properties: {
             _id: {
                 type: "string",
                 example: "6857e4d1e5d82d0d1f5d8c40"
@@ -105,42 +106,19 @@ module.exports = {
         ]
     },
 
-
-    PopulatedUserReference: {
-        type: "object",
-        nullable: true,
-        description: "Populated user information",
-        properties: {
-
-            _id: {
-                type: "string",
-                example: "6857e4d1e5d82d0d1f5d8c32"
-            },
-
-            username: {
-                type: "string",
-                example: "amir"
-            },
-
-            email: {
-                type: "string",
-                example: "amir@example.com"
-            }
-        }
-    },
-
-
     TicketPopulated: {
         type: "object",
         description: "Ticket with user references populated",
+
         allOf: [
             {
                 $ref: "#/components/schemas/Ticket"
             },
+
             {
                 type: "object",
-                properties: {
 
+                properties: {
                     userId: {
                         $ref: "#/components/schemas/PopulatedUserReference"
                     },
@@ -157,13 +135,11 @@ module.exports = {
         ]
     },
 
-
     CreateTicket: {
         type: "object",
         description: "Request body for creating a new ticket",
 
         properties: {
-
             title: {
                 type: "string",
                 minLength: 3,
@@ -193,14 +169,11 @@ module.exports = {
         ]
     },
 
-
     ReplyMessage: {
         type: "object",
-
         description: "Request body for replying to a ticket",
 
         properties: {
-
             message: {
                 type: "string",
                 minLength: 1,
@@ -214,14 +187,11 @@ module.exports = {
         ]
     },
 
-
     ChangeTicketStatus: {
         type: "object",
-
         description: "Request body for changing ticket status",
 
         properties: {
-
             newStatus: {
                 type: "string",
                 enum: [
@@ -237,12 +207,10 @@ module.exports = {
         ]
     },
 
-
     TicketListResponse: {
         type: "object",
 
         properties: {
-
             success: {
                 type: "boolean",
                 example: true
@@ -266,12 +234,10 @@ module.exports = {
         }
     },
 
-
     SingleTicketResponse: {
         type: "object",
 
         properties: {
-
             success: {
                 type: "boolean",
                 example: true
@@ -288,12 +254,10 @@ module.exports = {
         }
     },
 
-
     TicketResponse: {
         type: "object",
 
         properties: {
-
             success: {
                 type: "boolean",
                 example: true
@@ -309,5 +273,4 @@ module.exports = {
             }
         }
     }
-
 }
