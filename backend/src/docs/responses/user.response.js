@@ -182,14 +182,36 @@ module.exports = {
         }
     },
 
-    PendingRequestExists: {
-        description: "The user already has a pending role-change request.",
+    RequestRoleForbidden: {
+        description: "The role-change request is blocked because the current access-token ban state is active, or the user already has a pending role-change request.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: {
-                    success: false,
-                    message: "you already have a pending request"
+
+                examples: {
+                    permanentBan: {
+                        summary: "The access token indicates a permanent ban",
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
+                    },
+
+                    temporaryBan: {
+                        summary: "The access token indicates an unexpired temporary ban",
+                        value: {
+                            success: false,
+                            message: "you are temporary banned until: 2026-08-25T12:00:00.000Z. Reason: Spam"
+                        }
+                    },
+
+                    pendingRequest: {
+                        summary: "A pending role-change request already exists",
+                        value: {
+                            success: false,
+                            message: "you already have a pending request"
+                        }
+                    }
                 }
             }
         }
