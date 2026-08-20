@@ -4,7 +4,7 @@ module.exports = {
             tags: ["Auth"],
             operationId: "signUp",
             summary: "Sign up",
-            description: "Creates a user with role=user, returns a 5-minute access token, and sets refreshToken + deviceId cookies. JSON is supported when no avatar is needed. For avatar upload use multipart/form-data; with the current validator, rememberMe must be omitted from multipart and therefore defaults to false. Browser clients making cross-origin requests must include credentials for cookies to be stored. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`, so both cookies are available to the refresh flow.",
+            description: "Creates a user with role=user, returns a 5-minute access token, and sets refreshToken + deviceId cookies. JSON is supported when no avatar is needed. For avatar upload use multipart/form-data(avatar); with the current validator, rememberMe must be omitted from multipart and therefore defaults to false. Browser clients making cross-origin requests must include credentials for cookies to be stored. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`, so both cookies are available to the refresh flow.",
             security: [],
 
             requestBody: {
@@ -77,7 +77,7 @@ module.exports = {
             tags: ["Auth"],
             operationId: "login",
             summary: "Log in",
-            description: "Validates email/password, rejects a soft-deleted account only after the credentials match, updates lastLogin, returns a 5-minute access token, and sets refreshToken + deviceId cookies. An existing deviceId cookie is reused. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`. Browser clients making cross-origin requests must include credentials.", description: "Validates email/password, rejects a soft-deleted account only after the credentials match, updates lastLogin, returns a 5-minute access token, and sets refreshToken + deviceId cookies. An existing deviceId cookie is reused. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`. Browser clients making cross-origin requests must include credentials.",
+            description: "Validates email/password, rejects a soft-deleted account only after the credentials match, updates lastLogin, returns a 5-minute access token, and sets refreshToken + deviceId cookies. An existing deviceId cookie is reused. `refreshToken` is scoped to `/users/refresh-token`; `deviceId` is scoped to `/users`. Browser clients making cross-origin requests must include credentials.",
             security: [],
 
             requestBody: {
@@ -200,7 +200,6 @@ module.exports = {
             operationId: "refreshToken",
             summary: "Refresh the access token",
             description: "Requires refreshToken + deviceId cookies. The backend verifies the JWT, checks the latest token for this user/device, compares the supplied token with the stored bcrypt hash, revokes the previous token, and issues a new access/refresh-token pair. The implementation is sequential, not an atomic database transaction. Send at least `{}` as the JSON body so the Zod object validator can apply rememberMe=false. `refreshToken` is scoped to this route and `deviceId` is scoped to `/users`, so browser clients can send both when credentials are enabled for cross-origin requests.",
-
             security: [
                 {
                     refreshTokenCookie: [],
@@ -750,7 +749,7 @@ module.exports = {
             tags: ["Users"],
             operationId: "requestNewRole",
             summary: "Request a role change",
-            description: "Requests a role change to user, teacher, or admin. Requesting the same role as the current access-token role returns 409.",
+            description: "Requests a role change to user, teacher, or admin. Requesting the same role as the current access-token role returns 409. A partial unique MongoDB index on `{ userId, status }` for `status=pending` enforces at most one pending role request per user, including concurrent submissions; duplicate-key creation is translated to the documented 403 pending-request error. After creation, the service retains the pending request plus at most two previously processed requests.",
             security: [
                 {
                     bearerAuth: []
@@ -1088,7 +1087,7 @@ module.exports = {
             tags: ["Users", "Admins"],
             operationId: "rejectRequest",
             summary: "Reject a pending role-change request",
-            description: "Admin only. The request must still be pending. On success it becomes rejected and processedBy/processedAt are set; the user's role is not changed.",
+            description: "Admin only. Rejection is performed atomically with `findOneAndUpdate` and only matches a request whose status is currently `pending`. On success, the request status becomes `rejected` and `processedBy`/`processedAt` are recorded; the user's role is not changed. If no pending request with the given id exists, including a request that has already been processed, the endpoint returns 403 with `no pending request found`.",
 
             security: [
                 {
@@ -1129,7 +1128,7 @@ module.exports = {
                 },
 
                 403: {
-                    $ref: "#/components/responses/ProcessRequestForbidden"
+                    $ref: "#/components/responses/RejectRequestForbidden"
                 },
 
                 404: {

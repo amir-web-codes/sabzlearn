@@ -230,6 +230,36 @@ module.exports = {
         }
     },
 
+    RejectRequestForbidden: {
+        description: "The request cannot be rejected because the authenticated user is not allowed to perform this action, or no pending role-change request with the given id exists.",
+
+        content: {
+            "application/json": {
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
+
+                examples: {
+                    forbidden: {
+                        summary: "Authenticated user is not an admin",
+                        value: {
+                            success: false,
+                            message: "you don't have permission"
+                        }
+                    },
+
+                    noPendingRequest: {
+                        summary: "No pending request found",
+                        value: {
+                            success: false,
+                            message: "no pending request found"
+                        }
+                    }
+                }
+            }
+        }
+    },
+
     RequestOrUserNotFound: {
         description: "The role-change request does not exist, or the user referenced by the request no longer exists.",
         content: {

@@ -551,10 +551,9 @@ async function rejectRequest(adminId, requestId) {
     )
 
     if (!foundRequest) {
-        res.status(404).json({
-            success: false,
-            message: "no pending request found"
-        })
+        const err = new Error("no pending request found")
+        err.status = 403
+        throw err
     }
 }
 
