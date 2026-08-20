@@ -4,11 +4,14 @@ services:
   mongodb:
     image: mongo:8
     container_name: mongodb
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     
     volumes:
       - mongo_data:/data/db
+
     environment:
       MONGO_INITDB_DATABASE: sabzlearn
+
     ports:
       - "27017:27017"
 

@@ -266,36 +266,91 @@ async function changePassword(user, password) {
 }
 
 async function findUserCourses(userId, page, limit, sort = {}) {
-    const { sortBy = "createdAt", sortOrder = "desc" } = sort
-    const sortDirection = sortOrder === "asc" ? 1 : -1
+    const {
+        sortBy = "createdAt",
+        sortOrder = "desc"
+    } = sort
 
-    const key = buildCacheKey(`courses:users:${userId}:enrolled`, { page, limit, sortBy, sortOrder })
+    const sortDirection =
+        sortOrder === "asc" ? 1 : -1
+
+    const enrollmentQuery = {
+        userId,
+        status: "active"
+    }
+
+    const key = buildCacheKey(
+        `courses:users:${userId}:enrolled:v2`,
+        {
+            page,
+            limit,
+            sortBy,
+            sortOrder
+        }
+    )
+
     const cached = await client.get(key)
 
-    let data = cached ? JSON.parse(cached) : null
+    let data = cached
+        ? JSON.parse(cached)
+        : null
+
     let totalNumber = 0
 
     if (data) {
-        totalNumber = Number(await client.get(`${key}:totalNumber`))
-        return { data, totalNumber }
+        totalNumber = Number(
+            await client.get(`${key}:totalNumber`)
+        )
+
+        return {
+            data,
+            totalNumber
+        }
     }
 
     data = await enrollmentModel
-        .find({ userId })
+        .find(enrollmentQuery)
         .select("courseId")
-        .populate("courseId", "title slug price discountPrecentage")
-        .sort({ [sortBy]: sortDirection })
+        .populate(
+            "courseId",
+            "title slug price discountPrecentage"
+        )
+        .sort({
+            [sortBy]: sortDirection
+        })
         .skip((page - 1) * limit)
         .limit(limit)
         .lean()
 
-    totalNumber = await enrollmentModel.countDocuments({ userId })
+    totalNumber =
+        await enrollmentModel.countDocuments(
+            enrollmentQuery
+        )
 
-    const hasNonDefaultFilters = sortBy !== "createdAt" || sortOrder !== "desc"
-    await client.set(key, JSON.stringify(data), { EX: resolveTTL(hasNonDefaultFilters) })
-    await client.set(`${key}:totalNumber`, totalNumber, { EX: resolveTTL(hasNonDefaultFilters) })
+    const hasNonDefaultFilters =
+        sortBy !== "createdAt" ||
+        sortOrder !== "desc"
 
-    return { data, totalNumber }
+    await client.set(
+        key,
+        JSON.stringify(data),
+        {
+            EX: resolveTTL(hasNonDefaultFilters)
+        }
+    )
+
+    await client.set(
+        `${key}:totalNumber`,
+        totalNumber,
+        {
+            EX: resolveTTL(hasNonDefaultFilters)
+        }
+    )
+
+    return {
+        data,
+        totalNumber
+    }
 }
 
 async function findUserComments(userId, page, limit, filters = {}, sort = {}) {
@@ -328,7 +383,7 @@ async function getUserDashboard(userId) {
     }
 
     const [enrolledCoursesCount, commentsCount, pendingRequestsCount] = await Promise.all([
-        enrollmentModel.countDocuments({ userId }),
+        enrollmentModel.countDocuments({ userId, status: "active" }),
         commentModel.countDocuments({ authorId: userId }),
         requestModel.countDocuments({ userId, status: "pending" })
     ])
