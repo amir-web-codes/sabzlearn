@@ -1131,10 +1131,6 @@ module.exports = {
                     $ref: "#/components/responses/RejectRequestForbidden"
                 },
 
-                404: {
-                    $ref: "#/components/responses/RequestNotFound"
-                },
-
                 429: {
                     $ref: "#/components/responses/TooManyRequestsGlobalOrAdmin"
                 },

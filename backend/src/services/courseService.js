@@ -26,23 +26,13 @@ async function findCourseBySlug(slug, select) {
         throw err
     }
 
+    const query = { slug, isDeleted: false, status: "published" }
+
     if (select) {
-        data = await courseModel.findOne({ slug, isDeleted: false }).select(select)
+        data = await courseModel.findOne(query).select(select)
     } else {
-        data = await courseModel.findOne({ slug, isDeleted: false })
+        data = await courseModel.findOne(query)
     }
-
-    if (!data) {
-        const err = new Error("course not found")
-        err.status = 404
-        throw err
-    }
-
-    return data
-}
-
-async function findCourseById(id) {
-    const data = await courseModel.findById(id)
 
     if (!data) {
         const err = new Error("course not found")
@@ -569,7 +559,6 @@ module.exports = {
     deleteCourse,
     updateCourse,
     getAllCourses,
-    findCourseById,
     enrollUserInCourse,
     findCourseStudents,
     findCourseComments,
