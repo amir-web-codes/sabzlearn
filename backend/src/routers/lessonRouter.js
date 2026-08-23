@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfs } = require("../middlewares")
+const { checkRoles, checkToken, checkUserBan, validateId, limiters, checkSelfs, checkEnrollmentOrOwnership } = require("../middlewares")
 
 const lessonController = require("../controllers/lessonController")
 
@@ -11,7 +11,7 @@ const { videoUpload } = require("../middlewares/uploads")
 
 router.get("/admin/get-all", validator(lessonValidations.getAllLessonsQuerySchema, "query"), checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, lessonController.getAllLessons)
 
-router.get("/:slug/get-lessons", validator(lessonValidations.getCourseLessonsQuerySchema, "query"), checkToken, checkUserBan, lessonController.getCourseLessons)
+router.get("/:slug/get-lessons", validator(lessonValidations.getCourseLessonsQuerySchema, "query"), checkToken, checkUserBan, checkEnrollmentOrOwnership(false), lessonController.getCourseLessons)
 
 router.post(
     "/courses/:slug/create",
@@ -24,8 +24,8 @@ router.post(
     lessonController.createNewLesson
 )
 
-router.route("/:id")
-    .get(validateId, checkToken, checkUserBan, lessonController.getLessonById)
+router.route("/:slug/:id")
+    .get(validateId, checkToken, checkUserBan, checkEnrollmentOrOwnership(false), lessonController.getLessonById)
     .patch(
         validateId,
         checkToken,

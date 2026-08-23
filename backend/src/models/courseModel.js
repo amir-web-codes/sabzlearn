@@ -131,6 +131,7 @@ courseSchema.pre("save", function () {
 })
 
 courseSchema.index({ tags: 1 })
+courseSchema.index({ instructor: 1 })
 
 const courseModel = mongoose.model("Course", courseSchema)
 

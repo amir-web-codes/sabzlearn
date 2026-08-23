@@ -5,7 +5,7 @@ const lessonModel = require("../models/lessonModel")
 const userModel = require("../models/userModel")
 const categoryService = require("./categoryService")
 const tagService = require("./tagService")
-
+const mongoose = require("mongoose")
 
 const { generateUniqueSlug } = require("../utils/generateUniqueSlug")
 const invalidatePattern = require("../utils/invalidatePattern")
@@ -111,23 +111,41 @@ async function createCourse({ title, description, price, discountPrecentage, lev
 }
 
 async function deleteCourse(slug, deletedById) {
+    const session = await mongoose.startSession()
 
-    const deletedData = await courseModel.findOneAndUpdate(
-        {
-            slug
-        },
-        {
-            $set: {
-                isDeleted: true,
-                deletedBy: deletedById,
-                deletedAt: new Date(Date.now())
-            }
+    try {
+        session.startTransaction()
+
+        const deletedData = await courseModel.findOneAndUpdate(
+            {
+                slug
+            },
+            {
+                $set: {
+                    isDeleted: true,
+                    deletedBy: deletedById,
+                    deletedAt: new Date(Date.now())
+                }
+            },
+            { session }
+        )
+
+        if (!deletedData) {
+            const err = new Error("course not found")
+            err.status = 404
+            throw err
         }
-    )
 
-    await lessonModel.deleteMany({ courseId: deletedData._id })
+        await lessonModel.deleteMany({ courseId: deletedData._id }, { session })
 
-    await invalidatePattern("courses:*")
+        await session.commitTransaction()
+
+        await invalidatePattern("courses:*")
+    } catch (err) {
+        await session.abortTransaction()
+    } finally {
+        await session.endSession()
+    }
 }
 
 async function updateCourse({ title, description, price, discountPrecentage, level, language, status, category, tags }, slug) {
@@ -367,8 +385,6 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
     const lessonsKey = `courses:${slug}:lessons`
 
     const cached = await client.get(courseKey)
-
-    let foundLessons;
     let totalDuration = 0;
 
     let foundCourse = cached
@@ -420,7 +436,7 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
         throw err
     }
 
-    foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title description order duration").sort({ order: 1, createdAt: -1 }).lean()
+    foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title order duration").sort({ order: 1, createdAt: -1 }).lean()
 
     if (foundLessons.length > 0) {
         totalDuration = foundLessons.reduce(
@@ -430,7 +446,7 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
     }
 
     const relatedCourses = await getRelatedCourses(foundCourse)
-    console.log(relatedCourses)
+
 
     await client.set(courseKey, JSON.stringify(foundCourse), { EX: 600 })
     await client.set(relatedKey, JSON.stringify(relatedCourses), { EX: 600 })

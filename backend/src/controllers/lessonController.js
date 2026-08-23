@@ -4,6 +4,7 @@ const lessonService = require("../services/lessonService")
 const courseService = require("../services/courseService")
 
 async function getLessonById(req, res) {
+    console.log("test")
     const data = await lessonService.findById(req.params.id)
 
     res.json({
