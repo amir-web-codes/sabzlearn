@@ -14,6 +14,6 @@ module.exports = {
     ...lessonSchemas,
     ...commentSchemas,
     ...cartSchemas,
-    ...categorySchemas
+    ...categorySchemas,
     ...courseSchemas
 }
