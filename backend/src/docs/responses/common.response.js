@@ -304,5 +304,50 @@ module.exports = {
                 }
             }
         }
+    },
+
+    InvalidOptionalBearerToken: {
+        description: "Authentication is optional for this endpoint. Omitting Authorization is allowed, but when a bearer token is supplied it must be valid and unexpired.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                example: {
+                    success: false,
+                    message: "invalid or expired token"
+                }
+            }
+        }
+    },
+
+    ForbiddenOrBanned: {
+        description: "The authenticated user is banned or does not have the required role.",
+        content: {
+            "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+                examples: {
+                    wrongRole: {
+                        summary: "Required role is missing",
+                        value: {
+                            success: false,
+                            message: "you don't have permission"
+                        }
+                    },
+                    permanentBan: {
+                        summary: "Permanent ban",
+                        value: {
+                            success: false,
+                            message: "you are permanently banned. Reason: Spam"
+                        }
+                    },
+                    temporaryBan: {
+                        summary: "Temporary ban",
+                        value: {
+                            success: false,
+                            message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
+                        }
+                    }
+                }
+            }
+        }
     }
 }
