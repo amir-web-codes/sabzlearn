@@ -5,9 +5,8 @@ module.exports = {
         description: "MongoDB ObjectId",
         required: true,
         schema: {
-            type: "string",
-            pattern: "^[a-fA-F0-9]{24}$",
-            example: "6857e4d1e5d82d0d1f5d8c40"
-        }
+            $ref: "#/components/schemas/MongoObjectId"
+        },
+        example: "6857e4d1e5d82d0d1f5d8c40"
     }
 }
