@@ -42,11 +42,10 @@ module.exports = {
                         minimum: 0,
                         example: 120
                     },
-                    discountPrecentage: {
+                    discountPercentage: {
                         type: "number",
                         minimum: 0,
                         maximum: 100,
-                        description: "Field name is intentionally documented with the backend model's current spelling: discountPrecentage.",
                         example: 20
                     },
                     finalPrice: {
@@ -115,7 +114,7 @@ module.exports = {
                     "slug",
                     "description",
                     "price",
-                    "discountPrecentage",
+                    "discountPercentage",
                     "finalPrice",
                     "category",
                     "tags",
