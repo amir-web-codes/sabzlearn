@@ -3,16 +3,23 @@ module.exports = {
         name: "sortBy",
         in: "query",
         required: false,
-        description: "Field to sort comments by",
-        schema: { type: "string", enum: ["createdAt", "rating"], default: "createdAt" },
+        description: "Comment sort field. rating is stored as a string, so rating sorting follows MongoDB string ordering rather than Very Bad -> Very Good score order.",
+        schema: {
+            type: "string",
+            enum: ["createdAt", "rating"],
+            default: "createdAt"
+        },
         example: "createdAt"
     },
+
     CommentRatingFilterParameter: {
         name: "rating",
         in: "query",
         required: false,
-        description: "Filter comments by rating",
-        schema: { type: "string", enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"] },
+        description: "Exact, case-sensitive comment-rating filter.",
+        schema: {
+            $ref: "#/components/schemas/CommentRating"
+        },
         example: "Good"
     }
 }
