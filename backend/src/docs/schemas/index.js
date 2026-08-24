@@ -4,6 +4,8 @@ const ticketSchemas = require("./ticket.schema")
 const lessonSchemas = require("./lesson.schema")
 const commentSchemas = require("./comment.schema")
 const cartSchemas = require("./cart.schema")
+const categorySchemas = require("./category.schema")
+const courseSchemas = require("./course.schema")
 
 module.exports = {
     ...commonSchemas,
@@ -11,5 +13,7 @@ module.exports = {
     ...ticketSchemas,
     ...lessonSchemas,
     ...commentSchemas,
-    ...cartSchemas
+    ...cartSchemas,
+    ...categorySchemas
+    ...courseSchemas
 }
