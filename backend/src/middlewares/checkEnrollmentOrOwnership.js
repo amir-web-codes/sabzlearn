@@ -4,7 +4,7 @@ const enrollmentModel = require("../models/enrollmentModel")
 function checkEnrollmentOrOwnership(adminAllowed = false) {
     return async (req, res, next) => {
         const foundCourse = await courseService.findCourseBySlug(req.params.slug, "instructor")
-        const hasEnrollment = await enrollmentModel.exists({ userId: req.user.id, courseId: foundCourse.id })
+        const hasEnrollment = await enrollmentModel.exists({ userId: req.user.id, courseId: foundCourse.id, status: "active" })
         req.course = foundCourse
 
         if (foundCourse.instructor.equals(req.user.id) || (adminAllowed && req.user.role === "admin")) {

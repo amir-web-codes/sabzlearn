@@ -564,7 +564,7 @@ module.exports = {
 
     "/users/me/get-comments": {
         get: {
-            tags: ["Users"],
+            tags: ["Users", "Comments"],
             operationId: "getUserComments",
             summary: "List the current user's comments",
             description: "Returns comments whose authorId is the authenticated user. Optional rating filtering is exact and case-sensitive. Empty results are returned as the literal string `you don't have any comment`, not an empty array.",

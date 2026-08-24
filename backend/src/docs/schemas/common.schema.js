@@ -1,4 +1,40 @@
 module.exports = {
+    MongoObjectId: {
+        type: "string",
+        pattern: "^[a-fA-F0-9]{24}$",
+        description: "MongoDB ObjectId serialized as a 24-character hexadecimal string",
+        example: "6857e4d1e5d82d0d1f5d8c40"
+    },
+
+    TimestampedMongoDocumentMeta: {
+        type: "object",
+        description: "Common Mongo/Mongoose metadata for documents created with timestamps=true and returned without excluding __v.",
+        properties: {
+            _id: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            createdAt: {
+                type: "string",
+                format: "date-time",
+                readOnly: true,
+                example: "2026-08-24T10:00:00.000Z"
+            },
+            updatedAt: {
+                type: "string",
+                format: "date-time",
+                readOnly: true,
+                example: "2026-08-24T10:00:00.000Z"
+            },
+            __v: {
+                type: "integer",
+                minimum: 0,
+                readOnly: true,
+                example: 0
+            }
+        },
+        required: ["_id", "createdAt", "updatedAt", "__v"]
+    },
+
     Error: {
         type: "object",
         description: "Standard error response. Optional diagnostic fields are included only when the thrown error provides them.",
@@ -99,8 +135,7 @@ module.exports = {
         description: "A user reference populated with the fields selected by the service layer",
         properties: {
             _id: {
-                type: "string",
-                example: "6857e4d1e5d82d0d1f5d8c32"
+                $ref: "#/components/schemas/MongoObjectId"
             },
             username: { type: "string", example: "amir" },
             email: {
