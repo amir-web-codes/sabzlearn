@@ -210,7 +210,7 @@ async function refreshToken(req, res) {
     const oldToken = req.cookies.refreshToken
 
     if (!oldToken) {
-        const err = new Error("token not available or expired")
+        const err = new Error("token not available or expired, please login again")
         err.status = 403
         throw err
     }

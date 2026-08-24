@@ -73,7 +73,7 @@ async function findEnrollment(courseId, userId) {
     return foundEnrollment
 }
 
-async function createCourse({ title, description, price, discountPrecentage, level, language, status, category, tags }, userId) {
+async function createCourse({ title, description, price, discountPercentage, level, language, status, category, tags }, userId) {
     const slug = await generateUniqueSlug(courseModel, title)
     let selectedPrice;
 
@@ -95,7 +95,7 @@ async function createCourse({ title, description, price, discountPrecentage, lev
         slug,
         description,
         price: selectedPrice,
-        discountPrecentage: Number(discountPrecentage) || 0,
+        discountPercentage: Number(discountPercentage) || 0,
         instructor: userId,
         category: categoryId,
         tags: tagIds,
@@ -148,7 +148,7 @@ async function deleteCourse(slug, deletedById) {
     }
 }
 
-async function updateCourse({ title, description, price, discountPrecentage, level, language, status, category, tags }, slug) {
+async function updateCourse({ title, description, price, discountPercentage, level, language, status, category, tags }, slug) {
 
     const foundCourse = await courseModel.findOne({ slug })
 
@@ -166,7 +166,7 @@ async function updateCourse({ title, description, price, discountPrecentage, lev
 
     if (description !== undefined) foundCourse.description = description
     if (price !== undefined) foundCourse.price = price
-    if (discountPrecentage !== undefined) foundCourse.discountPrecentage = discountPrecentage
+    if (discountPercentage !== undefined) foundCourse.discountPercentage = discountPercentage
     if (level !== undefined) foundCourse.level = level
     if (language !== undefined) foundCourse.language = language
     if (status !== undefined) foundCourse.status = status

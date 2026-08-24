@@ -50,7 +50,7 @@ async function editCommentById(req, res) {
 }
 
 async function createNewComment(req, res) {
-    await commentService.createComment(req.params.slug, req.user.id, req.body)
+    await commentService.createComment(req.params.slug.toLowerCase().trim(), req.user.id, req.body)
 
     res.status(201).json({
         success: true,

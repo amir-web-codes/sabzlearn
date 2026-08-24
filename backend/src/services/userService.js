@@ -313,7 +313,7 @@ async function findUserCourses(userId, page, limit, sort = {}) {
         .select("courseId")
         .populate(
             "courseId",
-            "title slug price discountPrecentage"
+            "title slug price discountPercentage"
         )
         .sort({
             [sortBy]: sortDirection

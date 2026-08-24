@@ -80,7 +80,7 @@ module.exports = {
                         summary: "refreshToken cookie missing",
                         value: {
                             success: false,
-                            message: "token not available or expired"
+                            message: "token not available or expired, please login again"
                         }
                     },
 

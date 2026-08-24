@@ -12,6 +12,19 @@ module.exports = {
         example: "desc"
     },
 
+    SortOrderAscParameter: {
+        name: "sortOrder",
+        in: "query",
+        required: false,
+        description: "Sort direction for endpoints whose backend default is ascending.",
+        schema: {
+            type: "string",
+            enum: ["asc", "desc"],
+            default: "asc"
+        },
+        example: "asc"
+    },
+
     CreatedAtSortByParameter: {
         name: "sortBy",
         in: "query",

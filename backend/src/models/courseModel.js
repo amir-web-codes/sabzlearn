@@ -23,7 +23,7 @@ const courseSchema = new mongoose.Schema({
         min: 0,
         default: 0
     },
-    discountPrecentage: {
+    discountPercentage: {
         type: Number,
         min: 0,
         max: 100,
@@ -124,8 +124,8 @@ const courseSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 courseSchema.pre("save", function () {
-    if (this.isModified("price") || this.isModified("discountPrecentage")) {
-        const discountAmount = this.price * (this.discountPrecentage / 100)
+    if (this.isModified("price") || this.isModified("discountPercentage")) {
+        const discountAmount = this.price * (this.discountPercentage / 100)
         this.finalPrice = Math.round((this.price - discountAmount) * 100) / 100
     }
 })
