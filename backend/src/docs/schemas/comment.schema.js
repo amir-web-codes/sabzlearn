@@ -1,87 +1,32 @@
+const exactSuccessSchema = (message) => ({
+    allOf: [
+        {
+            $ref: "#/components/schemas/Success"
+        },
+        {
+            type: "object",
+            properties: {
+                message: {
+                    type: "string",
+                    enum: [message],
+                    example: message
+                }
+            }
+        }
+    ]
+})
+
 module.exports = {
-    Comment: {
-        type: "object",
-        description: "Comment document returned by comment queries. findUserComments() uses lean() without a projection, so Mongo/Mongoose metadata such as __v is currently returned.",
-
-        properties: {
-            _id: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                example: "6857e4d1e5d82d0d1f5d8c60"
-            },
-
-            title: {
-                type: "string",
-                minLength: 3,
-                maxLength: 60,
-                example: "Great course!"
-            },
-
-            text: {
-                type: "string",
-                minLength: 3,
-                maxLength: 300,
-                example: "Learned a lot, well explained."
-            },
-
-            authorId: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                example: "6857e4d1e5d82d0d1f5d8c32"
-            },
-
-            courseId: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                example: "6857e4d1e5d82d0d1f5d8c10"
-            },
-
-            rating: {
-                type: "string",
-                enum: [
-                    "Very Bad",
-                    "Bad",
-                    "Medium",
-                    "Good",
-                    "Very Good"
-                ],
-                example: "Good"
-            },
-
-            createdAt: {
-                type: "string",
-                format: "date-time"
-            },
-
-            updatedAt: {
-                type: "string",
-                format: "date-time"
-            },
-
-            __v: {
-                type: "integer",
-                minimum: 0,
-                readOnly: true,
-                example: 0
-            }
-        },
-
-        required: [
-            "_id",
-            "title",
-            "text",
-            "authorId",
-            "courseId",
-            "rating",
-            "createdAt",
-            "updatedAt",
-            "__v"
-        ]
+    CommentRating: {
+        type: "string",
+        description: "Stored comment rating. Values are strings, so sortBy=rating uses MongoDB string ordering rather than a numeric 1-5 score.",
+        enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"],
+        example: "Good"
     },
 
-    CreateComment: {
+    CommentFields: {
         type: "object",
-
+        description: "Fields that can be supplied when creating or editing a comment. The current Zod validators do not trim title/text.",
         properties: {
             title: {
                 type: "string",
@@ -89,136 +34,209 @@ module.exports = {
                 maxLength: 60,
                 example: "Great course!"
             },
-
             text: {
                 type: "string",
                 minLength: 3,
                 maxLength: 300,
                 example: "Learned a lot, well explained."
             },
-
             rating: {
-                type: "string",
-                enum: [
-                    "Very Bad",
-                    "Bad",
-                    "Medium",
-                    "Good",
-                    "Very Good"
-                ],
-                default: "Medium",
-                example: "Good"
-            }
-        },
-
-        required: [
-            "title",
-            "text"
-        ]
-    },
-
-    UpdateComment: {
-        type: "object",
-        description: "All fields are optional. Only the provided fields will be updated.",
-
-        properties: {
-            title: {
-                type: "string",
-                minLength: 3,
-                maxLength: 60,
-                example: "Updated title"
-            },
-
-            text: {
-                type: "string",
-                minLength: 3,
-                maxLength: 300,
-                example: "Updated review text."
-            },
-
-            rating: {
-                type: "string",
-                enum: [
-                    "Very Bad",
-                    "Bad",
-                    "Medium",
-                    "Good",
-                    "Very Good"
-                ],
-                example: "Very Good"
+                $ref: "#/components/schemas/CommentRating"
             }
         }
     },
 
-    CommentByIdResponse: {
-        type: "object",
-
-        properties: {
-            success: {
-                type: "boolean",
-                example: true
+    CreateComment: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/CommentFields"
             },
-
-            message: {
-                type: "string",
-                example: "comment fetched successfully"
-            },
-
-            data: {
-                $ref: "#/components/schemas/Comment"
+            {
+                type: "object",
+                description: "Create-comment body. title and text are required. rating is optional and Zod supplies Medium when it is omitted. Unknown JSON properties are not used by the service.",
+                properties: {
+                    rating: {
+                        allOf: [
+                            {
+                                $ref: "#/components/schemas/CommentRating"
+                            }
+                        ],
+                        default: "Medium"
+                    }
+                },
+                required: ["title", "text"]
             }
-        },
-
-        required: [
-            "success",
-            "message",
-            "data"
         ]
     },
 
-    CommentsListResponse: {
-        type: "object",
-        description: "GET /comments/{id}/comments — a specific user's comments (admin only)",
+    UpdateComment: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/CommentFields"
+            }
+        ],
+        description: "Edit-comment body. Every field is optional and {} is valid; an empty object returns success without changing the document. Unlike create, rating has no update-time default. Unknown JSON properties are ignored by updateCommentById()."
+    },
 
-        properties: {
-            success: {
-                type: "boolean",
-                example: true
+    Comment: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/TimestampedMongoDocumentMeta"
             },
-
-            message: {
-                type: "string",
-                example: "comments fetched successfully"
+            {
+                $ref: "#/components/schemas/CommentFields"
             },
-
-            data: {
-                oneOf: [
-                    {
-                        type: "array",
-                        items: {
-                            $ref: "#/components/schemas/Comment"
-                        }
+            {
+                type: "object",
+                description: "Raw Comment document returned by current comment list/detail services. authorId and courseId are not populated.",
+                properties: {
+                    authorId: {
+                        $ref: "#/components/schemas/MongoObjectId"
                     },
-
-                    {
-                        type: "string",
-                        example: "no comments found"
+                    courseId: {
+                        $ref: "#/components/schemas/MongoObjectId"
                     }
-                ],
+                },
+                required: ["title", "text", "authorId", "courseId", "rating"]
+            }
+        ]
+    },
 
-                description: "An array of the user's comments, or the literal string \"no comments found\" when there are none"
+    CourseRatingSummary: {
+        type: "object",
+        description: "Current aggregate rating stored on the course and returned in GET /courses/{slug}/get-comments meta.rating.",
+        properties: {
+            average: {
+                type: "number",
+                minimum: 0,
+                maximum: 5,
+                example: 4.25
             },
-
-            meta: {
-                $ref: "#/components/schemas/PaginationMeta"
+            count: {
+                type: "integer",
+                minimum: 0,
+                example: 12
             }
         },
+        required: ["average", "count"]
+    },
 
-        required: [
-            "success",
-            "message",
-            "data",
-            "meta"
+    CourseCommentsMeta: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/PaginationMeta"
+            },
+            {
+                type: "object",
+                properties: {
+                    rating: {
+                        $ref: "#/components/schemas/CourseRatingSummary"
+                    }
+                },
+                required: ["rating"]
+            }
         ]
-    }
+    },
+
+    CommentByIdResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["comment fetched successfully"],
+                        example: "comment fetched successfully"
+                    },
+                    data: {
+                        $ref: "#/components/schemas/Comment"
+                    }
+                },
+                required: ["data"]
+            }
+        ]
+    },
+
+    AdminUserCommentsListResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                description: "Response for GET /comments/{id}/comments. A valid ObjectId is enough; the target user document itself is not checked for existence.",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["comments fetched successfully"],
+                        example: "comments fetched successfully"
+                    },
+                    data: {
+                        oneOf: [
+                            {
+                                type: "array",
+                                items: {
+                                    $ref: "#/components/schemas/Comment"
+                                }
+                            },
+                            {
+                                type: "string",
+                                enum: ["no comments found"],
+                                example: "no comments found"
+                            }
+                        ]
+                    },
+                    meta: {
+                        $ref: "#/components/schemas/PaginationMeta"
+                    }
+                },
+                required: ["data", "meta"]
+            }
+        ]
+    },
+
+    CourseCommentsListResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                description: "Response for GET /courses/{slug}/get-comments. The empty state is the exact singular string no comment found.",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["comments fetched successfully"],
+                        example: "comments fetched successfully"
+                    },
+                    data: {
+                        oneOf: [
+                            {
+                                type: "array",
+                                items: {
+                                    $ref: "#/components/schemas/Comment"
+                                }
+                            },
+                            {
+                                type: "string",
+                                enum: ["no comment found"],
+                                example: "no comment found"
+                            }
+                        ]
+                    },
+                    meta: {
+                        $ref: "#/components/schemas/CourseCommentsMeta"
+                    }
+                },
+                required: ["data", "meta"]
+            }
+        ]
+    },
+
+    CommentCreatedResponse: exactSuccessSchema("comment created successfully"),
+    CommentEditedResponse: exactSuccessSchema("comment edited successfully"),
+    CommentDeletedResponse: exactSuccessSchema("comment deleted successfully")
 }
