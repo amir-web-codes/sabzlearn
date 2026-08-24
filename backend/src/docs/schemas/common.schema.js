@@ -1,14 +1,22 @@
 module.exports = {
     MongoObjectId: {
         type: "string",
-        pattern: "^[a-fA-F0-9]{24}$",
+        pattern: "^[0-9a-fA-F]{24}$",
         description: "MongoDB ObjectId serialized as a 24-character hexadecimal string",
+        example: "6857e4d1e5d82d0d1f5d8c40"
+    },
+
+    NullableMongoObjectId: {
+        type: "string",
+        pattern: "^[0-9a-fA-F]{24}$",
+        nullable: true,
+        description: "MongoDB ObjectId serialized as a 24-character hexadecimal string, or null",
         example: "6857e4d1e5d82d0d1f5d8c40"
     },
 
     TimestampedMongoDocumentMeta: {
         type: "object",
-        description: "Common Mongo/Mongoose metadata for documents created with timestamps=true and returned without excluding __v.",
+        description: "Common Mongo/Mongoose metadata for timestamped documents returned without excluding __v.",
         properties: {
             _id: {
                 $ref: "#/components/schemas/MongoObjectId"
@@ -33,6 +41,30 @@ module.exports = {
             }
         },
         required: ["_id", "createdAt", "updatedAt", "__v"]
+    },
+
+    MediaAssetReference: {
+        type: "object",
+        description: "Stored media reference returned by models that keep both a public URL/path and a storage-provider public id.",
+        properties: {
+            url: {
+                type: "string",
+                nullable: true,
+                example: "https://res.cloudinary.com/example/image/upload/v1/sabzlearn/categories/icons/web-development.webp"
+            },
+            publicId: {
+                type: "string",
+                nullable: true,
+                example: "sabzlearn/categories/icons/web-development"
+            }
+        },
+        required: ["url", "publicId"]
+    },
+
+    ImageUploadFile: {
+        type: "string",
+        format: "binary",
+        description: "Image upload. Current image middleware accepts image/jpeg, image/png, and image/webp up to 2 MiB."
     },
 
     Error: {
@@ -103,11 +135,11 @@ module.exports = {
                         { type: "integer" }
                     ]
                 },
-                example: ["password"]
+                example: ["name"]
             },
             message: {
                 type: "string",
-                example: "Too small: expected string to have >=5 characters"
+                example: "Too small: expected string to have >=2 characters"
             }
         },
         required: ["code", "path", "message"]
@@ -145,5 +177,14 @@ module.exports = {
             }
         },
         required: ["_id", "username", "email"]
+    },
+
+    NullablePopulatedUserReference: {
+        type: "object",
+        nullable: true,
+        description: "A populated user reference, or null.",
+        allOf: [
+            { $ref: "#/components/schemas/PopulatedUserReference" }
+        ]
     }
 }
