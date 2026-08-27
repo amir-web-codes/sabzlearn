@@ -167,7 +167,7 @@ module.exports = {
             },
             {
                 type: "object",
-                description: "Response for GET /comments/{id}/comments. A valid ObjectId is enough; the target user document itself is not checked for existence.",
+                description: "Response for GET /comments/admin/{id}/comments. A valid ObjectId is enough; the target user document itself is not checked for existence.",
                 properties: {
                     message: {
                         type: "string",

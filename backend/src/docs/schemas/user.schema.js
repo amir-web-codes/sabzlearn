@@ -801,7 +801,7 @@ module.exports = {
                 example: 250000
             },
 
-            discountPrecentage: {
+            discountPercentage: {
                 type: "number",
                 minimum: 0,
                 maximum: 100,
@@ -814,7 +814,7 @@ module.exports = {
             "title",
             "slug",
             "price",
-            "discountPrecentage"
+            "discountPercentage"
         ]
     },
 

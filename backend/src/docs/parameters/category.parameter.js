@@ -50,19 +50,6 @@ module.exports = {
         example: "sortOrder"
     },
 
-    CategoryCoursesSortByParameter: {
-        name: "sortBy",
-        in: "query",
-        required: false,
-        description: "Course sort key. Backend mapping: price -> finalPrice, students -> studentsCount, rating -> rating.average; createdAt and title map directly.",
-        schema: {
-            type: "string",
-            enum: ["createdAt", "price", "students", "rating", "title"],
-            default: "createdAt"
-        },
-        example: "rating"
-    },
-
     CategoryForceDeleteParameter: {
         name: "force",
         in: "query",

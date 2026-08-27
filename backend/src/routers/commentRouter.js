@@ -9,7 +9,7 @@ const validator = require("../middlewares/validator")
 const commentValidations = require("../middlewares/validations/comment.validation")
 
 router.get(
-    "/:id/comments",
+    "/admin/:id/comments",
     validateId,
     validator(commentValidations.getUserCommentsQuerySchema, "query"),
     checkToken,

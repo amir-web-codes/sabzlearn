@@ -6,6 +6,7 @@ const commentSchemas = require("./comment.schema")
 const cartSchemas = require("./cart.schema")
 const categorySchemas = require("./category.schema")
 const courseSchemas = require("./course.schema")
+const tagSchemas = require("./tag.schema")
 
 module.exports = {
     ...commonSchemas,
@@ -15,5 +16,6 @@ module.exports = {
     ...commentSchemas,
     ...cartSchemas,
     ...categorySchemas,
-    ...courseSchemas
+    ...courseSchemas,
+    ...tagSchemas
 }

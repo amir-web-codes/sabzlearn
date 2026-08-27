@@ -48,7 +48,7 @@ module.exports = {
                 { $ref: "#/components/parameters/CategorySlugParameter" },
                 { $ref: "#/components/parameters/PageParameter" },
                 { $ref: "#/components/parameters/LimitParameter" },
-                { $ref: "#/components/parameters/CategoryCoursesSortByParameter" },
+                { $ref: "#/components/parameters/CourseListSortByParameter" },
                 { $ref: "#/components/parameters/SortOrderParameter" }
             ],
             responses: {
@@ -152,8 +152,10 @@ module.exports = {
                     $ref: "#/components/responses/InternalServerError"
                 }
             }
-        },
+        }
+    },
 
+    "/categories/admin/{slug}": {
         patch: {
             tags: ["Categories", "Admins"],
             operationId: "updateCategory",

@@ -504,7 +504,7 @@ module.exports = {
             tags: ["Users"],
             operationId: "getUserCourses",
             summary: "List the current user's enrolled courses",
-            description: "Reads only active Enrollment documents for the authenticated user (`status=active`), sorts by Enrollment.createdAt, and returns only course _id/title/slug/price/discountPrecentage. Cancelled enrollments are excluded. Empty results are returned as the literal string `no course found`, not an empty array.",
+            description: "Reads only active Enrollment documents for the authenticated user (`status=active`), sorts by Enrollment.createdAt, and returns only course _id/title/slug/price/discountPercentage. Cancelled enrollments are excluded. Empty results are returned as the literal string `no course found`, not an empty array.",
 
             security: [
                 {

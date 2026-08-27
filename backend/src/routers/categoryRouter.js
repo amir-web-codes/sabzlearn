@@ -18,6 +18,8 @@ router.post("/admin/create", checkToken, checkUserBan, checkRoles(["admin"]), li
 
 router.route("/:slug")
     .get(checkTokenOptional, validator(slugParamSchema, "params"), categoryController.getBySlug)
+
+router.route("/admin/:slug")
     .patch(checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, imageUpload.single("newIcon"), validator(slugParamSchema, "params"), validator(updateSchema), categoryController.updateCategory)
     .delete(checkToken, checkUserBan, checkRoles(["admin"]), limiters.adminLimiter, validator(slugParamSchema, "params"), categoryController.deleteCategory)
 

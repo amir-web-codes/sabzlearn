@@ -7,6 +7,8 @@ const sortParameter = require("./sort.parameter")
 const commentParameter = require("./comment.parameter")
 const lessonParameter = require("./lesson.parameter")
 const categoryParameter = require("./category.parameter")
+const courseParameter = require("./course.parameter")
+const tagParameter = require("./tag.parameter")
 
 module.exports = {
     ...idParameter,
@@ -17,5 +19,7 @@ module.exports = {
     ...sortParameter,
     ...commentParameter,
     ...lessonParameter,
-    ...categoryParameter
+    ...categoryParameter,
+    ...courseParameter,
+    ...tagParameter
 }

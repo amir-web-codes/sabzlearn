@@ -51,7 +51,7 @@ module.exports = {
     },
 
     FailedValidation: {
-        description: "The request body or query parameters failed Zod validation",
+        description: "The request body, path parameters, or query parameters failed Zod validation",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/ValidationError" },
@@ -212,7 +212,7 @@ module.exports = {
     },
 
     TooManyRequestsGlobalOrAdmin: {
-        description: "Either the global limiter (100 requests per IP / 20 minutes) or the admin-route limiter (250 requests per authenticated user id / 20 minutes) was exceeded. The admin-route limiter runs after access-token authentication and before the admin-role check. Both limiters currently return the same response body.",
+        description: "Either the global limiter (100 requests per IP / 20 minutes) or the admin-route limiter (250 requests per authenticated user id / 20 minutes) was exceeded. The admin limiter is keyed by req.user.id; its exact middleware position is route-specific. Both limiters currently return the same response body.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
@@ -320,10 +320,12 @@ module.exports = {
     },
 
     ForbiddenOrBanned: {
-        description: "The authenticated user is banned or does not have the required role.",
+        description: "The authenticated user is currently banned or does not have one of the roles required by this endpoint.",
         content: {
             "application/json": {
-                schema: { $ref: "#/components/schemas/Error" },
+                schema: {
+                    $ref: "#/components/schemas/Error"
+                },
                 examples: {
                     wrongRole: {
                         summary: "Required role is missing",

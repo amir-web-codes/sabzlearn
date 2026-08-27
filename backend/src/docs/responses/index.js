@@ -5,6 +5,7 @@ const lessonResponses = require("./lesson.response")
 const commentResponses = require("./comment.response")
 const cartResponses = require("./cart.response")
 const categoryResponses = require("./category.response")
+const tagResponses = require("./tag.response")
 
 module.exports = {
     ...commonResponses,
@@ -13,5 +14,6 @@ module.exports = {
     ...lessonResponses,
     ...commentResponses,
     ...cartResponses,
-    ...categoryResponses
+    ...categoryResponses,
+    ...tagResponses
 }

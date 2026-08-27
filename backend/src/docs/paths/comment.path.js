@@ -1,5 +1,5 @@
 module.exports = {
-    "/comments/{id}/comments": {
+    "/comments/admin/{id}/comments": {
         get: {
             tags: ["Comments", "Admins"],
             operationId: "getCommentsByUserId",
