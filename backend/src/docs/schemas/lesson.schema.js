@@ -1,47 +1,119 @@
-module.exports = {
-    Lesson: {
-        type: "object",
-        properties: {
-            _id: { type: "string", example: "6857e4d1e5d82d0d1f5d8c50" },
-            title: { type: "string", example: "Introduction to Hooks" },
-            description: { type: "string", example: "Learn the basics of React Hooks." },
-            courseId: { type: "string", example: "6857e4d1e5d82d0d1f5d8c10" },
-            publisherId: { type: "string", description: "the user (admin/teacher) who created the lesson", example: "6857e4d1e5d82d0d1f5d8c99" },
-            order: { type: "number", example: 100 },
-            video: {
-                type: "object",
-                properties: {
-                    url: { type: "string", nullable: true, example: "https://res.cloudinary.com/.../lessons/xyz.mp4" },
-                    publicId: { type: "string", nullable: true, example: "sabzlearn/lessons/xyz" }
+const lessonDataResponse = (message) => ({
+    allOf: [
+        {
+            $ref: "#/components/schemas/Success"
+        },
+        {
+            type: "object",
+            properties: {
+                message: {
+                    type: "string",
+                    enum: [message],
+                    example: message
+                },
+                data: {
+                    $ref: "#/components/schemas/Lesson"
                 }
             },
-            duration: {
-                type: "number",
-                default: 0,
-                description: "Duration in minutes, computed automatically from the uploaded video. 0 if the lesson has no video.",
-                example: 15
+            required: ["data"]
+        }
+    ]
+})
+
+module.exports = {
+    LessonTitle: {
+        type: "string",
+        minLength: 5,
+        maxLength: 150,
+        description: "Lesson title. The current Zod validator does not trim surrounding whitespace.",
+        example: "Introduction to React Hooks"
+    },
+
+    LessonDescription: {
+        type: "string",
+        description: "Lesson description. It is required on create but may be an empty string because the current validator applies no minimum length.",
+        example: "Learn the fundamentals of React Hooks and their common use cases."
+    },
+
+    LessonOrder: {
+        type: "number",
+        description: "Lesson ordering value. The backend coerces multipart text input to a number but currently applies no integer/minimum constraint. When omitted on create, the service uses the highest existing order in the same course + 100, or 100 when the course has no lessons.",
+        example: 100
+    },
+
+    LessonVideoReference: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/MediaAssetReference"
+            }
+        ],
+        description: "Stored lesson video reference. Both url and publicId are null when the lesson has no video."
+    },
+
+    Lesson: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/TimestampedMongoDocumentMeta"
             },
-            createdAt: { type: "string", format: "date-time" },
-            updatedAt: { type: "string", format: "date-time" }
-        },
-        required: ["title", "courseId", "publisherId", "order", "duration"]
+            {
+                type: "object",
+                description: "Lesson document returned by the current lesson controllers/services. courseId and publisherId are raw MongoDB ObjectIds and are not populated.",
+                properties: {
+                    title: {
+                        $ref: "#/components/schemas/LessonTitle"
+                    },
+                    description: {
+                        $ref: "#/components/schemas/LessonDescription"
+                    },
+                    courseId: {
+                        $ref: "#/components/schemas/MongoObjectId"
+                    },
+                    publisherId: {
+                        $ref: "#/components/schemas/MongoObjectId"
+                    },
+                    order: {
+                        $ref: "#/components/schemas/LessonOrder"
+                    },
+                    video: {
+                        $ref: "#/components/schemas/LessonVideoReference"
+                    },
+                    duration: {
+                        type: "number",
+                        minimum: 0,
+                        readOnly: true,
+                        default: 0,
+                        description: "Video duration in minutes. It is derived from Cloudinary upload metadata and rounded to 2 decimal places. It is 0 when no video is attached.",
+                        example: 15.42
+                    }
+                },
+                required: [
+                    "title",
+                    "description",
+                    "courseId",
+                    "publisherId",
+                    "order",
+                    "video",
+                    "duration"
+                ]
+            }
+        ]
     },
 
     CreateLessonMultipart: {
         type: "object",
-        description: "multipart/form-data body. Field name for the video file must be exactly `video`.",
+        description: "multipart/form-data body for creating a lesson. Unknown text fields are stripped by the current Zod object validator. The only accepted file field name is `video`.",
         properties: {
-            title: { type: "string", minLength: 5, maxLength: 150, example: "Introduction to Hooks" },
-            description: { type: "string", example: "Learn the basics of React Hooks." },
+            title: {
+                $ref: "#/components/schemas/LessonTitle"
+            },
+            description: {
+                $ref: "#/components/schemas/LessonDescription"
+            },
             order: {
-                type: "integer",
-                example: 100,
-                description: "Optional. If not provided, it will be automatically calculated as (the latest existing order in the same course + 100)."
+                $ref: "#/components/schemas/LessonOrder"
             },
             video: {
-                type: "string",
-                format: "binary",
-                description: "Optional. mp4 only, max 100MB. Duration is computed automatically from this file and cannot be set directly."
+                $ref: "#/components/schemas/VideoUploadFile"
             }
         },
         required: ["title", "description"]
@@ -49,62 +121,117 @@ module.exports = {
 
     EditLessonMultipart: {
         type: "object",
-        description: "multipart/form-data body. All fields are optional. Field name for the video file must be exactly `video`.",
+        description: "multipart/form-data body for editing a lesson. Every text field is optional and an entirely empty request is valid, returning the unchanged lesson. A request containing only `video` is also valid. Unknown text fields are stripped by Zod.",
         properties: {
-            title: { type: "string", minLength: 5, maxLength: 150, example: "Introduction to Hooks (updated)" },
-            description: { type: "string", example: "Updated description." },
-            order: { type: "integer", example: 200 },
+            title: {
+                $ref: "#/components/schemas/LessonTitle"
+            },
+            description: {
+                $ref: "#/components/schemas/LessonDescription"
+            },
+            order: {
+                $ref: "#/components/schemas/LessonOrder"
+            },
             removeVideo: {
                 type: "string",
                 enum: ["true", "false"],
-                description: "Set to \"true\" to remove the existing video and reset duration to 0. Ignored if a new `video` file is also uploaded in the same request (the new file takes precedence)."
+                description: "Set the exact multipart text value `true` to remove the existing video and reset duration to 0. If a new `video` file is also supplied, the new file takes precedence and removeVideo is ignored by the service branch.",
+                example: "true"
             },
             video: {
-                type: "string",
-                format: "binary",
-                description: "Optional. mp4 only, max 100MB. Replaces (and deletes from storage) the previous video; duration is recomputed automatically."
+                $ref: "#/components/schemas/VideoUploadFile"
             }
         }
     },
 
+    LessonFetchedResponse: lessonDataResponse("lesson fetched successfully"),
 
-    LessonByIdResponse: {
-        type: "object",
-        properties: {
-            success: { type: "boolean", example: true },
-            message: { type: "string", example: "lesson fetched successfully" },
-            data: { $ref: "#/components/schemas/Lesson" }
-        },
-        required: ["success", "message", "data"]
+    LessonAddedResponse: lessonDataResponse("lesson added successfully"),
+
+    LessonEditedResponse: lessonDataResponse("lesson edited successfully"),
+
+    LessonDeletedResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["lesson deleted successfully"],
+                        example: "lesson deleted successfully"
+                    }
+                }
+            }
+        ]
     },
 
-    LessonsListResponse: {
-        type: "object",
-        description: "GET /lessons/admin/get-all",
-        properties: {
-            success: { type: "boolean", example: true },
-            message: { type: "string", example: "lessons fetched successfully" },
-            data: {
-                oneOf: [
-                    { type: "array", items: { $ref: "#/components/schemas/Lesson" } },
-                    { type: "string", example: "no lesson found" }
-                ],
-                description: "An array of lessons, or the literal string \"no lesson found\" when there are none"
+    LessonsAdminListResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
             },
-            meta: { $ref: "#/components/schemas/PaginationMeta" }
-        },
-        required: ["success", "message", "data", "meta"]
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["lessons fetched successfully"],
+                        example: "lessons fetched successfully"
+                    },
+                    data: {
+                        oneOf: [
+                            {
+                                type: "array",
+                                items: {
+                                    $ref: "#/components/schemas/Lesson"
+                                }
+                            },
+                            {
+                                type: "string",
+                                enum: ["no lesson found"],
+                                example: "no lesson found"
+                            }
+                        ],
+                        description: "An array when at least one lesson matches; otherwise the exact string `no lesson found`."
+                    },
+                    meta: {
+                        $ref: "#/components/schemas/PaginationMeta"
+                    }
+                },
+                required: ["data", "meta"]
+            }
+        ]
     },
 
     CourseLessonsListResponse: {
-        type: "object",
-        description: "GET /lessons/{slug}/get-lessons — unlike the admin get-all endpoint, this always returns an array (even if empty), never the \"no lesson found\" string",
-        properties: {
-            success: { type: "boolean", example: true },
-            message: { type: "string", example: "course lessons fetched successfully" },
-            data: { type: "array", items: { $ref: "#/components/schemas/Lesson" } },
-            meta: { $ref: "#/components/schemas/PaginationMeta" }
-        },
-        required: ["success", "message", "data", "meta"]
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["course lessons fetched successfully"],
+                        example: "course lessons fetched successfully"
+                    },
+                    data: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/Lesson"
+                        },
+                        description: "Always an array. The empty state is `[]`."
+                    },
+                    meta: {
+                        $ref: "#/components/schemas/PaginationMeta"
+                    }
+                },
+                required: ["data", "meta"]
+            }
+        ]
     }
 }
