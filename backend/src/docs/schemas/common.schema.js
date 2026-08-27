@@ -186,5 +186,14 @@ module.exports = {
         allOf: [
             { $ref: "#/components/schemas/PopulatedUserReference" }
         ]
-    }
+    },
+
+    KebabSlug: {
+        type: "string",
+        minLength: 2,
+        maxLength: 100,
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        description: "Lowercase alphanumeric kebab-case slug accepted by validated slug inputs.",
+        example: "web-development"
+    },
 }
