@@ -1,192 +1,335 @@
 # SabzLearn
 
-SabzLearn is a full-featured backend API for an online learning platform inspired by modern education marketplaces. It provides a solid foundation for managing users, instructors, courses, lessons, enrollments, comments, and support tickets in a secure and scalable way.
+> A backend-first learning management platform built around real-world education workflows — from authentication and course management to enrollment, support tickets, media handling, and checkout.
 
-This project is more than a simple CRUD app. It demonstrates real-world backend engineering concepts such as authentication, authorization, role-based access control, validation, security hardening, pagination, and modular architecture.
+**Node.js · Express · MongoDB · Redis · React · Cloudinary · JWT · Zod · Swagger**
 
----
+## Overview
 
-## Why this project is impressive
+**SabzLearn** is a full-stack learning platform with a strong focus on backend architecture and real application workflows.
 
-SabzLearn was built to look and feel like a production-grade backend service. It focuses on practical business logic and clean architecture rather than just basic API endpoints.
+Instead of being limited to course CRUD operations, the backend handles authentication, roles, courses, lessons, enrollments, comments, categories, tags, support tickets, cart/order flows, media uploads, moderation, and API documentation.
 
-What makes this project strong for a portfolio or job interview:
+A React + Vite frontend workspace is also included and is currently being developed on top of the backend API.
 
-- It solves a real-world problem: online course management
-- It includes user roles such as student, teacher, and admin
-- It implements secure authentication with JWT and refresh-token support
-- It includes admin moderation workflows and user protection features
-- It uses a structured MVC-style backend architecture
-- It shows attention to security, validation, and reliability
+## Key Features
 
----
-
-## Main Features
-
-### 1. User authentication and account management
-
-- Sign up and login
-- Secure password handling with hashing
-- JWT access tokens and refresh-token flow
-- Logout support
-- Profile viewing and profile updates
-- Password change functionality
-- Account deletion
-
-### 2. Role-based access control
-
-- Users can register as students by default
-- Teachers can create and manage courses
-- Admins can manage users, requests, and moderation actions
-- Role request workflow for users who want to become teachers
-
-### 3. Course management
-
-- Create, edit, and delete courses
-- Slug-based course access
-- Course details and course listing with pagination
-- Course enrollment and cancellation
-- Course student and comment management
-- Course rating metadata support
-
-### 4. Lesson management
-
-- Add lessons to existing courses
-- Edit or delete lessons
-- Retrieve lessons by course or globally
-
-### 5. Enrollment system
-
-- Users can enroll in courses
-- Users can cancel their enrollment
-- Enrollment actions are protected by middleware and rate limiting
-
-### 6. Comments and community interaction
-
-- Users can leave comments on courses
-- Comment ownership and edit/delete protection
-- Comment retrieval for users and course authors
-
-### 7. Support ticket system
-
-- Users can create support tickets
-- Tickets can receive replies
-- Ticket status can be changed by authorized users
-- Admin and teacher visibility for ticket management
-
-### 8. Admin tools and moderation
-
-- Ban and unban users
-- Change user roles
-- Review pending role requests
-- Accept or reject role requests
-- Manage tickets and course-related data responsibly
-
-### 9. Security and reliability
-
-- Input validation using schema-based validation
-- CORS configuration
-- Helmet middleware for secure headers
-- Rate limiting for sensitive actions
-- Centralized error handling
-- Health check endpoint
-- Cookie-based refresh-token handling
-
----
+- 🔐 **Authentication & Sessions** — Signup, login, refresh tokens, logout, password changes, and profile management
+- 👥 **Role-Based Access** — User, teacher, and admin permissions with ownership-aware authorization
+- 🎓 **Course Management** — Course CRUD, media, filtering, students, related courses, and administrative workflows
+- 📚 **Lessons & Enrollment** — Lesson management with enrollment and course-owner access rules
+- 🗂️ **Categories & Tags** — Structured course discovery and classification
+- 💬 **Comments & Ratings** — Course discussions with ownership and moderation rules
+- 🎫 **Support Tickets** — User support workflow with replies and ticket statuses
+- 🛒 **Cart & Orders** — Course cart management and checkout/order foundation
+- ☁️ **Cloudinary Media** — Avatars, thumbnails, videos, lesson media, and category assets
+- ⚡ **Redis Integration** — Shared high-speed application state
+- 📖 **Swagger / OpenAPI** — Interactive and modular API documentation
+- 🚦 **Security & Rate Limiting** — Validation, Helmet, role checks, ban checks, and endpoint-specific limits
+- 🧪 **Testing Tooling** — Jest and Supertest support
+- 🐳 **Docker Development** — MongoDB replica set and Redis
 
 ## Tech Stack
 
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT
-- bcrypt
-- cookie-parser
-- cors
-- helmet
-- express-rate-limit
-- Jest
-- Supertest
+### Backend
 
----
+| Category       | Technology              |
+| -------------- | ----------------------- |
+| Runtime        | Node.js                 |
+| Framework      | Express 5               |
+| Database       | MongoDB                 |
+| ODM            | Mongoose                |
+| Cache          | Redis                   |
+| Authentication | JWT                     |
+| Validation     | Zod / Fastest Validator |
+| Media          | Cloudinary + Multer     |
+| API Docs       | Swagger / OpenAPI       |
+| Logging        | Pino                    |
+| Testing        | Jest + Supertest        |
+| Infrastructure | Docker Compose          |
 
-## Project Structure
+### Frontend
+
+| Category     | Technology |
+| ------------ | ---------- |
+| UI           | React 19   |
+| Build Tool   | Vite       |
+| HTTP Client  | Axios      |
+| Code Quality | ESLint     |
+
+## Architecture
+
+The backend follows a layered structure:
 
 ```text
-controllers/     # Request handlers
-services/        # Core business logic
-models/          # Mongoose schemas
-routers/         # Route definitions
-middlewares/     # Auth, validation, role checks, error handling
-configs/         # Database, CORS, middleware setup
-utils/           # Helper utilities
+Request
+   ↓
+Router
+   ↓
+Middleware
+   ↓
+Controller
+   ↓
+Service
+   ↓
+Mongoose Model
+   ↓
+MongoDB
 ```
 
----
+Project structure:
 
-## Installation
+```text
+sabzlearn/
+├── backend/
+│   ├── src/
+│   │   ├── configs/
+│   │   ├── controllers/
+│   │   ├── docs/
+│   │   ├── middlewares/
+│   │   ├── models/
+│   │   ├── routers/
+│   │   ├── services/
+│   │   └── utils/
+│   ├── docker-compose.yml
+│   └── package.json
+│
+└── frontend/
+    ├── src/
+    └── package.json
+```
 
-1. Clone the repository
-2. Install dependencies:
+This separation keeps HTTP handling, business logic, persistence, infrastructure, and documentation independent and easier to maintain.
+
+## Main Modules
+
+| Module     | Responsibility                                |
+| ---------- | --------------------------------------------- |
+| Users      | Authentication, profiles, roles, moderation   |
+| Courses    | Course lifecycle, enrollment, students, media |
+| Lessons    | Learning content and lesson videos            |
+| Categories | Hierarchical course organization              |
+| Tags       | Flexible course classification                |
+| Comments   | Course comments and ratings                   |
+| Tickets    | User support workflow                         |
+| Cart       | Cart, checkout, and order-related operations  |
+
+## Getting Started
+
+### Prerequisites
+
+Install:
+
+- Node.js
+- npm
+- Git
+- Docker & Docker Compose
+
+A Cloudinary account is required for media-upload features.
+
+### 1. Clone the Repository
 
 ```bash
+git clone git@github.com:amir-web-codes/sabzlearn.git
+cd sabzlearn
+```
+
+## Backend Setup
+
+### 2. Install Dependencies
+
+```bash
+cd backend
 npm install
 ```
 
-3. Create a .env file with the required environment variables:
+### 3. Configure Environment Variables
+
+```bash
+cp .env.example .env
+```
+
+Example local configuration:
 
 ```env
-PORT=7000
 NODE_ENV=development
-DATABASEURL=your_mongodb_connection_string
-ACCESS_TOKEN_KEY=your_access_token_secret
-REFRESH_TOKEN_KEY=your_refresh_token_secret
-ALLOWED_ORIGINS=http://localhost:3000
+PORT=7000
+
+DATABASE_URL=mongodb://localhost:27017/sabzlearn?replicaSet=rs0
+
+ACCESS_TOKEN_KEY=your_access_token_key_min_32_chars
+REFRESH_TOKEN_KEY=your_refresh_token_key_min_32_chars
+
+ALLOWED_ORIGINS=http://localhost:5173
+LOG_LEVEL=debug
+
+REDIS_URL=redis://localhost:6378
+
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-4. Start the development server:
+### 4. Start MongoDB & Redis
+
+```bash
+docker compose up -d
+```
+
+MongoDB runs on `27017` and Redis is exposed locally on `6378`.
+
+### 5. Initialize MongoDB Replica Set
+
+This is required once for a fresh MongoDB volume:
+
+```bash
+docker exec -it mongodb mongosh --eval "rs.initiate()"
+```
+
+### 6. Start the Backend
 
 ```bash
 npm run dev
 ```
 
----
+Available locally at:
 
-## Scripts
-
-```bash
-npm run dev
-npm start
-npm test
+```text
+API          localhost:7000
+Swagger      localhost:7000/api-docs
+Health       localhost:7000/health
 ```
 
+## Frontend Setup
+
+In another terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The Vite development server normally runs on:
+
+```text
+localhost:5173
+```
+
+## Available Scripts
+
+### Backend
+
+| Command       | Description              |
+| ------------- | ------------------------ |
+| `npm run dev` | Start development server |
+| `npm start`   | Start backend            |
+| `npm test`    | Run Jest tests           |
+
+### Frontend
+
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `npm run dev`     | Start Vite               |
+| `npm run build`   | Build for production     |
+| `npm run lint`    | Run ESLint               |
+| `npm run preview` | Preview production build |
+
+## API Documentation
+
+Interactive Swagger documentation is available while the backend is running:
+
+```text
+localhost:7000/api-docs
+```
+
+The OpenAPI layer is organized into reusable components for:
+
+```text
+schemas · responses · parameters · paths · security · tags
+```
+
+This makes the API contract easier to maintain and consume from the frontend.
+
+## Security & Reliability
+
+SabzLearn includes:
+
+- Access and refresh-token authentication
+- Password hashing
+- Role-based authorization
+- Ownership checks
+- Course-owner checks
+- Enrollment-aware access
+- User ban protection
+- Zod request validation
+- Rate limiting
+- Helmet security headers
+- CORS configuration
+- File-upload validation
+- Centralized error handling
+- Structured request/application logging
+- `uncaughtException` and `unhandledRejection` handling
+- Health endpoint
+
+## Current Status
+
+```text
+Backend API             ✅
+Authentication          ✅
+Users & Roles           ✅
+Courses & Lessons       ✅
+Enrollment              ✅
+Categories & Tags       ✅
+Comments                ✅
+Support Tickets         ✅
+Cart / Orders           ✅
+Cloudinary Media        ✅
+Swagger Infrastructure  ✅
+React Frontend          🚧 In Progress
+Production Payments     🚧 Planned
+```
+
+> The backend is currently the main engineering focus of SabzLearn. The React application is the foundation for the complete learner, teacher, and admin interface.
+
+## Roadmap
+
+Planned improvements include:
+
+- 🎨 Complete learner, teacher, and admin frontend
+- 💳 Production payment gateway and payment verification
+- 📈 Learning progress and lesson-completion tracking
+- 🏆 Course completion and certificates
+- 🎟️ Discount codes and promotional campaigns
+- 🔔 Email/SMS notifications and background jobs
+- 🔎 Advanced course search
+- 🧪 Expanded integration and contract testing
+- ⚙️ CI/CD and production deployment
+- 📊 Metrics, tracing, and production observability
+
+## Engineering Focus
+
+SabzLearn is designed to demonstrate more than CRUD APIs.
+
+Its main engineering concepts include:
+
+**modular REST architecture, authentication, RBAC, ownership-based authorization, enrollment rules, media workflows, MongoDB modeling, Redis integration, reusable validation, rate limiting, OpenAPI documentation, and multi-domain business logic.**
+
+## Author
+
+Developed by **Amir — @amir-web-codes**
+
 ---
 
-## Example API Areas
+For a technical review, the most relevant backend directories are:
 
-Some of the main API routes include:
+```text
+backend/src/routers/
+backend/src/controllers/
+backend/src/services/
+backend/src/models/
+backend/src/middlewares/
+backend/src/docs/
+```
 
-- POST /users/auth/signup
-- POST /users/auth/login
-- POST /users/auth/logout
-- POST /users/refresh-token
-- GET /courses/getAll
-- POST /courses/create
-- POST /courses/:slug/enroll
-- GET /lessons/getAll
-- POST /comments/:slug/create
-- POST /tickets/create
-
----
-
-## Future improvements
-
-Potential next steps for the project:
-
-- Payment integration
-- Email verification and password reset
-- File upload for course images and videos
-- Advanced analytics dashboard
-- Unit and integration test expansion
-- Docker support
+They provide a good overview of the project's API architecture, business rules, access-control strategy, persistence layer, and documentation structure.
