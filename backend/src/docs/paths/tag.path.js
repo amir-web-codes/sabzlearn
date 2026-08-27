@@ -38,10 +38,6 @@ module.exports = {
                     $ref: "#/components/responses/FailedValidation"
                 },
 
-                403: {
-                    $ref: "#/components/responses/ForbiddenOrBanned"
-                },
-
                 429: {
                     $ref: "#/components/responses/TooManyRequestsGlobal"
                 },

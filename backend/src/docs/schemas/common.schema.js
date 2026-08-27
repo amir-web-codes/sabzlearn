@@ -1,3 +1,20 @@
+const populatedUserReferenceProperties = {
+    _id: {
+        $ref: "#/components/schemas/MongoObjectId"
+    },
+
+    username: {
+        type: "string",
+        example: "amir"
+    },
+
+    email: {
+        type: "string",
+        format: "email",
+        example: "amir@example.com"
+    }
+}
+
 module.exports = {
     MongoObjectId: {
         type: "string",
@@ -79,7 +96,6 @@ module.exports = {
             },
             code: {
                 description: "Optional application/library/database error code. MongoDB errors may expose a numeric code such as 11000.",
-                nullable: true,
                 oneOf: [
                     { type: "string" },
                     { type: "integer" }
@@ -165,26 +181,27 @@ module.exports = {
     PopulatedUserReference: {
         type: "object",
         description: "A user reference populated with the fields selected by the service layer",
-        properties: {
-            _id: {
-                $ref: "#/components/schemas/MongoObjectId"
-            },
-            username: { type: "string", example: "amir" },
-            email: {
-                type: "string",
-                format: "email",
-                example: "amir@example.com"
-            }
-        },
-        required: ["_id", "username", "email"]
+
+        properties: populatedUserReferenceProperties,
+
+        required: [
+            "_id",
+            "username",
+            "email"
+        ]
     },
 
     NullablePopulatedUserReference: {
         type: "object",
         nullable: true,
         description: "A populated user reference, or null.",
-        allOf: [
-            { $ref: "#/components/schemas/PopulatedUserReference" }
+
+        properties: populatedUserReferenceProperties,
+
+        required: [
+            "_id",
+            "username",
+            "email"
         ]
     },
 
@@ -196,4 +213,40 @@ module.exports = {
         description: "Lowercase alphanumeric kebab-case slug accepted by validated slug inputs.",
         example: "web-development"
     },
+
+    PublishedCoursesListResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+
+            {
+                type: "object",
+
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["courses fetched successfully"],
+                        example: "courses fetched successfully"
+                    },
+
+                    data: {
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/CourseDocument"
+                        }
+                    },
+
+                    meta: {
+                        $ref: "#/components/schemas/PaginationMeta"
+                    }
+                },
+
+                required: [
+                    "data",
+                    "meta"
+                ]
+            }
+        ]
+    }
 }

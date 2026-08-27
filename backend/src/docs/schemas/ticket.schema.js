@@ -186,21 +186,11 @@ module.exports = {
                     },
 
                     assignedTo: {
-                        nullable: true,
-                        allOf: [
-                            {
-                                $ref: "#/components/schemas/PopulatedUserReference"
-                            }
-                        ]
+                        $ref: "#/components/schemas/NullablePopulatedUserReference"
                     },
 
                     responsedBy: {
-                        nullable: true,
-                        allOf: [
-                            {
-                                $ref: "#/components/schemas/PopulatedUserReference"
-                            }
-                        ]
+                        $ref: "#/components/schemas/NullablePopulatedUserReference"
                     }
                 },
 

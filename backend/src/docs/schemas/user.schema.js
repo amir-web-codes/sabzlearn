@@ -74,13 +74,7 @@ module.exports = {
             },
 
             bannedBy: {
-                allOf: [
-                    {
-                        $ref: "#/components/schemas/PopulatedUserReference"
-                    }
-                ],
-                nullable: true,
-                description: "Admin who banned this user, populated with _id/username/email; null when not set."
+                $ref: "#/components/schemas/NullablePopulatedUserReference"
             },
 
             banExpiresAt: {
@@ -631,12 +625,7 @@ module.exports = {
                     },
 
                     processedBy: {
-                        allOf: [
-                            {
-                                $ref: "#/components/schemas/PopulatedUserReference"
-                            }
-                        ],
-                        nullable: true
+                        $ref: "#/components/schemas/NullablePopulatedUserReference"
                     }
                 },
 
@@ -1039,12 +1028,7 @@ module.exports = {
 
                 properties: {
                     deletedBy: {
-                        allOf: [
-                            {
-                                $ref: "#/components/schemas/PopulatedUserReference"
-                            }
-                        ],
-                        nullable: true
+                        $ref: "#/components/schemas/NullablePopulatedUserReference"
                     },
 
                     deletedAt: {

@@ -161,40 +161,5 @@ module.exports = {
                 }
             }
         ]
-    },
-
-    TagCoursesListResponse: {
-        allOf: [
-            {
-                $ref: "#/components/schemas/Success"
-            },
-            {
-                type: "object",
-
-                properties: {
-                    message: {
-                        type: "string",
-                        enum: ["courses fetched successfully"],
-                        example: "courses fetched successfully"
-                    },
-
-                    data: {
-                        type: "array",
-                        items: {
-                            $ref: "#/components/schemas/CourseDocument"
-                        }
-                    },
-
-                    meta: {
-                        $ref: "#/components/schemas/PaginationMeta"
-                    }
-                },
-
-                required: [
-                    "data",
-                    "meta"
-                ]
-            }
-        ]
     }
 }

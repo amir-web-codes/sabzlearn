@@ -70,7 +70,7 @@ module.exports = {
         content: {
             "application/json": {
                 schema: {
-                    $ref: "#/components/schemas/TagCoursesListResponse"
+                    $ref: "#/components/schemas/PublishedCoursesListResponse"
                 }
             }
         }
