@@ -155,7 +155,7 @@ module.exports = {
     UpdateCategoryForm: {
         type: "object",
         additionalProperties: false,
-        description: "multipart/form-data body used by PATCH /categories/{slug}. At least one text field among name, description, parent, sortOrder, or status must be supplied. Supplying only newIcon is rejected with 400 because updateSchema validates req.body and requires at least one body field.",
+        description: "multipart/form-data body used by PATCH /categories/admin/{slug}. At least one text field among name, description, parent, sortOrder, or status must be supplied. Supplying only newIcon is rejected with 400 because updateSchema validates req.body and requires at least one body field.",
         properties: {
             name: {
                 type: "string",

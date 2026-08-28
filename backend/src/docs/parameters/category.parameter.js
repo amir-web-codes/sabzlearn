@@ -5,10 +5,7 @@ module.exports = {
         required: true,
         description: "Category slug. Validation trims the incoming value, requires 2-100 characters, and accepts only lowercase alphanumeric kebab-case segments.",
         schema: {
-            type: "string",
-            minLength: 2,
-            maxLength: 100,
-            pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            $ref: "#/components/schemas/KebabSlug"
         },
         example: "web-development"
     },

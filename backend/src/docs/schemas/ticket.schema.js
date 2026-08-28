@@ -5,10 +5,7 @@ module.exports = {
 
         properties: {
             _id: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                readOnly: true,
-                example: "6857e4d1e5d82d0d1f5d8c55"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             message: {
@@ -19,9 +16,7 @@ module.exports = {
             },
 
             senderId: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                example: "6857e4d1e5d82d0d1f5d8c32"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             createdAt: {
@@ -46,10 +41,7 @@ module.exports = {
 
         properties: {
             _id: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                readOnly: true,
-                example: "6857e4d1e5d82d0d1f5d8c40"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             title: {
@@ -140,24 +132,15 @@ module.exports = {
 
                 properties: {
                     userId: {
-                        type: "string",
-                        pattern: "^[a-fA-F0-9]{24}$",
-                        example: "6857e4d1e5d82d0d1f5d8c32"
+                        $ref: "#/components/schemas/MongoObjectId"
                     },
 
                     assignedTo: {
-                        type: "string",
-                        pattern: "^[a-fA-F0-9]{24}$",
-                        nullable: true,
-                        example: null
+                        $ref: "#/components/schemas/MongoObjectId"
                     },
 
                     responsedBy: {
-                        type: "string",
-                        pattern: "^[a-fA-F0-9]{24}$",
-                        nullable: true,
-                        example: null,
-                        description: "Exact field name used by the backend. It is set when a non-owner staff member replies."
+                        $ref: "#/components/schemas/MongoObjectId"
                     }
                 },
 
@@ -223,10 +206,7 @@ module.exports = {
             },
 
             assignedToId: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                description: "Optional target user id. If supplied, the target must exist and currently have role `admin` or `teacher`. JSON null is not accepted by the current validator.",
-                example: "6857e4d1e5d82d0d1f5d8c99"
+                $ref: "#/components/schemas/MongoObjectId"
             }
         },
 

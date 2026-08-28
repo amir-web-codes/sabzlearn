@@ -26,10 +26,7 @@ module.exports = {
 
         properties: {
             _id: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                readOnly: true,
-                example: "6857e4d1e5d82d0d1f5d8c32"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             username: {
@@ -91,11 +88,7 @@ module.exports = {
             },
 
             deletedBy: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                nullable: true,
-                description: "ObjectId of the user/admin who soft-deleted the account. This field is not populated by findUserById().",
-                example: "6857e4d1e5d82d0d1f5d8c32"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             deletedAt: {
@@ -504,9 +497,7 @@ module.exports = {
 
         properties: {
             _id: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                example: "6857e4d1e5d82d0d1f5d8c40"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             processedAt: {
@@ -588,16 +579,11 @@ module.exports = {
 
                 properties: {
                     userId: {
-                        type: "string",
-                        pattern: "^[a-fA-F0-9]{24}$",
-                        example: "6857e4d1e5d82d0d1f5d8c32"
+                        $ref: "#/components/schemas/MongoObjectId"
                     },
 
                     processedBy: {
-                        type: "string",
-                        pattern: "^[a-fA-F0-9]{24}$",
-                        nullable: true,
-                        example: null
+                        $ref: "#/components/schemas/MongoObjectId"
                     }
                 },
 
@@ -646,9 +632,7 @@ module.exports = {
 
                 properties: {
                     id: {
-                        type: "string",
-                        pattern: "^[a-fA-F0-9]{24}$",
-                        example: "6857e4d1e5d82d0d1f5d8c32"
+                        $ref: "#/components/schemas/MongoObjectId"
                     },
 
                     username: {
@@ -769,9 +753,7 @@ module.exports = {
 
         properties: {
             _id: {
-                type: "string",
-                pattern: "^[a-fA-F0-9]{24}$",
-                example: "6857e4d1e5d82d0d1f5d8c10"
+                $ref: "#/components/schemas/MongoObjectId"
             },
 
             title: {
