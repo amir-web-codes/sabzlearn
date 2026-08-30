@@ -5,7 +5,8 @@ const commentModel = require("../models/commentModel")
 const requestModel = require("../models/requestModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
-
+const mongoose = require("mongoose")
+// const { buildRatingSortPipeline } = require("../utils/commentRating")
 const { client } = require("../configs/redis")
 const { uploadImage, deleteFile } = require("./fileService")
 const { buildCacheKey, resolveTTL } = require("../utils/listCache")
@@ -355,22 +356,56 @@ async function findUserCourses(userId, page, limit, sort = {}) {
 
 async function findUserComments(userId, page, limit, filters = {}, sort = {}) {
     const { rating } = filters
-    const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
-    const query = { authorId: userId }
-    if (rating) query.rating = rating
+    const {
+        sortBy = "createdAt",
+        sortOrder = "desc"
+    } = sort
+
+    const authorId = userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId)
+
+    const query = {
+        authorId
+    }
+
+    if (rating) {
+        query.rating = rating
+    }
 
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
-    const data = await commentModel
-        .find(query)
-        .sort({ [sortBy]: sortDirection })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean()
+    let data
+
+    if (sortBy === "rating") {
+        data = await commentModel.aggregate(
+            buildRatingSortPipeline(
+                query,
+                page,
+                limit,
+                sortDirection
+            )
+        )
+    } else {
+        data = await commentModel
+            .find(query)
+            .sort({
+                createdAt:
+                    sortDirection
+            })
+            .skip(
+                (page - 1) *
+                limit
+            )
+            .limit(limit)
+            .lean()
+    }
 
     const totalNumber = await commentModel.countDocuments(query)
-    return { data, totalNumber }
+
+    return {
+        data,
+        totalNumber
+    }
 }
 
 async function getUserDashboard(userId) {
