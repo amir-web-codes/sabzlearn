@@ -6,33 +6,53 @@ const userModel = require("../models/userModel")
 const categoryService = require("./categoryService")
 const tagService = require("./tagService")
 const mongoose = require("mongoose")
-
 const { generateUniqueSlug } = require("../utils/generateUniqueSlug")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
 const { uploadImage, uploadVideo, deleteFile } = require("./fileService")
+const logger = require("../utils/logger")
+const { buildRatingSortPipeline } = require("../utils/commentRating")
 
 const DEFAULT_THUMBNAIL_URL = "/images/default-thumbnail.png"
 
-
-
-async function findCourseBySlug(slug, select) {
-    let data;
-
-    if (!slug) {
+function normalizeSlug(slug) {
+    if (typeof slug !== "string" || !slug.trim()) {
         const err = new Error("no slug provided")
         err.status = 400
         throw err
     }
 
-    const query = { slug, isDeleted: false, status: "published" }
+    return slug.toLowerCase().trim()
+}
+
+function toObjectId(value) {
+    if (!value) return null
+
+    if (value instanceof mongoose.Types.ObjectId) {
+        return value
+    }
+
+    if (mongoose.Types.ObjectId.isValid(value)) {
+        return new mongoose.Types.ObjectId(value)
+    }
+
+    return value
+}
+
+async function findCourseBySlug(slug, select) {
+    const normalizedSlug = normalizeSlug(slug)
+
+    let query = courseModel.findOne({
+        slug: normalizedSlug,
+        isDeleted: false
+    })
 
     if (select) {
-        data = await courseModel.findOne(query).select(select)
-    } else {
-        data = await courseModel.findOne(query)
+        query = query.select(select)
     }
+
+    const data = await query
 
     if (!data) {
         const err = new Error("course not found")
@@ -43,10 +63,69 @@ async function findCourseBySlug(slug, select) {
     return data
 }
 
+async function findPublishedCourseBySlug(slug, select) {
+    const normalizedSlug = normalizeSlug(slug)
+
+    let query = courseModel.findOne({
+        slug: normalizedSlug,
+        isDeleted: false,
+        status: "published"
+    })
+
+    if (select) {
+        query = query.select(select)
+    }
+
+    const data = await query
+
+    if (!data) {
+        const err = new Error("course not found")
+        err.status = 404
+        throw err
+    }
+
+    return data
+}
+
+async function syncCourseStudentsCount(courseId, session = null) {
+    let countQuery = enrollmentModel.countDocuments({
+        courseId,
+        status: "active"
+    })
+
+    if (session) {
+        countQuery = countQuery.session(session)
+    }
+
+    const totalNumber = await countQuery
+
+    await courseModel.updateOne(
+        {
+            _id: courseId,
+            isDeleted: false
+        },
+        {
+            $set: {
+                studentsCount: totalNumber
+            }
+        },
+        session ? { session } : {}
+    )
+
+    return totalNumber
+}
+
 async function updateCourseRating(id, comments) {
     const foundCourse = await courseModel.findById(id)
 
-    let ratesNumber = 0;
+    if (!foundCourse) {
+        const err = new Error("course not found")
+        err.status = 404
+        throw err
+    }
+
+    let ratesNumber = 0
+
     comments.forEach(comment => {
         if (comment.rating === "Very Bad") ratesNumber += 1
         else if (comment.rating === "Bad") ratesNumber += 2
@@ -55,10 +134,11 @@ async function updateCourseRating(id, comments) {
         else if (comment.rating === "Very Good") ratesNumber += 5
     })
 
-    foundCourse.rating.average = (ratesNumber / comments.length || 0).toFixed(2)
+    foundCourse.rating.average = Number((ratesNumber / comments.length || 0).toFixed(2))
     foundCourse.rating.count = comments.length
 
     await foundCourse.save()
+    await invalidatePattern("courses:*")
 }
 
 async function findEnrollment(courseId, userId) {
@@ -75,13 +155,7 @@ async function findEnrollment(courseId, userId) {
 
 async function createCourse({ title, description, price, discountPercentage, level, language, status, category, tags }, userId) {
     const slug = await generateUniqueSlug(courseModel, title)
-    let selectedPrice;
-
-    if (price) {
-        selectedPrice = Number(price)
-    } else {
-        selectedPrice = 0
-    }
+    const selectedPrice = price !== undefined ? Number(price) : 0
 
     let categoryId = null
     if (category) {
@@ -102,7 +176,7 @@ async function createCourse({ title, description, price, discountPercentage, lev
         level,
         language,
         status,
-        studentsCount: 0,
+        studentsCount: 0
     })
 
     await invalidatePattern("courses:*")
@@ -111,23 +185,31 @@ async function createCourse({ title, description, price, discountPercentage, lev
 }
 
 async function deleteCourse(slug, deletedById) {
+    const normalizedSlug = normalizeSlug(slug)
     const session = await mongoose.startSession()
+
+    let deletedData
+    let lessonVideoPublicIds = []
 
     try {
         session.startTransaction()
 
-        const deletedData = await courseModel.findOneAndUpdate(
+        deletedData = await courseModel.findOneAndUpdate(
             {
-                slug
+                slug: normalizedSlug,
+                isDeleted: false
             },
             {
                 $set: {
                     isDeleted: true,
                     deletedBy: deletedById,
-                    deletedAt: new Date(Date.now())
+                    deletedAt: new Date()
                 }
             },
-            { session }
+            {
+                new: true,
+                session
+            }
         )
 
         if (!deletedData) {
@@ -136,21 +218,88 @@ async function deleteCourse(slug, deletedById) {
             throw err
         }
 
-        await lessonModel.deleteMany({ courseId: deletedData._id }, { session })
+        const lessons = await lessonModel
+            .find({ courseId: deletedData._id })
+            .select("video.publicId")
+            .session(session)
+            .lean()
+
+        lessonVideoPublicIds = lessons
+            .map(lesson => lesson.video?.publicId)
+            .filter(Boolean)
+
+        await lessonModel.deleteMany(
+            { courseId: deletedData._id },
+            { session }
+        )
 
         await session.commitTransaction()
-
-        await invalidatePattern("courses:*")
     } catch (err) {
-        await session.abortTransaction()
+        if (session.inTransaction()) {
+            await session.abortTransaction()
+        }
+
+        throw err
     } finally {
         await session.endSession()
     }
+
+    const invalidationResults = await Promise.allSettled([
+        invalidatePattern("courses:*"),
+        invalidatePattern("lessons:*")
+    ])
+
+    invalidationResults.forEach(result => {
+        if (result.status === "rejected") {
+            logger.error(
+                { err: result.reason, courseId: deletedData?._id },
+                "failed to invalidate cache after course deletion"
+            )
+        }
+    })
+
+    const cleanupResults = await Promise.allSettled(
+        lessonVideoPublicIds.map(publicId =>
+            deleteFile(publicId, "video")
+        )
+    )
+
+    cleanupResults.forEach((result, index) => {
+        if (result.status === "rejected") {
+            logger.error(
+                {
+                    err: result.reason,
+                    courseId: deletedData?._id,
+                    publicId: lessonVideoPublicIds[index]
+                },
+                "failed to delete lesson video after course deletion"
+            )
+        }
+    })
+
+    return deletedData
 }
 
-async function updateCourse({ title, description, price, discountPercentage, level, language, status, category, tags }, slug) {
+async function updateCourse(
+    {
+        title,
+        description,
+        price,
+        discountPercentage,
+        level,
+        language,
+        status,
+        category,
+        tags
+    },
+    slug
+) {
+    const normalizedSlug = normalizeSlug(slug)
 
-    const foundCourse = await courseModel.findOne({ slug })
+    const foundCourse = await courseModel.findOne({
+        slug: normalizedSlug,
+        isDeleted: false
+    })
 
     if (!foundCourse) {
         const err = new Error("course not found")
@@ -158,15 +307,20 @@ async function updateCourse({ title, description, price, discountPercentage, lev
         throw err
     }
 
-    if (title !== undefined && title.trim() !== foundCourse.title) {
+    if (title !== undefined && title !== foundCourse.title) {
         foundCourse.title = title
-        const sluged = await generateUniqueSlug(courseModel, title)
-        foundCourse.slug = sluged
+        foundCourse.slug = await generateUniqueSlug(
+            courseModel,
+            title,
+            foundCourse._id
+        )
     }
 
     if (description !== undefined) foundCourse.description = description
     if (price !== undefined) foundCourse.price = price
-    if (discountPercentage !== undefined) foundCourse.discountPercentage = discountPercentage
+    if (discountPercentage !== undefined) {
+        foundCourse.discountPercentage = discountPercentage
+    }
     if (level !== undefined) foundCourse.level = level
     if (language !== undefined) foundCourse.language = language
     if (status !== undefined) foundCourse.status = status
@@ -180,15 +334,39 @@ async function updateCourse({ title, description, price, discountPercentage, lev
     }
 
     await foundCourse.save()
-
     await invalidatePattern("courses:*")
 
     return foundCourse
 }
 
-async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}, isAdmin = false) {
-    const { level, language, status, minPrice, maxPrice, category } = filters
-    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+async function getAllCourses(
+    page = 1,
+    limit = 20,
+    filters = {},
+    sort = {},
+    isAdmin = false
+) {
+    const {
+        level,
+        language,
+        status,
+        minPrice,
+        maxPrice,
+        category
+    } = filters
+
+    const {
+        sortBy = "createdAt",
+        sortOrder = "desc"
+    } = sort
+
+    if (status && status !== "published" && !isAdmin) {
+        const err = new Error(
+            "you don't have permission to filter by this status"
+        )
+        err.status = 403
+        throw err
+    }
 
     const sortFieldMap = {
         createdAt: "createdAt",
@@ -197,46 +375,66 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}, isAd
         rating: "rating.average",
         title: "title"
     }
+
     const sortField = sortFieldMap[sortBy] || "createdAt"
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
     let categoryIds = null
+
     if (category) {
         categoryIds = await categoryService.getDescendantCategoryIds(category)
     }
 
     const skipCache = hasUnboundedParams({ minPrice, maxPrice })
+
     const cacheKey = buildCacheKey("courses:list", {
-        page, limit, level, language, status, category, sortBy, sortOrder
+        page,
+        limit,
+        level,
+        language,
+        status,
+        category,
+        sortBy,
+        sortOrder
     })
 
     if (!skipCache) {
         const cached = await client.get(cacheKey)
-        if (cached) return JSON.parse(cached)
+
+        if (cached) {
+            return JSON.parse(cached)
+        }
     }
 
-    const query = { isDeleted: false }
+    const query = {
+        isDeleted: false
+    }
 
     if (level) query.level = level
     if (language) query.language = language
 
     if (status) {
-        if (status !== "published" && !isAdmin) {
-            const err = new Error("you don't have permission to filter by this status")
-            err.status = 403
-            throw err
-        }
         query.status = status
     } else {
         query.status = "published"
     }
 
-    if (categoryIds) query.category = { $in: categoryIds }
+    if (categoryIds) {
+        query.category = {
+            $in: categoryIds
+        }
+    }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
         query.finalPrice = {}
-        if (minPrice !== undefined) query.finalPrice.$gte = Number(minPrice)
-        if (maxPrice !== undefined) query.finalPrice.$lte = Number(maxPrice)
+
+        if (minPrice !== undefined) {
+            query.finalPrice.$gte = Number(minPrice)
+        }
+
+        if (maxPrice !== undefined) {
+            query.finalPrice.$lte = Number(maxPrice)
+        }
     }
 
     const data = await courseModel
@@ -247,11 +445,28 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}, isAd
         .lean()
 
     const totalNumber = await courseModel.countDocuments(query)
-    const result = { data, totalNumber }
+
+    const result = {
+        data,
+        totalNumber
+    }
 
     if (!skipCache) {
-        const hasNonDefaultFilters = Boolean(level || language || status || category || sortBy !== "createdAt")
-        await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
+        const hasNonDefaultFilters = Boolean(
+            level ||
+            language ||
+            status ||
+            category ||
+            sortBy !== "createdAt"
+        )
+
+        await client.set(
+            cacheKey,
+            JSON.stringify(result),
+            {
+                EX: resolveTTL(hasNonDefaultFilters)
+            }
+        )
     }
 
     return result
@@ -260,7 +475,11 @@ async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}, isAd
 async function enrollUserInCourse(slug, userId) {
     const foundCourse = await findCourseBySlug(slug)
 
-    const userExists = await userModel.exists({ _id: userId })
+    const userExists = await userModel.exists({
+        _id: userId,
+        isDeleted: false
+    })
+
     if (!userExists) {
         const err = new Error("user not found")
         err.status = 404
@@ -270,31 +489,64 @@ async function enrollUserInCourse(slug, userId) {
     const today = new Date()
 
     await enrollmentModel.findOneAndUpdate(
-        { userId, courseId: foundCourse._id },
         {
-            $set: { status: "active", lastAccessedAt: today },
-            $setOnInsert: { userId, courseId: foundCourse._id }
+            userId,
+            courseId: foundCourse._id
         },
-        { upsert: true, setDefaultsOnInsert: true, runValidators: true }
+        {
+            $set: {
+                status: "active",
+                lastAccessedAt: today
+            },
+            $setOnInsert: {
+                userId,
+                courseId: foundCourse._id
+            }
+        },
+        {
+            upsert: true,
+            setDefaultsOnInsert: true,
+            runValidators: true
+        }
     )
 
-    const totalNumber = await enrollmentModel.countDocuments({ courseId: foundCourse._id, status: "active" })
+    await syncCourseStudentsCount(foundCourse._id)
 
-    foundCourse.studentsCount = totalNumber
-    await foundCourse.save()
-
-    await invalidatePattern(`courses:users:${userId}:*`)
+    await Promise.all([
+        invalidatePattern("courses:*"),
+        invalidatePattern(`courses:users:${userId}:*`)
+    ])
 }
 
-async function findCourseStudents(course, page = 1, limit = 20, sort = {}) {
-    const { sortBy = "createdAt", sortOrder = "desc" } = sort
+async function findCourseStudents(
+    course,
+    page = 1,
+    limit = 20,
+    sort = {}
+) {
+    const {
+        sortBy = "createdAt",
+        sortOrder = "desc"
+    } = sort
 
-    const allowedSortFields = ["createdAt", "lastAccessedAt"]
-    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt"
+    const allowedSortFields = [
+        "createdAt",
+        "lastAccessedAt"
+    ]
+
+    const sortField = allowedSortFields.includes(sortBy)
+        ? sortBy
+        : "createdAt"
+
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
+    const query = {
+        courseId: course._id,
+        status: "active"
+    }
+
     const data = await enrollmentModel
-        .find({ courseId: course._id, status: "active" })
+        .find(query)
         .select("userId createdAt lastAccessedAt")
         .populate("userId", "username email")
         .sort({ [sortField]: sortDirection })
@@ -302,40 +554,89 @@ async function findCourseStudents(course, page = 1, limit = 20, sort = {}) {
         .limit(limit)
         .lean()
 
-    const totalNumber = course.studentsCount
-    return { data, totalNumber }
+    const totalNumber = await enrollmentModel.countDocuments(query)
+
+    return {
+        data,
+        totalNumber
+    }
 }
 
-async function findCourseComments(course, page = 1, limit = 20, filters = {}, sort = {}) {
+async function findCourseComments(
+    course,
+    page = 1,
+    limit = 20,
+    filters = {},
+    sort = {}
+) {
     const { rating } = filters
-    const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
-    const query = { courseId: course._id }
-    if (rating) query.rating = rating
+    const {
+        sortBy = "createdAt",
+        sortOrder = "desc"
+    } = sort
 
-    const allowedSortFields = ["createdAt", "rating"]
-    const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt"
+    const query = {
+        courseId: course._id
+    }
+
+    if (rating) {
+        query.rating = rating
+    }
+
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
-    const data = await commentModel
-        .find(query)
-        .sort({ [sortField]: sortDirection })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean()
+    let data
+
+    if (sortBy === "rating") {
+        data = await commentModel.aggregate(
+            buildRatingSortPipeline(
+                query,
+                page,
+                limit,
+                sortDirection
+            )
+        )
+    } else {
+        data = await commentModel
+            .find(query)
+            .sort({ createdAt: sortDirection })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean()
+    }
 
     const totalNumber = await commentModel.countDocuments(query)
-    return { data, totalNumber }
+
+    return {
+        data,
+        totalNumber
+    }
 }
 
 async function getRelatedCourses(course) {
-    const categoryId = course.category?._id || course.category || null
-    const tagIds = (course.tags || []).map(tag => tag._id || tag)
+    const courseId = toObjectId(course._id)
+
+    const categoryId = toObjectId(
+        course.category?._id ||
+        course.category ||
+        null
+    )
+
+    const tagIds = (course.tags || [])
+        .map(tag => toObjectId(tag._id || tag))
+        .filter(Boolean)
+
+    const instructorId = toObjectId(
+        course.instructor
+    )
 
     const pipeline = [
         {
             $match: {
-                _id: { $ne: course._id },
+                _id: {
+                    $ne: courseId
+                },
                 isDeleted: false,
                 status: "published"
             }
@@ -346,21 +647,78 @@ async function getRelatedCourses(course) {
                     $add: [
                         {
                             $cond: [
-                                { $and: [{ $ne: [categoryId, null] }, { $eq: ["$category", categoryId] }] },
+                                {
+                                    $and: [
+                                        {
+                                            $ne: [
+                                                categoryId,
+                                                null
+                                            ]
+                                        },
+                                        {
+                                            $eq: [
+                                                "$category",
+                                                categoryId
+                                            ]
+                                        }
+                                    ]
+                                },
                                 2,
                                 0
                             ]
                         },
-                        { $size: { $setIntersection: ["$tags", tagIds] } },
-                        { $cond: [{ $eq: ["$instructor", course.instructor] }, 2, 0] },
-                        { $cond: [{ $eq: ["$level", course.level] }, 1, 0] }
+                        {
+                            $size: {
+                                $setIntersection: [
+                                    "$tags",
+                                    tagIds
+                                ]
+                            }
+                        },
+                        {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$instructor",
+                                        instructorId
+                                    ]
+                                },
+                                2,
+                                0
+                            ]
+                        },
+                        {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$level",
+                                        course.level
+                                    ]
+                                },
+                                1,
+                                0
+                            ]
+                        }
                     ]
                 }
             }
         },
-        { $match: { score: { $gt: 0 } } },
-        { $sort: { score: -1, "rating.average": -1 } },
-        { $limit: 15 },
+        {
+            $match: {
+                score: {
+                    $gt: 0
+                }
+            }
+        },
+        {
+            $sort: {
+                score: -1,
+                "rating.average": -1
+            }
+        },
+        {
+            $limit: 15
+        },
         {
             $project: {
                 title: 1,
@@ -379,78 +737,93 @@ async function getRelatedCourses(course) {
     return courseModel.aggregate(pipeline)
 }
 
-async function getCourseDetails(slug, lessonsIncluded = "true") {
-    const courseKey = `courses:${slug}:lessons:${lessonsIncluded}`
-    const relatedKey = `courses:${slug}:related`
-    const lessonsKey = `courses:${slug}:lessons`
+async function getCourseDetails(slug, lessonsIncluded = true) {
+    const normalizedSlug = normalizeSlug(slug)
 
-    const cached = await client.get(courseKey)
-    let totalDuration = 0;
+    const includeLessons = lessonsIncluded === true || lessonsIncluded === "true" || lessonsIncluded === undefined
 
-    let foundCourse = cached
-        ? JSON.parse(cached)
+    const courseKey = `courses:${normalizedSlug}:details`
+    const relatedKey = `courses:${normalizedSlug}:related`
+    const lessonsKey = `courses:${normalizedSlug}:lessons`
+
+    const cachedCourse = await client.get(courseKey)
+
+    let foundCourse = cachedCourse
+        ? JSON.parse(cachedCourse)
         : null
 
-    if (foundCourse) {
-
-        const cachedLessons = await client.get(lessonsKey);
-
-        foundLessons = cachedLessons
-            ? JSON.parse(cachedLessons)
-            : []
-
-        if (foundLessons.length > 0) {
-            totalDuration = foundLessons.reduce(
-                (sum, lesson) => sum + lesson.duration,
-                0
-            )
-        }
-
-        const relatedCoursesCached = await client.get(relatedKey)
-
-        const relatedCourses = relatedCoursesCached
-            ? JSON.parse(relatedCoursesCached)
-            : []
-
-        const result = {
-            foundCourse,
-            totalDuration,
-            relatedCourses
-        }
-        if (lessonsIncluded === "true") {
-            result.foundLessons = foundLessons
-        }
-
-        return result
-    }
-
-    foundCourse = await courseModel
-        .findOne({ slug, isDeleted: false })
-        .populate("category", "name slug")
-        .populate("tags", "name slug")
-        .lean()
-
     if (!foundCourse) {
-        const err = new Error("course not found")
-        err.status = 404
-        throw err
-    }
+        foundCourse = await courseModel
+            .findOne({
+                slug: normalizedSlug,
+                isDeleted: false,
+                status: "published"
+            })
+            .populate("category", "name slug")
+            .populate("tags", "name slug")
+            .lean()
 
-    foundLessons = await lessonModel.find({ courseId: foundCourse._id }).select("title order duration").sort({ order: 1, createdAt: -1 }).lean()
+        if (!foundCourse) {
+            const err = new Error("course not found")
+            err.status = 404
+            throw err
+        }
 
-    if (foundLessons.length > 0) {
-        totalDuration = foundLessons.reduce(
-            (sum, lesson) => sum + lesson.duration,
-            0
+        await client.set(
+            courseKey,
+            JSON.stringify(foundCourse),
+            {
+                EX: 600
+            }
         )
     }
 
-    const relatedCourses = await getRelatedCourses(foundCourse)
+    const cachedLessons = await client.get(lessonsKey)
 
+    let foundLessons = cachedLessons
+        ? JSON.parse(cachedLessons)
+        : null
 
-    await client.set(courseKey, JSON.stringify(foundCourse), { EX: 600 })
-    await client.set(relatedKey, JSON.stringify(relatedCourses), { EX: 600 })
-    await client.set(lessonsKey, JSON.stringify(foundLessons), { EX: 600 })
+    if (!foundLessons) {
+        foundLessons = await lessonModel
+            .find({
+                courseId: foundCourse._id
+            })
+            .select("title order duration")
+            .sort({
+                order: 1,
+                createdAt: -1
+            })
+            .lean()
+
+        await client.set(
+            lessonsKey,
+            JSON.stringify(foundLessons),
+            {
+                EX: 600
+            }
+        )
+    }
+
+    const totalDuration = foundLessons.reduce((sum, lesson) => sum + Number(lesson.duration || 0), 0)
+
+    const relatedCoursesCached = await client.get(relatedKey)
+
+    let relatedCourses = relatedCoursesCached
+        ? JSON.parse(relatedCoursesCached) :
+        null
+
+    if (!relatedCourses) {
+        relatedCourses = await getRelatedCourses(foundCourse)
+
+        await client.set(
+            relatedKey,
+            JSON.stringify(relatedCourses),
+            {
+                EX: 600
+            }
+        )
+    }
 
     const result = {
         foundCourse,
@@ -458,7 +831,7 @@ async function getCourseDetails(slug, lessonsIncluded = "true") {
         relatedCourses
     }
 
-    if (lessonsIncluded === "true") {
+    if (includeLessons) {
         result.foundLessons = foundLessons
     }
 
@@ -475,17 +848,43 @@ async function updateCourseThumbnail(slug, file) {
     const foundCourse = await findCourseBySlug(slug)
     const oldPublicId = foundCourse.thumbnail.publicId
 
-    const uploadedFile = await uploadImage(file, `sabzlearn/courses/${foundCourse._id}/thumbnail`)
+    let uploadedFile
 
-    foundCourse.thumbnail = {
-        url: uploadedFile.secure_url,
-        publicId: uploadedFile.public_id
+    try {
+        uploadedFile = await uploadImage(file, `sabzlearn/courses/${foundCourse._id}/thumbnail`)
+
+        foundCourse.thumbnail = {
+            url: uploadedFile.secure_url,
+            publicId: uploadedFile.public_id
+        }
+
+        await foundCourse.save()
+    } catch (err) {
+        if (uploadedFile?.public_id) {
+            await deleteFile(uploadedFile.public_id, "image").catch(cleanupErr => {
+                logger.error(
+                    {
+                        err: cleanupErr,
+                        publicId: uploadedFile.public_id
+                    },
+                    "failed to cleanup uploaded course thumbnail"
+                )
+            })
+        }
+
+        throw err
     }
 
-    await foundCourse.save()
-
     if (oldPublicId) {
-        await deleteFile(oldPublicId, "image").catch(() => { })
+        await deleteFile(oldPublicId, "image").catch(err => {
+            logger.error(
+                {
+                    err,
+                    publicId: oldPublicId
+                },
+                "failed to delete previous course thumbnail"
+            )
+        })
     }
 
     await invalidatePattern("courses:*")
@@ -510,7 +909,16 @@ async function deleteCourseThumbnail(slug) {
     }
 
     await foundCourse.save()
-    await deleteFile(oldPublicId, "image").catch(() => { })
+
+    await deleteFile(oldPublicId, "image").catch(err => {
+        logger.error(
+            {
+                err,
+                publicId: oldPublicId
+            },
+            "failed to delete course thumbnail"
+        )
+    })
 
     await invalidatePattern("courses:*")
 
@@ -527,17 +935,40 @@ async function updateCourseCoverVideo(slug, file) {
     const foundCourse = await findCourseBySlug(slug)
     const oldPublicId = foundCourse.coverVideoURL.publicId
 
-    const uploadedFile = await uploadVideo(file, `sabzlearn/courses/${foundCourse._id}/cover`)
+    let uploadedFile
 
-    foundCourse.coverVideoURL = {
-        url: uploadedFile.secure_url,
-        publicId: uploadedFile.public_id
+    try {
+        uploadedFile = await uploadVideo(file, `sabzlearn/courses/${foundCourse._id}/cover`)
+
+        foundCourse.coverVideoURL = { url: uploadedFile.secure_url, publicId: uploadedFile.public_id }
+
+        await foundCourse.save()
+    } catch (err) {
+        if (uploadedFile?.public_id) {
+            await deleteFile(uploadedFile.public_id, "video").catch(cleanupErr => {
+                logger.error(
+                    {
+                        err: cleanupErr,
+                        publicId: uploadedFile.public_id
+                    },
+                    "failed to cleanup uploaded course cover video"
+                )
+            })
+        }
+
+        throw err
     }
 
-    await foundCourse.save()
-
     if (oldPublicId) {
-        await deleteFile(oldPublicId, "video").catch(() => { })
+        await deleteFile(oldPublicId, "video").catch(err => {
+            logger.error(
+                {
+                    err,
+                    publicId: oldPublicId
+                },
+                "failed to delete previous course cover video"
+            )
+        })
     }
 
     await invalidatePattern("courses:*")
@@ -562,7 +993,15 @@ async function deleteCourseCoverVideo(slug) {
     }
 
     await foundCourse.save()
-    await deleteFile(oldPublicId, "video").catch(() => { })
+
+    await deleteFile(oldPublicId, "video").catch(err => {
+        logger.error({
+            err,
+            publicId: oldPublicId
+        },
+            "failed to delete course cover video"
+        )
+    })
 
     await invalidatePattern("courses:*")
 
@@ -571,6 +1010,8 @@ async function deleteCourseCoverVideo(slug) {
 
 module.exports = {
     findCourseBySlug,
+    findPublishedCourseBySlug,
+    syncCourseStudentsCount,
     createCourse,
     deleteCourse,
     updateCourse,
