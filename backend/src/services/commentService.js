@@ -1,24 +1,40 @@
+const mongoose = require("mongoose")
 const commentModel = require("../models/commentModel")
 const courseService = require("./courseService")
+const { buildRatingSortPipeline } = require("../utils/commentRating")
 
 async function findUserComments(userId, page, limit, filters = {}, sort = {}) {
     const { rating } = filters
+
     const { sortBy = "createdAt", sortOrder = "desc" } = sort
 
-    const query = { authorId: userId }
-    if (rating) query.rating = rating
+    const authorId = userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId)
+
+    const query = {
+        authorId
+    }
+
+    if (rating) {
+        query.rating = rating
+    }
 
     const sortDirection = sortOrder === "asc" ? 1 : -1
 
-    const data = await commentModel
-        .find(query)
-        .sort({ [sortBy]: sortDirection })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean()
+    let data
 
-    const totalNumber = await commentModel.countDocuments(query)
-    return { data, totalNumber }
+    if (sortBy === "rating") {
+        data = await commentModel.aggregate(buildRatingSortPipeline(query, page, limit, sortDirection))
+    } else {
+        data = await commentModel.find(query).sort({ createdAt: sortDirection }).skip((page - 1) * limit).limit(limit).lean()
+    }
+
+    const totalNumber =
+        await commentModel.countDocuments(query)
+
+    return {
+        data,
+        totalNumber
+    }
 }
 
 async function findCommentById(id) {
@@ -35,6 +51,7 @@ async function findCommentById(id) {
 
 async function updateRating(courseId) {
     const courseComments = await commentModel.find({ courseId }).select("rating").lean()
+
     await courseService.updateCourseRating(courseId, courseComments)
 }
 
@@ -53,9 +70,17 @@ async function deleteCommentById(id) {
 async function updateCommentById(id, { title, text, rating }) {
     const query = {}
 
-    if (title !== undefined) query.title = title
-    if (text !== undefined) query.text = text
-    if (rating !== undefined) query.rating = rating
+    if (title !== undefined) {
+        query.title = title
+    }
+
+    if (text !== undefined) {
+        query.text = text
+    }
+
+    if (rating !== undefined) {
+        query.rating = rating
+    }
 
     const result = await commentModel.findOneAndUpdate(
         { _id: id },
@@ -75,7 +100,7 @@ async function updateCommentById(id, { title, text, rating }) {
 }
 
 async function createComment(slug, userId, { title, text, rating }) {
-    const foundCourse = await courseService.findCourseBySlug(slug)
+    const foundCourse = await courseService.findPublishedCourseBySlug(slug)
 
     await commentModel.create({
         title,
