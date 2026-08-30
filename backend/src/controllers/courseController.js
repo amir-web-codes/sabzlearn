@@ -2,16 +2,14 @@ const courseService = require("../services/courseService")
 const asyncWrapper = require("../utils/asyncWrapper")
 
 async function getCourseBySlug(req, res) {
-
-
-    const { foundCourse, foundLessons, totalDuration, relatedCourses } = await courseService.getCourseDetails(req.params.slug.toLowerCase().trim(), req.query.lessonsIncluded)
+    const { foundCourse, foundLessons, totalDuration, relatedCourses } = await courseService.getCourseDetails(req.params.slug, req.query.lessonsIncluded)
 
     res.json({
         success: true,
         message: "course fetched successfully",
         data: {
             foundCourse,
-            lessons: foundLessons,
+            ...(foundLessons !== undefined ? { lessons: foundLessons } : {}),
             relatedCourses
         },
         meta: {
@@ -20,7 +18,6 @@ async function getCourseBySlug(req, res) {
             duration: `${totalDuration || 0} minutes`
         }
     })
-
 }
 
 async function createCourse(req, res) {
@@ -34,8 +31,7 @@ async function createCourse(req, res) {
 }
 
 async function deleteCourse(req, res) {
-
-    await courseService.deleteCourse(req.params.slug.toLowerCase().trim(), req.user.id)
+    await courseService.deleteCourse(req.params.slug, req.user.id)
 
     res.json({
         success: true,
@@ -44,7 +40,7 @@ async function deleteCourse(req, res) {
 }
 
 async function editCourseDetails(req, res) {
-    const data = await courseService.updateCourse(req.body, req.params.slug.toLowerCase().trim())
+    const data = await courseService.updateCourse(req.body, req.params.slug)
 
     res.json({
         success: true,
@@ -75,14 +71,14 @@ async function getAllCourses(req, res) {
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
-            page: page,
-            limit: limit
+            page,
+            limit
         }
     })
 }
 
 async function registerUserInCourseByTeacher(req, res) {
-    await courseService.enrollUserInCourse(req.params.slug.toLowerCase().trim(), req.params.id)
+    await courseService.enrollUserInCourse(req.params.slug, req.params.id)
 
     res.status(201).json({
         success: true,
@@ -97,6 +93,7 @@ async function getCourseStudents(req, res) {
     const limit = req.query.limit || 20
 
     const { data, totalNumber } = await courseService.findCourseStudents(req.course, page, limit, { sortBy, sortOrder })
+
     const students = data.map(object => object.userId)
 
     res.json({
@@ -107,8 +104,8 @@ async function getCourseStudents(req, res) {
             rating: req.course.rating,
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
-            page: page,
-            limit: limit
+            page,
+            limit
         }
     })
 }
@@ -129,14 +126,14 @@ async function getCourseComments(req, res) {
             rating: req.course.rating,
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
-            page: page,
-            limit: limit
+            page,
+            limit
         }
     })
 }
 
 async function updateCourseThumbnail(req, res) {
-    const data = await courseService.updateCourseThumbnail(req.params.slug.toLowerCase().trim(), req.file)
+    const data = await courseService.updateCourseThumbnail(req.params.slug, req.file)
 
     res.json({
         success: true,
@@ -146,7 +143,7 @@ async function updateCourseThumbnail(req, res) {
 }
 
 async function deleteCourseThumbnail(req, res) {
-    const data = await courseService.deleteCourseThumbnail(req.params.slug.toLowerCase().trim())
+    const data = await courseService.deleteCourseThumbnail(req.params.slug)
 
     res.json({
         success: true,
@@ -156,7 +153,7 @@ async function deleteCourseThumbnail(req, res) {
 }
 
 async function updateCourseCoverVideo(req, res) {
-    const data = await courseService.updateCourseCoverVideo(req.params.slug.toLowerCase().trim(), req.file)
+    const data = await courseService.updateCourseCoverVideo(req.params.slug, req.file)
 
     res.json({
         success: true,
@@ -166,7 +163,7 @@ async function updateCourseCoverVideo(req, res) {
 }
 
 async function deleteCourseCoverVideo(req, res) {
-    const data = await courseService.deleteCourseCoverVideo(req.params.slug.toLowerCase().trim())
+    const data = await courseService.deleteCourseCoverVideo(req.params.slug)
 
     res.json({
         success: true,
@@ -176,7 +173,8 @@ async function deleteCourseCoverVideo(req, res) {
 }
 
 async function getRelatedCourses(req, res) {
-    const foundCourse = await courseService.findCourseBySlug(req.params.slug.toLowerCase().trim())
+    const foundCourse = await courseService.findPublishedCourseBySlug(req.params.slug)
+
     const data = await courseService.getRelatedCourses(foundCourse)
 
     res.json({
