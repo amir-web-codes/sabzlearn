@@ -17,9 +17,8 @@ async function getUserCart(req, res) {
 }
 
 async function addNewItem(req, res) {
+    const foundCourse = await courseService.findPublishedCourseBySlug(req.params.slug, "title price finalPrice")
 
-    const foundCourse = await courseService.findCourseBySlug(req.params.slug, "title price finalPrice")
-    console.log("hi")
     const { data, totalPrice } = await cartService.createItem(req.user.id, foundCourse)
 
     res.status(201).json({
@@ -38,7 +37,7 @@ async function deleteUserCart(req, res) {
 
     res.json({
         success: true,
-        message: "cart items deleted successfully",
+        message: "cart items deleted successfully"
     })
 }
 

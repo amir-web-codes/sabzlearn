@@ -40,9 +40,7 @@ async function commitWithRetry(session) {
 }
 
 async function getCart(userId, session) {
-    let cart = await cartModel
-        .findOne({ userId })
-        .session(session || null)
+    let cart = await cartModel.findOne({ userId }).session(session || null)
 
     if (!cart) {
         const [createdCart] = await cartModel.create(
@@ -253,9 +251,12 @@ async function createOrder(userId) {
 
 async function completeOrder(orderId, userId) {
     const session = await mongoose.startSession()
+    const affectedCourseIds = new Set()
+
+    let completedOrder
 
     try {
-        return await withTransaction(session, async () => {
+        completedOrder = await withTransaction(session, async () => {
             const order = await orderModel.findOne({ _id: orderId, userId }).session(session)
 
             if (!order) {
@@ -265,33 +266,45 @@ async function completeOrder(orderId, userId) {
             }
 
             if (order.status === "paid") {
-                return order // idempotency guard
+                return order
             }
 
-            if (order.status !== "pending") {
+            if (
+                order.status !==
+                "pending"
+            ) {
                 const err = new Error(`cannot complete an order with status "${order.status}"`)
                 err.status = 400
                 throw err
             }
 
             order.status = "paid"
-            await order.save({ session })
 
-            for (const item of order.items) {
+            await order.save({
+                session
+            })
+
+            for (
+                const item
+                of order.items
+            ) {
                 await enrollmentModel.updateOne(
                     {
                         userId,
-                        courseId: item.courseId
+                        courseId:
+                            item.courseId
                     },
                     {
                         $set: {
-                            status: "active",
-                            lastAccessedAt: new Date()
+                            status:
+                                "active",
+                            lastAccessedAt:
+                                new Date()
                         },
-
                         $setOnInsert: {
                             userId,
-                            courseId: item.courseId
+                            courseId:
+                                item.courseId
                         }
                     },
                     {
@@ -299,16 +312,41 @@ async function completeOrder(orderId, userId) {
                         session
                     }
                 )
+
+                affectedCourseIds.add(
+                    item.courseId.toString()
+                )
+            }
+
+            for (const courseId of affectedCourseIds) {
+                await courseService.syncCourseStudentsCount(courseId, session)
             }
 
             await deleteItems(userId, session)
-            invalidatePattern(`courses:users:${userId}:*`)
 
             return order
-        })
+        }
+        )
     } finally {
         await session.endSession()
     }
+
+    if (affectedCourseIds.size) {
+        const invalidationResults = await Promise.allSettled([invalidatePattern(`courses:users:${userId}:*`), invalidatePattern("courses:*")])
+
+        invalidationResults.forEach(result => {
+            if (result.status === "rejected") {
+                logger.error({
+                    err: result.reason,
+                    userId,
+                    courseIds:
+                        [...affectedCourseIds]
+                }, "failed to invalidate course cache after checkout")
+            }
+        })
+    }
+
+    return completedOrder
 }
 
 async function failOrder(orderId, userId, reason) {
