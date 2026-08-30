@@ -206,17 +206,34 @@ async function getAllTags({ page = 1, limit = 20, search, sortBy = "createdAt", 
 }
 
 async function validateTags(tagIds) {
-    if (!tagIds || tagIds.length === 0) return []
+    if (!tagIds || tagIds.length === 0) {
+        return []
+    }
 
-    const foundTags = await tagModel.find({ _id: { $in: tagIds } }).select("_id")
+    const normalizedTagIds = tagIds.map(id => String(id).toLowerCase())
 
-    if (foundTags.length !== tagIds.length) {
+    const uniqueTagIds = [...new Set(normalizedTagIds)]
+
+    if (uniqueTagIds.length !== normalizedTagIds.length) {
+        const err = new Error("duplicate tags are not allowed")
+        err.status = 400
+        throw err
+    }
+
+    const foundTags = await tagModel.find({
+        _id: {
+            $in:
+                uniqueTagIds
+        }
+    }).select("_id")
+
+    if (foundTags.length !== uniqueTagIds.length) {
         const err = new Error("one or more tags not found")
         err.status = 404
         throw err
     }
 
-    return foundTags.map(t => t._id)
+    return foundTags.map(tag => tag._id)
 }
 
 module.exports = {

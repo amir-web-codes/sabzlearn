@@ -2,6 +2,7 @@ const multer = require("multer")
 
 const imageUpload = multer({
     storage: multer.memoryStorage(),
+
     fileFilter(req, file, cb) {
         const allowed = [
             "image/jpeg",
@@ -10,11 +11,19 @@ const imageUpload = multer({
         ]
 
         if (!allowed.includes(file.mimetype)) {
-            return cb(new Error("invalid file type"))
+            const err = new Error(
+                "invalid image file type"
+            )
+
+            err.status = 415
+            err.code = "INVALID_IMAGE_TYPE"
+
+            return cb(err)
         }
 
         cb(null, true)
     },
+
     limits: {
         fileSize: 1024 * 1024 * 2
     }
