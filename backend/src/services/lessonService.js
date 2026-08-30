@@ -1,5 +1,5 @@
 const lessonModel = require("../models/lessonModel")
-
+const courseModel = require("../models/courseModel")
 const { client } = require("../configs/redis")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { buildCacheKey, resolveTTL } = require("../utils/listCache")
@@ -164,11 +164,16 @@ async function findCourseLessons(course, page = 1, limit = 20, sort = {}) {
     return result
 }
 
+async function isLessonInCourse(courseSlug, lessonId) {
+    const isInCourse = await courseModel.exists({})
+}
+
 module.exports = {
     findById,
     createLesson,
     editById,
     deleteById,
     findAll,
-    findCourseLessons
+    findCourseLessons,
+    isLessonInCourse
 }
