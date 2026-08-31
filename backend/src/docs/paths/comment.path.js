@@ -4,7 +4,9 @@ module.exports = {
             tags: ["Comments", "Admins"],
             operationId: "getCommentsByUserId",
             summary: "List comments authored by a user (admin only)",
-            description: "Admin-only list endpoint. `id` is validated only as a MongoDB ObjectId; the backend does not verify that a User document with that id exists, so an unknown but valid id returns 200 with `data: \"no comments found\"`. Query validation runs before authentication. After authentication, the admin limiter runs before the admin-role check, and the ban check runs after the role check. Filtering by rating is exact/case-sensitive. `sortBy=rating` sorts the stored rating strings, not their semantic 1-5 score. Returned comments are lean raw documents with unpopulated `authorId` and `courseId`.",
+            description: `Admin-only list endpoint. id is validated only as a MongoDB ObjectId; the backend does not verify that a User document with that id exists, so an unknown but valid id returns 200 with data="no comments found".
+
+Filtering by rating is exact/case-sensitive. sortBy=rating uses semantic rating order (Very Bad=1 through Very Good=5), not lexical string ordering. Returned comments are raw documents with unpopulated authorId/courseId.`,
             security: [
                 {
                     bearerAuth: []
@@ -58,7 +60,9 @@ module.exports = {
             tags: ["Comments"],
             operationId: "createNewComment",
             summary: "Create a course comment",
-            description: "Creates a comment on a course. The body validator runs first, then the comment-specific limiter (3 requests per IP per minute), then bearer authentication, then the ban check. Because of that order, an invalid body can return 400 before authentication and the comment limiter can return 429 before a missing/invalid token reaches `checkToken`. `title` and `text` are required; `rating` defaults to `Medium`. The course slug is trimmed and lowercased before lookup, and only an exact matching, non-deleted, `published` course can be commented on. There is currently no enrollment check and no one-comment-per-course rule, so any authenticated non-banned user can create multiple comments on a published course. After creation the service recomputes the course rating average/count from all course comments. The response contains only success/message, not the created document.",
+            description: `Creates a comment on a published Course. title/text are required; rating defaults to Medium.
+
+There is currently no enrollment requirement and no one-comment-per-Course rule. Any authenticated non-banned user can create multiple comments on a published Course. The response contains only success/message.`,
             security: [
                 {
                     bearerAuth: []
@@ -75,23 +79,6 @@ module.exports = {
                     "application/json": {
                         schema: {
                             $ref: "#/components/schemas/CreateComment"
-                        },
-                        examples: {
-                            explicitRating: {
-                                summary: "Explicit rating",
-                                value: {
-                                    title: "Great course!",
-                                    text: "Learned a lot, well explained.",
-                                    rating: "Good"
-                                }
-                            },
-                            defaultRating: {
-                                summary: "rating omitted; backend sets Medium",
-                                value: {
-                                    title: "Useful course",
-                                    text: "The explanations were clear."
-                                }
-                            }
                         }
                     }
                 }
@@ -127,7 +114,7 @@ module.exports = {
             tags: ["Comments"],
             operationId: "getCommentById",
             summary: "Get a comment by id",
-            description: "Returns one raw Comment document. The id is validated before authentication. After bearer authentication and the ban check, `checkSelfCommentAuthor(true)` loads the comment and allows either its original author or any admin; otherwise it returns 403. The access middleware is also what produces the normal 404 `comment not found`. `authorId` and `courseId` remain raw ObjectIds.",
+            description: "Returns one raw Comment document. Access is allowed to its author or an admin.",
             security: [
                 {
                     bearerAuth: []
@@ -167,7 +154,7 @@ module.exports = {
             tags: ["Comments"],
             operationId: "editCommentById",
             summary: "Edit a comment",
-            description: "Edits only `title`, `text`, and/or `rating`. The id is validated before authentication. The order after that is authentication -> ban check -> body validation -> ownership check. Therefore an authenticated non-owner can receive a 400 validation error before the ownership middleware reaches its 403. All body fields are optional and `{}` is valid, returning success without changing anything. Only the original author may edit; `checkSelfCommentAuthor(false)` does not grant an admin override. If `rating` is present, the service recomputes the course aggregate rating; title/text-only edits do not. The response contains only success/message, not the updated document.",
+            description: "Edits title/text/rating. Every field is optional and {} is valid. Only the original author may edit; there is no admin override for PATCH.",
             security: [
                 {
                     bearerAuth: []
@@ -184,22 +171,6 @@ module.exports = {
                     "application/json": {
                         schema: {
                             $ref: "#/components/schemas/UpdateComment"
-                        },
-                        examples: {
-                            updateText: {
-                                value: {
-                                    text: "Updated review text."
-                                }
-                            },
-                            updateRating: {
-                                value: {
-                                    rating: "Very Good"
-                                }
-                            },
-                            noOp: {
-                                summary: "Valid no-op body",
-                                value: {}
-                            }
                         }
                     }
                 }
@@ -233,7 +204,7 @@ module.exports = {
             tags: ["Comments"],
             operationId: "deleteCommentById",
             summary: "Delete a comment",
-            description: "Deletes a comment by id. The id is validated before authentication. After authentication and the ban check, access is allowed to the original author or any admin. Deletion is physical (`findByIdAndDelete`), not a soft delete. After deletion the service recomputes the course aggregate rating from the remaining comments. The response contains only success/message.",
+            description: "Physically deletes a Comment. The original author or an admin may delete it. Course aggregate rating is recomputed afterwards.",
             security: [
                 {
                     bearerAuth: []
@@ -272,10 +243,14 @@ module.exports = {
 
     "/courses/{slug}/get-comments": {
         get: {
-            tags: ["Comments", "Courses"],
+            tags: ["Comments", "Courses", "Admins", "Teachers"],
             operationId: "getCourseComments",
-            summary: "List comments for a course (admin/teacher)",
-            description: "Comment-related endpoint implemented in courseRouter/courseController/courseService. Query validation runs before authentication, followed by bearer authentication -> ban check -> role check (`admin` or `teacher`) -> course ownership check. Admins may access any course that `findCourseBySlug()` can resolve; teachers may access only a course whose `instructor` equals their user id. `findCourseBySlug()` requires an exact slug plus `isDeleted=false` and `status=published`, so even the owning teacher receives 404 for a draft/archived/closed/deleted course. Filtering by rating is exact/case-sensitive. `sortBy=rating` sorts rating strings, not their numeric meaning. Returned comments are raw lean Comment documents with unpopulated authorId/courseId. Empty results use the exact string `no comment found`. `meta.rating` is the course's stored `{ average, count }` object. There is no route-specific limiter here; only the global limiter applies.",
+            summary: "List comments for a Course",
+            description: `Course-management endpoint implemented by courseRouter/courseController/courseService.
+
+Query validation runs before authentication, then authentication -> ban check -> admin/teacher role -> checkSelfCourseAuthor(true). Admins may access any non-deleted Course; teachers may access only Courses they instruct. Course status is NOT restricted by findCourseBySlug(), so draft/archived/closed Courses are also valid for authorized management access.
+
+rating filtering is exact/case-sensitive. sortBy=rating uses semantic score order: Very Bad=1, Bad=2, Medium=3, Good=4, Very Good=5. Returned comments are raw documents with unpopulated authorId/courseId. Empty results use the exact string "no comment found". meta.rating is the Course's { average, count } object.`,
             security: [
                 {
                     bearerAuth: []
@@ -303,7 +278,7 @@ module.exports = {
             ],
             responses: {
                 200: {
-                    $ref: "#/components/responses/CourseCommentsFetchedSuccessfully"
+                    $ref: "#/components/responses/CourseCommentsFetchedForManagement"
                 },
                 400: {
                     $ref: "#/components/responses/FailedValidation"
@@ -312,7 +287,7 @@ module.exports = {
                     $ref: "#/components/responses/Unauthorized"
                 },
                 403: {
-                    $ref: "#/components/responses/CourseCommentsForbidden"
+                    $ref: "#/components/responses/CourseOwnerOrAdminForbidden"
                 },
                 404: {
                     $ref: "#/components/responses/CourseNotFound"

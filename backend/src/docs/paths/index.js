@@ -5,6 +5,7 @@ const commentPaths = require("./comment.path")
 const categoryPaths = require("./category.path")
 const tagPaths = require("./tag.path")
 const cartPaths = require("./cart.path")
+const coursePaths = require("./course.path")
 
 module.exports = {
     ...userPaths,
@@ -13,5 +14,6 @@ module.exports = {
     ...commentPaths,
     ...categoryPaths,
     ...tagPaths,
-    ...cartPaths
+    ...cartPaths,
+    ...coursePaths
 }
