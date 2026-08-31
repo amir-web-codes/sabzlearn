@@ -19,7 +19,7 @@ const exactSuccessSchema = (message) => ({
 module.exports = {
     CommentRating: {
         type: "string",
-        description: "Stored comment rating. Values are strings, so sortBy=rating uses MongoDB string ordering rather than a numeric 1-5 score.",
+        description: "Stored comment rating. List services translate these values to semantic scores when sortBy=rating: Very Bad=1 through Very Good=5.",
         enum: ["Very Bad", "Bad", "Medium", "Good", "Very Good"],
         example: "Good"
     },
@@ -53,7 +53,7 @@ module.exports = {
             },
             {
                 type: "object",
-                description: "Create-comment body. title and text are required. rating is optional and Zod supplies Medium when it is omitted. Unknown JSON properties are not used by the service.",
+                description: "Create-comment body. title and text are required. rating is optional and Zod supplies Medium when omitted.",
                 properties: {
                     rating: {
                         allOf: [
@@ -75,7 +75,7 @@ module.exports = {
                 $ref: "#/components/schemas/CommentFields"
             }
         ],
-        description: "Edit-comment body. Every field is optional and {} is valid; an empty object returns success without changing the document. Unlike create, rating has no update-time default. Unknown JSON properties are ignored by updateCommentById()."
+        description: "Edit-comment body. Every field is optional and {} is valid; rating has no update-time default."
     },
 
     Comment: {
@@ -88,7 +88,7 @@ module.exports = {
             },
             {
                 type: "object",
-                description: "Raw Comment document returned by current comment list/detail services. authorId and courseId are not populated.",
+                description: "Raw Comment document. authorId and courseId are not populated by the current comment/course list services.",
                 properties: {
                     authorId: {
                         $ref: "#/components/schemas/MongoObjectId"
@@ -167,7 +167,7 @@ module.exports = {
             },
             {
                 type: "object",
-                description: "Response for GET /comments/admin/{id}/comments. A valid ObjectId is enough; the target user document itself is not checked for existence.",
+                description: "Response for GET /comments/admin/{id}/comments.",
                 properties: {
                     message: {
                         type: "string",

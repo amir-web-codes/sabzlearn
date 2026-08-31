@@ -62,17 +62,17 @@ module.exports = {
 
     MediaAssetReference: {
         type: "object",
-        description: "Stored media reference returned by models that keep both a URL/path and a storage-provider public id.",
+        description: "Stored media reference returned by models that keep both a public URL/path and a storage-provider public id.",
         properties: {
             url: {
                 type: "string",
                 nullable: true,
-                example: "https://res.cloudinary.com/example/image/upload/v1/sabzlearn/categories/icons/web-development.webp"
+                example: "https://res.cloudinary.com/example/image/upload/v1/sabzlearn/courses/course-id/thumbnail/example.webp"
             },
             publicId: {
                 type: "string",
                 nullable: true,
-                example: "sabzlearn/categories/icons/web-development"
+                example: "sabzlearn/courses/course-id/thumbnail/example"
             }
         },
         required: ["url", "publicId"]
@@ -188,11 +188,11 @@ module.exports = {
                         { type: "integer" }
                     ]
                 },
-                example: ["name"]
+                example: ["title"]
             },
             message: {
                 type: "string",
-                example: "Too small: expected string to have >=2 characters"
+                example: "Too small: expected string to have >= 3 characters"
             }
         },
         required: ["code", "path", "message"]

@@ -1,10 +1,82 @@
+const exactDataResponse = (message, dataRef) => ({
+    allOf: [
+        {
+            $ref: "#/components/schemas/Success"
+        },
+        {
+            type: "object",
+            properties: {
+                message: {
+                    type: "string",
+                    enum: [message],
+                    example: message
+                },
+                data: {
+                    $ref: dataRef
+                }
+            },
+            required: ["data"]
+        }
+    ]
+})
+
 module.exports = {
+    CourseTitle: {
+        type: "string",
+        minLength: 3,
+        maxLength: 50,
+        description: "Course title. Request validation trims surrounding whitespace. Changing title through PATCH may generate a new unique slug.",
+        example: "Node.js Mastery"
+    },
+
+    CourseDescription: {
+        type: "string",
+        minLength: 1,
+        description: "Course description. Request validation trims surrounding whitespace.",
+        example: "A complete backend development course with Node.js."
+    },
+
+    CoursePrice: {
+        type: "number",
+        minimum: 0,
+        description: "Base course price before discount.",
+        example: 120
+    },
+
+    CourseDiscountPercentage: {
+        type: "number",
+        minimum: 0,
+        maximum: 100,
+        description: "Percentage discount applied to price.",
+        example: 20
+    },
+
+    CourseLevel: {
+        type: "string",
+        enum: ["beginner", "intermediate", "advanced"],
+        example: "intermediate"
+    },
+
+    CourseLanguage: {
+        type: "string",
+        enum: ["en", "fa"],
+        example: "fa"
+    },
+
+    CourseStatus: {
+        type: "string",
+        enum: ["draft", "published", "archived", "closed"],
+        example: "published"
+    },
+
     CourseRating: {
         type: "object",
+        description: "Aggregate course rating maintained from course comments.",
         properties: {
             average: {
                 type: "number",
                 minimum: 0,
+                maximum: 5,
                 example: 4.6
             },
             count: {
@@ -16,156 +88,619 @@ module.exports = {
         required: ["average", "count"]
     },
 
-    CourseDocument: {
-        allOf: [
-            { $ref: "#/components/schemas/TimestampedMongoDocumentMeta" },
-            {
-                type: "object",
-                description: "Raw Course document returned by queries that use lean() without populate/projection, including GET /categories/{slug}/courses.",
-                properties: {
-                    title: {
-                        type: "string",
-                        minLength: 3,
-                        maxLength: 50,
-                        example: "Node.js Mastery"
-                    },
-                    slug: {
-                        type: "string",
-                        example: "nodejs-mastery"
-                    },
-                    description: {
-                        type: "string",
-                        example: "A complete backend development course with Node.js."
-                    },
-                    price: {
-                        type: "number",
-                        minimum: 0,
-                        example: 120
-                    },
-                    discountPercentage: {
-                        type: "number",
-                        minimum: 0,
-                        maximum: 100,
-                        example: 20
-                    },
-                    finalPrice: {
-                        type: "number",
-                        minimum: 0,
-                        example: 96
-                    },
-                    category: {
-                        $ref: "#/components/schemas/NullableMongoObjectId"
-                    },
-                    tags: {
-                        type: "array",
-                        maxItems: 5,
-                        items: {
-                            $ref: "#/components/schemas/MongoObjectId"
-                        }
-                    },
-                    instructor: {
-                        $ref: "#/components/schemas/MongoObjectId"
-                    },
-                    level: {
-                        type: "string",
-                        enum: ["beginner", "intermediate", "advanced"],
-                        example: "intermediate"
-                    },
-                    language: {
-                        type: "string",
-                        enum: ["en", "fa"],
-                        example: "fa"
-                    },
-                    studentsCount: {
-                        type: "integer",
-                        minimum: 0,
-                        example: 350
-                    },
-                    thumbnail: {
+    CourseScalarFields: {
+        type: "object",
+        description: "Stored Course fields whose representation is identical in raw and populated Course responses.",
+        properties: {
+            title: {
+                $ref: "#/components/schemas/CourseTitle"
+            },
+            slug: {
+                type: "string",
+                readOnly: true,
+                description: "Unique slug generated by the backend from title. A title update can change this value.",
+                example: "nodejs-mastery"
+            },
+            description: {
+                $ref: "#/components/schemas/CourseDescription"
+            },
+            price: {
+                $ref: "#/components/schemas/CoursePrice"
+            },
+            discountPercentage: {
+                $ref: "#/components/schemas/CourseDiscountPercentage"
+            },
+            finalPrice: {
+                type: "number",
+                minimum: 0,
+                readOnly: true,
+                description: "price minus discountPercentage, recalculated by the Mongoose pre-save hook and rounded to two decimal places.",
+                example: 96
+            },
+            instructor: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            level: {
+                $ref: "#/components/schemas/CourseLevel"
+            },
+            language: {
+                $ref: "#/components/schemas/CourseLanguage"
+            },
+            studentsCount: {
+                type: "integer",
+                minimum: 0,
+                readOnly: true,
+                example: 350
+            },
+            thumbnail: {
+                allOf: [
+                    {
                         $ref: "#/components/schemas/MediaAssetReference"
-                    },
-                    coverVideoURL: {
-                        $ref: "#/components/schemas/MediaAssetReference"
-                    },
-                    isDeleted: {
-                        type: "boolean",
-                        example: false
-                    },
-                    deletedBy: {
-                        $ref: "#/components/schemas/NullableMongoObjectId"
-                    },
-                    deletedAt: {
-                        type: "string",
-                        format: "date-time",
-                        nullable: true,
-                        example: null
-                    },
-                    status: {
-                        type: "string",
-                        enum: ["draft", "published", "archived", "closed"],
-                        example: "published"
-                    },
-                    rating: {
-                        $ref: "#/components/schemas/CourseRating"
                     }
-                },
-                required: [
-                    "title",
-                    "slug",
-                    "description",
-                    "price",
-                    "discountPercentage",
-                    "finalPrice",
-                    "category",
-                    "tags",
-                    "instructor",
-                    "level",
-                    "language",
-                    "studentsCount",
-                    "thumbnail",
-                    "coverVideoURL",
-                    "isDeleted",
-                    "deletedBy",
-                    "deletedAt",
-                    "status",
-                    "rating"
-                ]
+                ],
+                description: "Course thumbnail. The model default is { url: '/images/default-thumbnail.png', publicId: null }."
+            },
+            coverVideoURL: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/MediaAssetReference"
+                    }
+                ],
+                description: "Course cover-video reference. Both properties default to null."
+            },
+            isDeleted: {
+                type: "boolean",
+                readOnly: true,
+                example: false
+            },
+            deletedBy: {
+                $ref: "#/components/schemas/NullableMongoObjectId"
+            },
+            deletedAt: {
+                type: "string",
+                format: "date-time",
+                nullable: true,
+                readOnly: true,
+                example: null
+            },
+            status: {
+                $ref: "#/components/schemas/CourseStatus"
+            },
+            rating: {
+                $ref: "#/components/schemas/CourseRating"
             }
+        },
+        required: [
+            "title",
+            "slug",
+            "description",
+            "price",
+            "discountPercentage",
+            "finalPrice",
+            "instructor",
+            "level",
+            "language",
+            "studentsCount",
+            "thumbnail",
+            "coverVideoURL",
+            "isDeleted",
+            "deletedBy",
+            "deletedAt",
+            "status",
+            "rating"
         ]
     },
 
-    PublishedCoursesListResponse: {
+    CourseRawRelations: {
+        type: "object",
+        description: "Unpopulated Course taxonomy references.",
+        properties: {
+            category: {
+                $ref: "#/components/schemas/NullableMongoObjectId"
+            },
+            tags: {
+                type: "array",
+                maxItems: 5,
+                items: {
+                    $ref: "#/components/schemas/MongoObjectId"
+                }
+            }
+        },
+        required: ["category", "tags"]
+    },
+
+    CourseTaxonomyReference: {
+        type: "object",
+        description: "Category/tag projection populated by getCourseDetails().",
+        properties: {
+            _id: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            name: {
+                type: "string",
+                example: "Backend Development"
+            },
+            slug: {
+                type: "string",
+                example: "backend-development"
+            }
+        },
+        required: ["_id", "name", "slug"]
+    },
+
+    CoursePopulatedRelations: {
+        type: "object",
+        properties: {
+            category: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/CourseTaxonomyReference"
+                    }
+                ],
+                nullable: true,
+                description: "Populated category with only _id/name/slug, or null."
+            },
+            tags: {
+                type: "array",
+                maxItems: 5,
+                items: {
+                    $ref: "#/components/schemas/CourseTaxonomyReference"
+                }
+            }
+        },
+        required: ["category", "tags"]
+    },
+
+    CourseDocument: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/TimestampedMongoDocumentMeta"
+            },
+            {
+                $ref: "#/components/schemas/CourseScalarFields"
+            },
+            {
+                $ref: "#/components/schemas/CourseRawRelations"
+            }
+        ],
+        description: "Full raw Course document returned by create/edit/media operations and GET /courses/get-all. category/tags/instructor are not populated."
+    },
+
+    CourseDetailsDocument: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/TimestampedMongoDocumentMeta"
+            },
+            {
+                $ref: "#/components/schemas/CourseScalarFields"
+            },
+            {
+                $ref: "#/components/schemas/CoursePopulatedRelations"
+            }
+        ],
+        description: "Published Course returned by GET /courses/{slug}. category and tags are populated with _id/name/slug; instructor remains a raw ObjectId."
+    },
+
+    CourseLessonPreview: {
+        type: "object",
+        description: "Lesson projection embedded in Course details. The service selects only title/order/duration; _id remains included by MongoDB.",
+        properties: {
+            _id: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            title: {
+                $ref: "#/components/schemas/LessonTitle"
+            },
+            order: {
+                $ref: "#/components/schemas/LessonOrder"
+            },
+            duration: {
+                $ref: "#/components/schemas/LessonDuration"
+            }
+        },
+        required: ["_id", "title", "order", "duration"]
+    },
+
+    RelatedCourseItem: {
+        type: "object",
+        description: "Projection returned by the related-course aggregation. Only published, non-deleted courses with score > 0 are returned, up to 15.",
+        properties: {
+            _id: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            title: {
+                $ref: "#/components/schemas/CourseTitle"
+            },
+            slug: {
+                type: "string",
+                example: "express-api-design"
+            },
+            thumbnail: {
+                $ref: "#/components/schemas/MediaAssetReference"
+            },
+            price: {
+                $ref: "#/components/schemas/CoursePrice"
+            },
+            finalPrice: {
+                type: "number",
+                minimum: 0,
+                example: 80
+            },
+            level: {
+                $ref: "#/components/schemas/CourseLevel"
+            },
+            rating: {
+                $ref: "#/components/schemas/CourseRating"
+            },
+            studentsCount: {
+                type: "integer",
+                minimum: 0,
+                example: 230
+            },
+            score: {
+                type: "number",
+                minimum: 1,
+                description: "Relatedness score: +2 same category, +1 per shared tag, +2 same instructor, +1 same level.",
+                example: 4
+            }
+        },
+        required: [
+            "_id",
+            "title",
+            "slug",
+            "thumbnail",
+            "price",
+            "finalPrice",
+            "level",
+            "rating",
+            "studentsCount",
+            "score"
+        ]
+    },
+
+    CourseTagIdsInput: {
+        type: "array",
+        maxItems: 5,
+        uniqueItems: true,
+        description: "Tag ObjectIds. Backend additionally rejects duplicate ids case-insensitively and verifies that every supplied Tag exists.",
+        items: {
+            $ref: "#/components/schemas/MongoObjectId"
+        },
+        example: [
+            "6857e4d1e5d82d0d1f5d8c51",
+            "6857e4d1e5d82d0d1f5d8c52"
+        ]
+    },
+
+    CreateCourseRequest: {
+        type: "object",
+        description: "JSON body for creating a Course. Unknown body properties are not used by createCourse().",
+        properties: {
+            title: {
+                $ref: "#/components/schemas/CourseTitle"
+            },
+            description: {
+                $ref: "#/components/schemas/CourseDescription"
+            },
+            price: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/CoursePrice"
+                    }
+                ],
+                default: 0
+            },
+            discountPercentage: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/CourseDiscountPercentage"
+                    }
+                ],
+                default: 0
+            },
+            level: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/CourseLevel"
+                    }
+                ],
+                default: "beginner"
+            },
+            language: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/CourseLanguage"
+                    }
+                ],
+                default: "fa"
+            },
+            status: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/CourseStatus"
+                    }
+                ],
+                default: "draft"
+            },
+            category: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/KebabSlug"
+                    }
+                ],
+                description: "Optional category slug. It must resolve to a category whose status is not inactive."
+            },
+            tags: {
+                $ref: "#/components/schemas/CourseTagIdsInput"
+            }
+        },
+        required: ["title", "description"]
+    },
+
+    UpdateCourseRequest: {
+        type: "object",
+        description: "JSON body for PATCH /courses/{slug}. Every field is optional and {} is accepted. title changes may change the returned slug. category cannot currently be cleared with null/empty string; tags can be cleared with [].",
+        properties: {
+            title: {
+                $ref: "#/components/schemas/CourseTitle"
+            },
+            description: {
+                $ref: "#/components/schemas/CourseDescription"
+            },
+            price: {
+                $ref: "#/components/schemas/CoursePrice"
+            },
+            discountPercentage: {
+                $ref: "#/components/schemas/CourseDiscountPercentage"
+            },
+            level: {
+                $ref: "#/components/schemas/CourseLevel"
+            },
+            language: {
+                $ref: "#/components/schemas/CourseLanguage"
+            },
+            status: {
+                $ref: "#/components/schemas/CourseStatus"
+            },
+            category: {
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/KebabSlug"
+                    }
+                ],
+                description: "Replacement category slug. The referenced category must not be inactive."
+            },
+            tags: {
+                $ref: "#/components/schemas/CourseTagIdsInput"
+            }
+        }
+    },
+
+    CourseThumbnailUploadForm: {
+        type: "object",
+        description: "multipart/form-data body. The exact Multer field name is thumbnail.",
+        properties: {
+            thumbnail: {
+                $ref: "#/components/schemas/ImageUploadFile"
+            }
+        },
+        required: ["thumbnail"]
+    },
+
+    CourseCoverVideoUploadForm: {
+        type: "object",
+        description: "multipart/form-data body. The exact Multer field name is coverVideo.",
+        properties: {
+            coverVideo: {
+                $ref: "#/components/schemas/VideoUploadFile"
+            }
+        },
+        required: ["coverVideo"]
+    },
+
+    CoursesListResponse: {
         allOf: [
             {
                 $ref: "#/components/schemas/Success"
             },
-
             {
                 type: "object",
-
                 properties: {
                     message: {
                         type: "string",
                         enum: ["courses fetched successfully"],
                         example: "courses fetched successfully"
                     },
-
                     data: {
                         type: "array",
                         items: {
                             $ref: "#/components/schemas/CourseDocument"
                         }
                     },
-
                     meta: {
                         $ref: "#/components/schemas/PaginationMeta"
                     }
                 },
+                required: ["data", "meta"]
+            }
+        ]
+    },
 
-                required: [
-                    "data",
-                    "meta"
-                ]
+    CourseDetailsMeta: {
+        type: "object",
+        properties: {
+            totalStudents: {
+                type: "integer",
+                minimum: 0,
+                example: 350
+            },
+            rating: {
+                type: "number",
+                minimum: 0,
+                maximum: 5,
+                example: 4.6
+            },
+            duration: {
+                type: "string",
+                description: "Sum of all lesson durations, even when lessonsIncluded=false. The controller appends the literal suffix ' minutes'.",
+                example: "183.75 minutes"
+            }
+        },
+        required: ["totalStudents", "rating", "duration"]
+    },
+
+    CourseDetailsResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["course fetched successfully"],
+                        example: "course fetched successfully"
+                    },
+                    data: {
+                        type: "object",
+                        properties: {
+                            foundCourse: {
+                                $ref: "#/components/schemas/CourseDetailsDocument"
+                            },
+                            lessons: {
+                                type: "array",
+                                description: "Present by default. Completely omitted from JSON when lessonsIncluded=false.",
+                                items: {
+                                    $ref: "#/components/schemas/CourseLessonPreview"
+                                }
+                            },
+                            relatedCourses: {
+                                type: "array",
+                                maxItems: 15,
+                                items: {
+                                    $ref: "#/components/schemas/RelatedCourseItem"
+                                }
+                            }
+                        },
+                        required: ["foundCourse", "relatedCourses"]
+                    },
+                    meta: {
+                        $ref: "#/components/schemas/CourseDetailsMeta"
+                    }
+                },
+                required: ["data", "meta"]
+            }
+        ]
+    },
+
+    CourseCreatedResponse: exactDataResponse(
+        "course created successfully",
+        "#/components/schemas/CourseDocument"
+    ),
+
+    CourseEditedResponse: exactDataResponse(
+        "course edited successfully",
+        "#/components/schemas/CourseDocument"
+    ),
+
+    CourseThumbnailUpdatedResponse: exactDataResponse(
+        "course thumbnail updated successfully",
+        "#/components/schemas/CourseDocument"
+    ),
+
+    CourseThumbnailDeletedResponse: exactDataResponse(
+        "course thumbnail reset to default successfully",
+        "#/components/schemas/CourseDocument"
+    ),
+
+    CourseCoverVideoUpdatedResponse: exactDataResponse(
+        "course cover video updated successfully",
+        "#/components/schemas/CourseDocument"
+    ),
+
+    CourseCoverVideoDeletedResponse: exactDataResponse(
+        "course cover video deleted successfully",
+        "#/components/schemas/CourseDocument"
+    ),
+
+    CourseStudentsMeta: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/PaginationMeta"
+            },
+            {
+                type: "object",
+                properties: {
+                    rating: {
+                        $ref: "#/components/schemas/CourseRating"
+                    }
+                },
+                required: ["rating"]
+            }
+        ]
+    },
+
+    CourseStudentsListResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["users fetched successfully"],
+                        example: "users fetched successfully"
+                    },
+                    data: {
+                        oneOf: [
+                            {
+                                type: "array",
+                                description: "Only the populated user objects are returned; enrollment createdAt/lastAccessedAt are not exposed by the controller.",
+                                items: {
+                                    $ref: "#/components/schemas/NullablePopulatedUserReference"
+                                }
+                            },
+                            {
+                                type: "string",
+                                enum: ["no student found"],
+                                example: "no student found"
+                            }
+                        ]
+                    },
+                    meta: {
+                        $ref: "#/components/schemas/CourseStudentsMeta"
+                    }
+                },
+                required: ["data", "meta"]
+            }
+        ]
+    },
+
+    RelatedCoursesResponse: {
+        allOf: [
+            {
+                $ref: "#/components/schemas/Success"
+            },
+            {
+                type: "object",
+                properties: {
+                    message: {
+                        type: "string",
+                        enum: ["related courses fetched successfully"],
+                        example: "related courses fetched successfully"
+                    },
+                    data: {
+                        type: "array",
+                        maxItems: 15,
+                        items: {
+                            $ref: "#/components/schemas/RelatedCourseItem"
+                        }
+                    }
+                },
+                required: ["data"]
             }
         ]
     }
