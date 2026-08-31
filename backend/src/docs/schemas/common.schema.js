@@ -62,7 +62,7 @@ module.exports = {
 
     MediaAssetReference: {
         type: "object",
-        description: "Stored media reference returned by models that keep both a public URL/path and a storage-provider public id.",
+        description: "Stored media reference returned by models that keep both a URL/path and a storage-provider public id.",
         properties: {
             url: {
                 type: "string",
@@ -84,15 +84,30 @@ module.exports = {
         description: "Image upload. Current image middleware accepts image/jpeg, image/png, and image/webp up to 2 MiB."
     },
 
+    VideoUploadFile: {
+        type: "string",
+        format: "binary",
+        description: "Video upload. Current video middleware accepts video/mp4 only, up to 100 MiB."
+    },
+
     Error: {
         type: "object",
         description: "Standard error response. Optional diagnostic fields are included only when the thrown error provides them.",
         properties: {
-            success: { type: "boolean", enum: [false], example: false },
-            message: { type: "string", example: "error" },
+            success: {
+                type: "boolean",
+                enum: [false],
+                example: false
+            },
+            message: {
+                type: "string",
+                example: "error"
+            },
             errors: {
                 type: "array",
-                items: { $ref: "#/components/schemas/ValidationErrorItem" }
+                items: {
+                    $ref: "#/components/schemas/ValidationErrorItem"
+                }
             },
             code: {
                 description: "Optional application/library/database error code. MongoDB errors may expose a numeric code such as 11000.",
@@ -115,8 +130,15 @@ module.exports = {
         type: "object",
         description: "Standard success response without a data payload",
         properties: {
-            success: { type: "boolean", enum: [true], example: true },
-            message: { type: "string", example: "success" }
+            success: {
+                type: "boolean",
+                enum: [true],
+                example: true
+            },
+            message: {
+                type: "string",
+                example: "success"
+            }
         },
         required: ["success", "message"]
     },
@@ -125,9 +147,21 @@ module.exports = {
         type: "object",
         description: "Pagination metadata",
         properties: {
-            totalNumber: { type: "integer", minimum: 0, example: 42 },
-            totalPages: { type: "integer", minimum: 0, example: 3 },
-            page: { type: "integer", minimum: 1, example: 1 },
+            totalNumber: {
+                type: "integer",
+                minimum: 0,
+                example: 42
+            },
+            totalPages: {
+                type: "integer",
+                minimum: 0,
+                example: 3
+            },
+            page: {
+                type: "integer",
+                minimum: 1,
+                example: 1
+            },
             limit: {
                 type: "integer",
                 minimum: 1,
@@ -142,7 +176,10 @@ module.exports = {
         type: "object",
         description: "A single Zod 4 validation issue",
         properties: {
-            code: { type: "string", example: "too_small" },
+            code: {
+                type: "string",
+                example: "too_small"
+            },
             path: {
                 type: "array",
                 items: {
@@ -164,7 +201,11 @@ module.exports = {
     ValidationError: {
         type: "object",
         properties: {
-            success: { type: "boolean", enum: [false], example: false },
+            success: {
+                type: "boolean",
+                enum: [false],
+                example: false
+            },
             message: {
                 type: "string",
                 enum: ["validation failed"],
@@ -172,7 +213,9 @@ module.exports = {
             },
             errors: {
                 type: "array",
-                items: { $ref: "#/components/schemas/ValidationErrorItem" }
+                items: {
+                    $ref: "#/components/schemas/ValidationErrorItem"
+                }
             }
         },
         required: ["success", "message", "errors"]
@@ -181,28 +224,16 @@ module.exports = {
     PopulatedUserReference: {
         type: "object",
         description: "A user reference populated with the fields selected by the service layer",
-
         properties: populatedUserReferenceProperties,
-
-        required: [
-            "_id",
-            "username",
-            "email"
-        ]
+        required: ["_id", "username", "email"]
     },
 
     NullablePopulatedUserReference: {
         type: "object",
         nullable: true,
         description: "A populated user reference, or null.",
-
         properties: populatedUserReferenceProperties,
-
-        required: [
-            "_id",
-            "username",
-            "email"
-        ]
+        required: ["_id", "username", "email"]
     },
 
     KebabSlug: {
