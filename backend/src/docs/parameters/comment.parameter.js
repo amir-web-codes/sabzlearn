@@ -3,7 +3,7 @@ module.exports = {
         name: "sortBy",
         in: "query",
         required: false,
-        description: "Comment sort field. rating is stored as a string, so rating sorting follows MongoDB string ordering rather than Very Bad -> Very Good score order.",
+        description: "Comment sort field. sortBy=rating uses the backend's semantic score order: Very Bad=1, Bad=2, Medium=3, Good=4, Very Good=5. sortOrder controls ascending/descending semantic score.",
         schema: {
             type: "string",
             enum: ["createdAt", "rating"],
