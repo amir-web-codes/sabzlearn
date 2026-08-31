@@ -7,7 +7,7 @@ const cartController = require("../controllers/cartController")
 
 
 router.post("/checkout", limiters.cartLimiter, checkToken, checkUserBan, cartController.cartCheckout)
-router.get("/orders/:id", validateId, checkToken, checkUserBan, checkRoles(["admin"]), cartController.getOrderById)
+router.get("/admin/orders/:id", validateId, checkToken, checkUserBan, checkRoles(["admin"]), cartController.getOrderById)
 
 router.route("/me")
     .get(checkToken, limiters.cartLimiter, cartController.getUserCart)

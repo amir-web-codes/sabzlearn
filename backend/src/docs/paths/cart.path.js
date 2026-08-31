@@ -47,7 +47,7 @@ module.exports = {
         }
     },
 
-    "/cart/orders/{id}": {
+    "/cart/admin/orders/{id}": {
         get: {
             tags: ["Cart", "Admins"],
 

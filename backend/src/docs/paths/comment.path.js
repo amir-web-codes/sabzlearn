@@ -4,9 +4,7 @@ module.exports = {
             tags: ["Comments", "Admins"],
             operationId: "getCommentsByUserId",
             summary: "List comments authored by a user (admin only)",
-            description: `Admin-only list endpoint. id is validated only as a MongoDB ObjectId; the backend does not verify that a User document with that id exists, so an unknown but valid id returns 200 with data="no comments found".
-
-Filtering by rating is exact/case-sensitive. sortBy=rating uses semantic rating order (Very Bad=1 through Very Good=5), not lexical string ordering. Returned comments are raw documents with unpopulated authorId/courseId.`,
+            description: `Admin-only list endpoint. id is validated only as a MongoDB ObjectId; the backend does not verify that a User document with that id exists, so an unknown but valid id returns 200 with data="no comments found". Filtering by rating is exact/case-sensitive. sortBy=rating uses semantic rating order (Very Bad=1 through Very Good=5), not lexical string ordering. Returned comments are raw documents with unpopulated authorId/courseId.`,
             security: [
                 {
                     bearerAuth: []
@@ -60,9 +58,7 @@ Filtering by rating is exact/case-sensitive. sortBy=rating uses semantic rating 
             tags: ["Comments"],
             operationId: "createNewComment",
             summary: "Create a course comment",
-            description: `Creates a comment on a published Course. title/text are required; rating defaults to Medium.
-
-There is currently no enrollment requirement and no one-comment-per-Course rule. Any authenticated non-banned user can create multiple comments on a published Course. The response contains only success/message.`,
+            description: `Creates a comment on a published Course. title/text are required; rating defaults to Medium. There is currently no enrollment requirement and no one-comment-per-Course rule. Any authenticated non-banned user can create multiple comments on a published Course. The response contains only success/message.`,
             security: [
                 {
                     bearerAuth: []
@@ -243,14 +239,10 @@ There is currently no enrollment requirement and no one-comment-per-Course rule.
 
     "/courses/{slug}/get-comments": {
         get: {
-            tags: ["Comments", "Courses", "Admins", "Teachers"],
+            tags: ["Comments", "Courses"],
             operationId: "getCourseComments",
             summary: "List comments for a Course",
-            description: `Course-management endpoint implemented by courseRouter/courseController/courseService.
-
-Query validation runs before authentication, then authentication -> ban check -> admin/teacher role -> checkSelfCourseAuthor(true). Admins may access any non-deleted Course; teachers may access only Courses they instruct. Course status is NOT restricted by findCourseBySlug(), so draft/archived/closed Courses are also valid for authorized management access.
-
-rating filtering is exact/case-sensitive. sortBy=rating uses semantic score order: Very Bad=1, Bad=2, Medium=3, Good=4, Very Good=5. Returned comments are raw documents with unpopulated authorId/courseId. Empty results use the exact string "no comment found". meta.rating is the Course's { average, count } object.`,
+            description: `Course-management endpoint implemented by courseRouter/courseController/courseService. Query validation runs before authentication, then authentication -> ban check -> admin/teacher role -> checkSelfCourseAuthor(true). Admins may access any non-deleted Course; teachers may access only Courses they instruct. Course status is NOT restricted by findCourseBySlug(), so draft/archived/closed Courses are also valid for authorized management access. rating filtering is exact/case-sensitive. sortBy=rating uses semantic score order: Very Bad=1, Bad=2, Medium=3, Good=4, Very Good=5. Returned comments are raw documents with unpopulated authorId/courseId. Empty results use the exact string "no comment found". meta.rating is the Course's { average, count } object.`,
             security: [
                 {
                     bearerAuth: []

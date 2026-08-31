@@ -676,7 +676,7 @@ module.exports = {
 
     "/users/auth/change-password": {
         patch: {
-            tags: ["Users"],
+            tags: ["Users", "Auth"],
             operationId: "changeUserPassword",
             summary: "Change the current user's password",
             description: "Revokes refresh tokens for all devices, hashes/saves the new password, and clears the current refreshToken cookie. The deviceId cookie is not cleared and the current access token is not revoked server-side; the frontend should remove the access token and log in again.",
