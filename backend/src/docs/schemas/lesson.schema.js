@@ -31,14 +31,23 @@ module.exports = {
 
     LessonDescription: {
         type: "string",
-        description: "Lesson description. It is required on create but may be an empty string because the current validator applies no minimum length.",
+        description: "Lesson description. Required on create. Empty strings are accepted because the validator applies no minimum length.",
         example: "Learn the fundamentals of React Hooks and their common use cases."
     },
 
     LessonOrder: {
         type: "number",
-        description: "Lesson ordering value. The backend coerces multipart text input to a number but currently applies no integer/minimum constraint. When omitted on create, the service uses the highest existing order in the same course + 100, or 100 when the course has no lessons.",
+        description: "Lesson ordering value. Multipart text is coerced to a JavaScript number. The current validator/model applies no integer, minimum, maximum, or uniqueness constraint.",
         example: 100
+    },
+
+    LessonDuration: {
+        type: "number",
+        minimum: 0,
+        readOnly: true,
+        default: 0,
+        description: "Video duration in minutes, derived from Cloudinary upload metadata and rounded to 2 decimal places. It is 0 when no video is attached.",
+        example: 15.42
     },
 
     LessonVideoReference: {
@@ -47,7 +56,7 @@ module.exports = {
                 $ref: "#/components/schemas/MediaAssetReference"
             }
         ],
-        description: "Stored lesson video reference. Both url and publicId are null when the lesson has no video."
+        description: "Stored lesson video reference. Both url and publicId are null when no lesson video is attached. In the current source, url is the Cloudinary secure_url returned by a normal video upload."
     },
 
     Lesson: {
@@ -57,7 +66,7 @@ module.exports = {
             },
             {
                 type: "object",
-                description: "Lesson document returned by the current lesson controllers/services. courseId and publisherId are raw MongoDB ObjectIds and are not populated.",
+                description: "Full lesson document returned by create, edit, single-lesson read, and course-lesson list endpoints. courseId and publisherId are raw ObjectIds and are not populated.",
                 properties: {
                     title: {
                         $ref: "#/components/schemas/LessonTitle"
@@ -78,12 +87,7 @@ module.exports = {
                         $ref: "#/components/schemas/LessonVideoReference"
                     },
                     duration: {
-                        type: "number",
-                        minimum: 0,
-                        readOnly: true,
-                        default: 0,
-                        description: "Video duration in minutes. It is derived from Cloudinary upload metadata and rounded to 2 decimal places. It is 0 when no video is attached.",
-                        example: 15.42
+                        $ref: "#/components/schemas/LessonDuration"
                     }
                 },
                 required: [
@@ -99,9 +103,42 @@ module.exports = {
         ]
     },
 
+    LessonAdminListItem: {
+        type: "object",
+        description: "Projection returned by GET /lessons/admin/get-all. The service explicitly selects only title, courseId, publisherId, order, and duration; MongoDB _id remains included by default.",
+        properties: {
+            _id: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            title: {
+                $ref: "#/components/schemas/LessonTitle"
+            },
+            courseId: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            publisherId: {
+                $ref: "#/components/schemas/MongoObjectId"
+            },
+            order: {
+                $ref: "#/components/schemas/LessonOrder"
+            },
+            duration: {
+                $ref: "#/components/schemas/LessonDuration"
+            }
+        },
+        required: [
+            "_id",
+            "title",
+            "courseId",
+            "publisherId",
+            "order",
+            "duration"
+        ]
+    },
+
     CreateLessonMultipart: {
         type: "object",
-        description: "multipart/form-data body for creating a lesson. Unknown text fields are stripped by the current Zod object validator. The only accepted file field name is `video`.",
+        description: "multipart/form-data body for creating a lesson. Only the documented fields affect createLesson(): title, description, order, and the Multer file field video.",
         properties: {
             title: {
                 $ref: "#/components/schemas/LessonTitle"
@@ -110,7 +147,12 @@ module.exports = {
                 $ref: "#/components/schemas/LessonDescription"
             },
             order: {
-                $ref: "#/components/schemas/LessonOrder"
+                allOf: [
+                    {
+                        $ref: "#/components/schemas/LessonOrder"
+                    }
+                ],
+                description: "Optional. When omitted, the service uses the highest existing order in the same course + 100, or 100 when the course has no lessons."
             },
             video: {
                 $ref: "#/components/schemas/VideoUploadFile"
@@ -121,7 +163,7 @@ module.exports = {
 
     EditLessonMultipart: {
         type: "object",
-        description: "multipart/form-data body for editing a lesson. Every text field is optional and an entirely empty request is valid, returning the unchanged lesson. A request containing only `video` is also valid. Unknown text fields are stripped by Zod.",
+        description: "multipart/form-data body for editing a lesson. Every field is optional. Empty PATCH requests and file-only PATCH requests are accepted by the current route/validator.",
         properties: {
             title: {
                 $ref: "#/components/schemas/LessonTitle"
@@ -135,7 +177,7 @@ module.exports = {
             removeVideo: {
                 type: "string",
                 enum: ["true", "false"],
-                description: "Set the exact multipart text value `true` to remove the existing video and reset duration to 0. If a new `video` file is also supplied, the new file takes precedence and removeVideo is ignored by the service branch.",
+                description: "Exact multipart text value. `true` removes the existing video and resets duration to 0 only when a new video file is not also supplied. A new video file takes precedence.",
                 example: "true"
             },
             video: {
@@ -149,24 +191,6 @@ module.exports = {
     LessonAddedResponse: lessonDataResponse("lesson added successfully"),
 
     LessonEditedResponse: lessonDataResponse("lesson edited successfully"),
-
-    LessonDeletedResponse: {
-        allOf: [
-            {
-                $ref: "#/components/schemas/Success"
-            },
-            {
-                type: "object",
-                properties: {
-                    message: {
-                        type: "string",
-                        enum: ["lesson deleted successfully"],
-                        example: "lesson deleted successfully"
-                    }
-                }
-            }
-        ]
-    },
 
     LessonsAdminListResponse: {
         allOf: [
@@ -182,20 +206,11 @@ module.exports = {
                         example: "lessons fetched successfully"
                     },
                     data: {
-                        oneOf: [
-                            {
-                                type: "array",
-                                items: {
-                                    $ref: "#/components/schemas/Lesson"
-                                }
-                            },
-                            {
-                                type: "string",
-                                enum: ["no lesson found"],
-                                example: "no lesson found"
-                            }
-                        ],
-                        description: "An array when at least one lesson matches; otherwise the exact string `no lesson found`."
+                        type: "array",
+                        items: {
+                            $ref: "#/components/schemas/LessonAdminListItem"
+                        },
+                        description: "Always an array. The empty state is []."
                     },
                     meta: {
                         $ref: "#/components/schemas/PaginationMeta"
@@ -224,7 +239,7 @@ module.exports = {
                         items: {
                             $ref: "#/components/schemas/Lesson"
                         },
-                        description: "Always an array. The empty state is `[]`."
+                        description: "Always an array. The empty state is []."
                     },
                     meta: {
                         $ref: "#/components/schemas/PaginationMeta"

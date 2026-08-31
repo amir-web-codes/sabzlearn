@@ -45,7 +45,7 @@ async function signUp(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/users/refresh-token",
+        path: "/users/auth/refresh-token",
         maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
     })
 
@@ -87,7 +87,7 @@ async function login(req, res) {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
                 sameSite: "strict",
-                path: "/users/refresh-token",
+                path: "/users/auth/refresh-token",
                 maxAge: rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
             })
 
@@ -127,7 +127,7 @@ async function logOut(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/users/refresh-token",
+        path: "/users/auth/refresh-token",
     })
 
     res.json({
@@ -179,7 +179,7 @@ async function deleteUserProfile(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/users/refresh-token"
+        path: "/users/auth/refresh-token"
     })
 
     res.clearCookie("deviceId", {
@@ -231,7 +231,7 @@ async function refreshToken(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/users/refresh-token",
+        path: "/users/auth/refresh-token",
         maxAge: req.body.rememberMe ? 1000 * 60 * 60 * 24 * 15 : 1000 * 60 * 60 * 24 * 1
     })
 
@@ -251,7 +251,7 @@ async function changeUserPassword(req, res) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/users/refresh-token"
+        path: "/users/auth/refresh-token"
     })
 
     res.json({

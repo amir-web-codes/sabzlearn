@@ -34,7 +34,6 @@ router.patch("/admin/requests/:id/reject", validateId, checkToken, limiters.admi
 
 
 
-router.patch("/change-password", validator(userValidations.changePasswordSchema), checkToken, checkUserBan, userController.changeUserPassword)
 
 router.route("/admin/:id")
     .get(validateId, checkToken, limiters.adminLimiter, checkRoles(["admin"]), userController.getUserById)
@@ -45,10 +44,12 @@ router.patch("/admin/:id/unban", validateId, checkToken, limiters.adminChangeLim
 
 router.patch("/admin/:id/change-role", validateId, validator(userValidations.changeRoleSchema), checkToken, limiters.adminChangeLimiter, checkRoles(["admin"]), userController.changeUserRole)
 
+router.patch("/auth/change-password", validator(userValidations.changePasswordSchema), checkToken, checkUserBan, userController.changeUserPassword)
+
 router.post("/auth/signup", limiters.loginLimiter, imageUpload.single("avatar"), validator(userValidations.signUpSchema), userController.signUp)
 router.post("/auth/login", limiters.loginLimiter, validator(userValidations.loginSchema), userController.login)
 router.post("/auth/logout", checkToken, userController.logOut)
-router.post("/refresh-token", validator(userValidations.refreshTokenSchema), userController.refreshToken)
+router.post("/auth/refresh-token", validator(userValidations.refreshTokenSchema), userController.refreshToken)
 
 
 

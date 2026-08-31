@@ -3,7 +3,7 @@ module.exports = {
         name: "sortBy",
         in: "query",
         required: false,
-        description: "Field used to sort lesson lists.",
+        description: "Lesson list sort field.",
         schema: {
             type: "string",
             enum: ["order", "duration", "createdAt"],
@@ -16,7 +16,7 @@ module.exports = {
         name: "courseId",
         in: "query",
         required: false,
-        description: "Filter the admin lesson list by an exact Course ObjectId. The backend validates only the ObjectId format; it does not verify that a Course document with this id exists, so an unknown valid id returns an empty result rather than 404.",
+        description: "Exact Course ObjectId filter for the admin lesson list. Only ObjectId syntax is validated; a valid but unknown courseId returns an empty array rather than 404. Supplying this filter also disables lesson-list Redis caching in the current service.",
         schema: {
             $ref: "#/components/schemas/MongoObjectId"
         },

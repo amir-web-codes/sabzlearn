@@ -194,7 +194,7 @@ module.exports = {
         }
     },
 
-    "/users/refresh-token": {
+    "/users/auth/refresh-token": {
         post: {
             tags: ["Auth"],
             operationId: "refreshToken",
@@ -674,7 +674,7 @@ module.exports = {
         }
     },
 
-    "/users/change-password": {
+    "/users/auth/change-password": {
         patch: {
             tags: ["Users"],
             operationId: "changeUserPassword",
