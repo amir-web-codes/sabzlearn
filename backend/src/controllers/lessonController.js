@@ -4,7 +4,7 @@ const lessonService = require("../services/lessonService")
 const courseService = require("../services/courseService")
 
 async function getLessonById(req, res) {
-
+    await lessonService.isLessonInCourse(req.params.id, req.course._id)
     const data = await lessonService.findById(req.params.id)
 
     res.json({
@@ -56,7 +56,7 @@ async function getAllLessons(req, res) {
     res.json({
         success: true,
         message: "lessons fetched successfully",
-        data: data.length ? data : "no lesson found",
+        data: data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
@@ -72,9 +72,7 @@ async function getCourseLessons(req, res) {
     const page = req.query.page || 1
     const limit = req.query.limit || 20
 
-    const foundCourse = await courseService.findCourseBySlug(req.params.slug)
-
-    const { data, totalNumber } = await lessonService.findCourseLessons(foundCourse, page, limit, { sortBy, sortOrder })
+    const { data, totalNumber } = await lessonService.findCourseLessons(req.course, page, limit, { sortBy, sortOrder })
 
     res.json({
         success: true,

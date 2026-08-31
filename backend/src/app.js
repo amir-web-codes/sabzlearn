@@ -27,12 +27,19 @@ process.on("unhandledRejection", (reason) => {
 })
 
 const { connectRedis } = require("./configs/redis")
-async function callDB() {
+async function bootstrap() {
     await require("./configs/db")()
     await connectRedis()
+
+    const port = process.env.PORT || 7000
+
+    app.listen(port, () => {
+        console.log(`server is running on port: ${process.env.PORT}`)
+        logger.info({ port }, "server started successfully")
+    })
 }
 
-callDB()
+bootstrap()
 
 const userRouter = require("./routers/userRouter")
 const courseRouter = require("./routers/courseRouter")
@@ -82,10 +89,3 @@ app.use(notFound)
 const errorHandler = require("./middlewares/errorHandler")
 
 app.use(errorHandler)
-
-const port = process.env.PORT || 7000
-
-app.listen(port, () => {
-    console.log(`server is running on port: ${process.env.PORT}`)
-    logger.info({ port }, "server started successfully")
-})

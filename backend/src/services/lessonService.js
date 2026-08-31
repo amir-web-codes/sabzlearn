@@ -120,6 +120,7 @@ async function findAll(page = 1, limit = 20, filters = {}, sort = {}) {
 
     const data = await lessonModel
         .find(query)
+        .select("title courseId publisherId order duration")
         .sort({ [sortField]: sortDirection })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -164,8 +165,14 @@ async function findCourseLessons(course, page = 1, limit = 20, sort = {}) {
     return result
 }
 
-async function isLessonInCourse(courseSlug, lessonId) {
-    const isInCourse = await courseModel.exists({})
+async function isLessonInCourse(lessonId, courseId) {
+    const isInCourse = await lessonModel.exists({ _id: lessonId, courseId })
+
+    if (!isInCourse) {
+        const err = new Error("this lesson is not in course")
+        err.status = 403
+        throw err
+    }
 }
 
 module.exports = {
