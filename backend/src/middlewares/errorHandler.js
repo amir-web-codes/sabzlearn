@@ -48,7 +48,8 @@ const errorHandler = async (err, req, res, next) => {
         message: err.message,
         errors: err.errors,
         code: err.code,
-        details: err.details
+        details: err.details,
+        requestId: req.requestId
     })
 }
 
