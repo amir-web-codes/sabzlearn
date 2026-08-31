@@ -3,6 +3,8 @@ const cartModel = require("../models/cartModel")
 const orderModel = require("../models/orderModel")
 const courseModel = require("../models/courseModel")
 const enrollmentModel = require("../models/enrollmentModel")
+const courseService = require("../services/courseService")
+const logger = require("../utils/logger")
 
 const invalidatePattern = require("../utils/invalidatePattern")
 
@@ -60,9 +62,7 @@ async function getCart(userId, session) {
         .find({ _id: { $in: courseIds } })
         .session(session || null)
 
-    const courseMap = new Map(
-        courses.map(course => [course._id.toString(), course])
-    )
+    const courseMap = new Map(courses.map(course => [course._id.toString(), course]))
 
     let totalPrice = 0
     let needsSave = false
@@ -72,7 +72,7 @@ async function getCart(userId, session) {
         const course = courseMap.get(item.courseId.toString())
 
         // if the course was deleted / unpublished -> drop it silently from the cart
-        if (!course || course.isDeleted) {
+        if (!course || course.isDeleted || course.status !== "published") {
             needsSave = true
             continue
         }
@@ -284,10 +284,7 @@ async function completeOrder(orderId, userId) {
                 session
             })
 
-            for (
-                const item
-                of order.items
-            ) {
+            for (const item of order.items) {
                 await enrollmentModel.updateOne(
                     {
                         userId,
@@ -296,15 +293,12 @@ async function completeOrder(orderId, userId) {
                     },
                     {
                         $set: {
-                            status:
-                                "active",
-                            lastAccessedAt:
-                                new Date()
+                            status: "active",
+                            lastAccessedAt: new Date()
                         },
                         $setOnInsert: {
                             userId,
-                            courseId:
-                                item.courseId
+                            courseId: item.courseId
                         }
                     },
                     {
@@ -313,9 +307,7 @@ async function completeOrder(orderId, userId) {
                     }
                 )
 
-                affectedCourseIds.add(
-                    item.courseId.toString()
-                )
+                affectedCourseIds.add(item.courseId.toString())
             }
 
             for (const courseId of affectedCourseIds) {

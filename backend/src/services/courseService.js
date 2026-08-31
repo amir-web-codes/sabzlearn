@@ -88,10 +88,7 @@ async function findPublishedCourseBySlug(slug, select) {
 }
 
 async function syncCourseStudentsCount(courseId, session = null) {
-    let countQuery = enrollmentModel.countDocuments({
-        courseId,
-        status: "active"
-    })
+    let countQuery = enrollmentModel.countDocuments({ courseId, status: "active" })
 
     if (session) {
         countQuery = countQuery.session(session)
@@ -339,13 +336,7 @@ async function updateCourse(
     return foundCourse
 }
 
-async function getAllCourses(
-    page = 1,
-    limit = 20,
-    filters = {},
-    sort = {},
-    isAdmin = false
-) {
+async function getAllCourses(page = 1, limit = 20, filters = {}, sort = {}, isAdmin = false) {
     const {
         level,
         language,
@@ -361,9 +352,7 @@ async function getAllCourses(
     } = sort
 
     if (status && status !== "published" && !isAdmin) {
-        const err = new Error(
-            "you don't have permission to filter by this status"
-        )
+        const err = new Error("you don't have permission to filter by this status")
         err.status = 403
         throw err
     }
@@ -477,11 +466,12 @@ async function enrollUserInCourse(slug, userId) {
 
     const userExists = await userModel.exists({
         _id: userId,
-        isDeleted: false
+        isDeleted: false,
+        isBanned: false
     })
 
     if (!userExists) {
-        const err = new Error("user not found")
+        const err = new Error("no active user found")
         err.status = 404
         throw err
     }
