@@ -1,3 +1,74 @@
+const jsonErrorResponse = (description, examples) => ({
+    description,
+    content: {
+        "application/json": {
+            schema: {
+                $ref: "#/components/schemas/Error"
+            },
+            examples
+        }
+    }
+})
+
+const successSchemaResponse = (description, schemaName) => ({
+    description,
+    content: {
+        "application/json": {
+            schema: {
+                $ref: `#/components/schemas/${schemaName}`
+            }
+        }
+    }
+})
+
+const permanentBanExample = {
+    summary: "Permanent ban",
+    value: {
+        success: false,
+        message: "you are permanently banned. Reason: Spam"
+    }
+}
+
+const temporaryBanExample = {
+    summary: "Temporary ban",
+    value: {
+        success: false,
+        message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
+    }
+}
+
+const wrongRoleExample = {
+    summary: "Required role is missing",
+    value: {
+        success: false,
+        message: "you don't have permission"
+    }
+}
+
+const noCourseAccessExample = {
+    summary: "No access to the requested course",
+    value: {
+        success: false,
+        message: "you don't have access to this course"
+    }
+}
+
+const noLessonAccessExample = {
+    summary: "No management access to the requested lesson",
+    value: {
+        success: false,
+        message: "you don't have access to this lesson"
+    }
+}
+
+const lessonNotInCourseExample = {
+    summary: "Lesson does not belong to the supplied course",
+    value: {
+        success: false,
+        message: "this lesson is not in course"
+    }
+}
+
 module.exports = {
     LessonNotFound: {
         description: "No lesson exists with the supplied id.",
@@ -14,285 +85,95 @@ module.exports = {
         }
     },
 
-    LessonOrCourseNotFound: {
-        description: "Either the course slug cannot be resolved as a published/non-deleted course, or the lesson id does not identify an existing lesson.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                examples: {
-                    courseNotFound: {
-                        summary: "Course cannot be resolved",
-                        value: {
-                            success: false,
-                            message: "course not found"
-                        }
-                    },
-                    lessonNotFound: {
-                        summary: "Lesson id does not exist",
-                        value: {
-                            success: false,
-                            message: "lesson not found"
-                        }
-                    }
-                }
-            }
+    LessonAdminListForbidden: jsonErrorResponse(
+        "The authenticated caller is banned or does not have the admin role.",
+        {
+            wrongRole: wrongRoleExample,
+            permanentBan: permanentBanExample,
+            temporaryBan: temporaryBanExample
         }
-    },
+    ),
 
-    LessonAdminListForbidden: {
-        description: "The authenticated caller is banned or does not have the admin role. Query validation runs before these authorization checks, and the admin limiter runs only after the admin-role check succeeds.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                examples: {
-                    wrongRole: {
-                        summary: "Caller is not an admin",
-                        value: {
-                            success: false,
-                            message: "you don't have permission"
-                        }
-                    },
-                    permanentBan: {
-                        summary: "Permanent ban",
-                        value: {
-                            success: false,
-                            message: "you are permanently banned. Reason: Spam"
-                        }
-                    },
-                    temporaryBan: {
-                        summary: "Temporary ban",
-                        value: {
-                            success: false,
-                            message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
-                        }
-                    }
-                }
-            }
+    LessonCourseAccessForbidden: jsonErrorResponse(
+        "The authenticated caller is banned, or is neither the requested course's instructor nor actively enrolled in it. checkEnrollmentOrOwnership(false) gives no admin-role override.",
+        {
+            noCourseAccess: noCourseAccessExample,
+            permanentBan: permanentBanExample,
+            temporaryBan: temporaryBanExample
         }
-    },
+    ),
 
-    LessonCourseContentForbidden: {
-        description: "The authenticated caller is banned, or is neither the instructor of the supplied course nor actively enrolled in it. The current access middleware is called with adminAllowed=false, so the admin role alone does not bypass this check.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                examples: {
-                    noCourseAccess: {
-                        summary: "Not the instructor and no active enrollment",
-                        value: {
-                            success: false,
-                            message: "you don't have access to this course"
-                        }
-                    },
-                    permanentBan: {
-                        summary: "Permanent ban",
-                        value: {
-                            success: false,
-                            message: "you are permanently banned. Reason: Spam"
-                        }
-                    },
-                    temporaryBan: {
-                        summary: "Temporary ban",
-                        value: {
-                            success: false,
-                            message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
-                        }
-                    }
-                }
-            }
+    LessonReadForbidden: jsonErrorResponse(
+        "Single-lesson reading is forbidden when the caller is banned, lacks access to the supplied course, or the lesson id does not belong to that course. Because isLessonInCourse() runs before findById(), a syntactically valid id for a missing lesson normally reaches the same `this lesson is not in course` 403 branch.",
+        {
+            noCourseAccess: noCourseAccessExample,
+            lessonNotInCourse: lessonNotInCourseExample,
+            permanentBan: permanentBanExample,
+            temporaryBan: temporaryBanExample
         }
-    },
+    ),
 
-    LessonCreateForbidden: {
-        description: "The authenticated caller is banned, is neither admin nor teacher, or is not the instructor of the supplied course. Although admin is an allowed role, checkSelfCourseAuthor(false) gives no admin override; an admin can create a lesson only when that admin is also the course instructor.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                examples: {
-                    wrongRole: {
-                        summary: "Caller is neither admin nor teacher",
-                        value: {
-                            success: false,
-                            message: "you don't have permission"
-                        }
-                    },
-                    noCourseAccess: {
-                        summary: "Caller is not the course instructor",
-                        value: {
-                            success: false,
-                            message: "you don't have access to this course"
-                        }
-                    },
-                    permanentBan: {
-                        summary: "Permanent ban",
-                        value: {
-                            success: false,
-                            message: "you are permanently banned. Reason: Spam"
-                        }
-                    },
-                    temporaryBan: {
-                        summary: "Temporary ban",
-                        value: {
-                            success: false,
-                            message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
-                        }
-                    }
-                }
-            }
+    LessonCreateForbidden: jsonErrorResponse(
+        "The caller is banned, is neither admin nor teacher, or is not the instructor of the supplied course. The route allows admin/teacher roles, but checkSelfCourseAuthor(false) provides no admin ownership override.",
+        {
+            wrongRole: wrongRoleExample,
+            noCourseAccess: noCourseAccessExample,
+            permanentBan: permanentBanExample,
+            temporaryBan: temporaryBanExample
         }
-    },
+    ),
 
-    LessonEditForbidden: {
-        description: "The authenticated caller is banned, is neither admin nor teacher, or is not the lesson's original publisher. checkSelfLessonAuthor(false) provides no admin override for PATCH.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                examples: {
-                    wrongRole: {
-                        summary: "Caller is neither admin nor teacher",
-                        value: {
-                            success: false,
-                            message: "you don't have permission"
-                        }
-                    },
-                    noLessonAccess: {
-                        summary: "Caller is not the original publisher",
-                        value: {
-                            success: false,
-                            message: "you don't have access to this lesson"
-                        }
-                    },
-                    permanentBan: {
-                        summary: "Permanent ban",
-                        value: {
-                            success: false,
-                            message: "you are permanently banned. Reason: Spam"
-                        }
-                    },
-                    temporaryBan: {
-                        summary: "Temporary ban",
-                        value: {
-                            success: false,
-                            message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
-                        }
-                    }
-                }
-            }
+    LessonEditForbidden: jsonErrorResponse(
+        "The caller is banned, is neither admin nor teacher, or is not the lesson's original publisher. checkSelfLessonAuthor(false) provides no admin override for PATCH.",
+        {
+            wrongRole: wrongRoleExample,
+            noLessonAccess: noLessonAccessExample,
+            permanentBan: permanentBanExample,
+            temporaryBan: temporaryBanExample
         }
-    },
+    ),
 
-    LessonDeleteForbidden: {
-        description: "The authenticated caller is banned, is neither admin nor teacher, or fails the lesson access check. DELETE allows the lesson's original publisher or any authenticated admin; a teacher who is not the original publisher receives 403.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/Error"
-                },
-                examples: {
-                    wrongRole: {
-                        summary: "Caller is neither admin nor teacher",
-                        value: {
-                            success: false,
-                            message: "you don't have permission"
-                        }
-                    },
-                    noLessonAccess: {
-                        summary: "Teacher is not the original publisher",
-                        value: {
-                            success: false,
-                            message: "you don't have access to this lesson"
-                        }
-                    },
-                    permanentBan: {
-                        summary: "Permanent ban",
-                        value: {
-                            success: false,
-                            message: "you are permanently banned. Reason: Spam"
-                        }
-                    },
-                    temporaryBan: {
-                        summary: "Temporary ban",
-                        value: {
-                            success: false,
-                            message: "you are temporary banned until: 2026-08-30T12:00:00.000Z. Reason: Spam"
-                        }
-                    }
-                }
-            }
+    LessonDeleteForbidden: jsonErrorResponse(
+        "The caller is banned, is neither admin nor teacher, or fails the lesson access check. DELETE allows the original publisher or any authenticated admin; a non-publisher teacher receives 403.",
+        {
+            wrongRole: wrongRoleExample,
+            noLessonAccess: noLessonAccessExample,
+            permanentBan: permanentBanExample,
+            temporaryBan: temporaryBanExample
         }
-    },
+    ),
 
-    LessonsFetchedSuccessfully: {
-        description: "Admin lesson list fetched successfully. Empty results use the exact string `no lesson found`.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/LessonsAdminListResponse"
-                }
-            }
-        }
-    },
+    LessonsFetchedSuccessfully: successSchemaResponse(
+        "Admin lesson list fetched successfully. data is always an array; the empty state is [].",
+        "LessonsAdminListResponse"
+    ),
 
-    CourseLessonsFetchedSuccessfully: {
-        description: "Course lessons fetched successfully. The empty state is an empty array.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/CourseLessonsListResponse"
-                }
-            }
-        }
-    },
+    CourseLessonsFetchedSuccessfully: successSchemaResponse(
+        "Course lessons fetched successfully. Full lesson documents are returned and the empty state is [].",
+        "CourseLessonsListResponse"
+    ),
 
-    LessonFetchedSuccessfully: {
-        description: "Lesson fetched successfully.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/LessonFetchedResponse"
-                }
-            }
-        }
-    },
+    LessonFetchedSuccessfully: successSchemaResponse(
+        "Lesson fetched successfully.",
+        "LessonFetchedResponse"
+    ),
 
-    LessonAddedSuccessfully: {
-        description: "Lesson created successfully. The response contains the created Lesson document.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/LessonAddedResponse"
-                }
-            }
-        }
-    },
+    LessonAddedSuccessfully: successSchemaResponse(
+        "Lesson created successfully. The response contains the created full Lesson document.",
+        "LessonAddedResponse"
+    ),
 
-    LessonEditedSuccessfully: {
-        description: "Lesson edited successfully. The response contains the saved Lesson document; a no-op PATCH may return the unchanged document.",
-        content: {
-            "application/json": {
-                schema: {
-                    $ref: "#/components/schemas/LessonEditedResponse"
-                }
-            }
-        }
-    },
+    LessonEditedSuccessfully: successSchemaResponse(
+        "Lesson edited successfully. The response contains the saved full Lesson document; a no-op PATCH may return the unchanged document.",
+        "LessonEditedResponse"
+    ),
 
     LessonDeletedSuccessfully: {
-        description: "Lesson deleted successfully. The controller does not return the deleted document.",
+        description: "Lesson hard-deleted successfully. The controller returns no data payload.",
         content: {
             "application/json": {
                 schema: {
-                    $ref: "#/components/schemas/LessonDeletedResponse"
+                    $ref: "#/components/schemas/Success"
                 },
                 example: {
                     success: true,
