@@ -163,7 +163,7 @@ module.exports = {
     },
 
     CreateTicketBadRequest: {
-        description: "The create-ticket body failed validation, or the authenticated user already has three ticket documents. The three-ticket limit counts open, pending, and closed tickets alike.",
+        description: "The create-ticket body failed validation, or the authenticated user already has three ticket documents. The three-ticket limit counts open tickets.",
 
         content: {
             "application/json": {
@@ -215,11 +215,11 @@ module.exports = {
                     },
 
                     maximumTickets: {
-                        summary: "User already has three tickets",
+                        summary: "User already has three open tickets",
 
                         value: {
                             success: false,
-                            message: "maximum 3 tickets"
+                            message: "you can have at most 3 open tickets"
                         }
                     }
                 }

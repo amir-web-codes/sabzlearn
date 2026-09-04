@@ -101,11 +101,11 @@ async function deleteById(lessonId) {
 
 async function findAll(page = 1, limit = 20, filters = {}, sort = {}) {
     const { courseId } = filters
-    const { sortBy = "order", sortOrder = "desc" } = sort
+    const { sortBy = "order", sortOrder = "asc" } = sort
 
     const allowedSortFields = ["order", "duration", "createdAt"]
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : "order"
-    const sortDirection = sortOrder === "asc" ? 1 : -1
+    const sortDirection = sortOrder === "desc" ? -1 : 1
 
     const skipCache = Boolean(courseId)
     const cacheKey = buildCacheKey("lessons:list", { page, limit, sortBy, sortOrder })
@@ -130,7 +130,7 @@ async function findAll(page = 1, limit = 20, filters = {}, sort = {}) {
     const result = { data, totalNumber }
 
     if (!skipCache) {
-        const hasNonDefaultFilters = sortBy !== "order" || sortOrder !== "desc"
+        const hasNonDefaultFilters = sortBy !== "order" || sortOrder !== "asc"
         await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
     }
 
@@ -138,11 +138,11 @@ async function findAll(page = 1, limit = 20, filters = {}, sort = {}) {
 }
 
 async function findCourseLessons(course, page = 1, limit = 20, sort = {}) {
-    const { sortBy = "order", sortOrder = "desc" } = sort
+    const { sortBy = "order", sortOrder = "asc" } = sort
 
     const allowedSortFields = ["order", "duration", "createdAt"]
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : "order"
-    const sortDirection = sortOrder === "asc" ? 1 : -1
+    const sortDirection = sortOrder === "desc" ? -1 : 1
 
     const cacheKey = buildCacheKey(`courses:${course.slug}:lessons:list`, { page, limit, sortBy, sortOrder })
 
@@ -159,7 +159,7 @@ async function findCourseLessons(course, page = 1, limit = 20, sort = {}) {
     const totalNumber = await lessonModel.countDocuments({ courseId: course._id })
     const result = { data, totalNumber }
 
-    const hasNonDefaultFilters = sortBy !== "order" || sortOrder !== "desc"
+    const hasNonDefaultFilters = sortBy !== "order" || sortOrder !== "asc"
     await client.set(cacheKey, JSON.stringify(result), { EX: resolveTTL(hasNonDefaultFilters) })
 
     return result

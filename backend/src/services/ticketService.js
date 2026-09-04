@@ -20,10 +20,10 @@ async function createTicket(userId, { title, message, assignedToId }) {
         }
     }
 
-    const ticketsNumber = await ticketModel.countDocuments({ userId })
+    const activeTicketsCount = await ticketModel.countDocuments({ userId, status: { $ne: "closed" } })
 
-    if (ticketsNumber > 2) {
-        const err = new Error("maximum 3 tickets")
+    if (activeTicketsCount >= 3) {
+        const err = new Error("you can have at most 3 open tickets")
         err.status = 400
         throw err
     }
