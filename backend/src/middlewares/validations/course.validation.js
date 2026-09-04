@@ -29,16 +29,18 @@ const baseSchema = z.object({
 const createSchema = baseSchema
 
 const editSchema = z.object({
-    title: z.string().trim().min(3).max(50),
-    description: z.string().trim().min(1, "description is required"),
-    price: z.coerce.number().min(0),
-    discountPercentage: z.coerce.number().min(0).max(100),
-    level: z.enum(["beginner", "intermediate", "advanced"]),
-    language: z.enum(["en", "fa"]),
-    status: z.enum(["draft", "published", "archived", "closed"]),
-    category: slugSchema,
-    tags: tagsSchema
-}).partial()
+    title: z.string().trim().min(3).max(50).optional(),
+    description: z.string().trim().min(1, "description is required").optional(),
+    price: z.coerce.number().min(0).optional(),
+    discountPercentage: z.coerce.number().min(0).max(100).optional(),
+    level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    language: z.enum(["en", "fa"]).optional(),
+    status: z.enum(["draft", "published", "archived", "closed"]).optional(),
+    category: slugSchema.optional(),
+    tags: tagsSchema.optional()
+}).strict().refine(data => Object.keys(data).length > 0, {
+    message: "No fields to update"
+})
 
 const getAllCoursesQuerySchema = z.object({
     ...paginationFields(),

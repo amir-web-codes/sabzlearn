@@ -24,7 +24,7 @@ async function findUserById(userId) {
 }
 
 async function findByEmail(email) {
-    const data = await userModel.findOne({ email })
+    const data = await userModel.findOne({ email }).select("+password")
 
     return data
 }

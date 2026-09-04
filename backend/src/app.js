@@ -20,9 +20,9 @@ process.on("uncaughtException", (error) => {
     process.exit(1)
 })
 
-process.on("unhandledRejection", (reason) => {
-    logger.fatal({ error: reason }, "unhandled rejection")
-    console.log(reason)
+process.on("unhandledRejection", (error) => {
+    logger.fatal({ error }, "unhandled rejection")
+    console.log(error)
     process.exit(1)
 })
 

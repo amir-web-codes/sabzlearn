@@ -45,7 +45,9 @@ const changePasswordSchema = baseSchema.pick({
 const updateUserSchema = baseSchema.pick({
     username: true,
     email: true
-}).partial()
+}).partial().strict().refine(data => Object.keys(data).length > 0, {
+    message: "No fields to update"
+})
 
 const requestRoleSchema = z.object({
     newRole: z.enum(["user", "teacher", "admin"])

@@ -11,6 +11,8 @@ const createSchema = baseSchema;
 
 const editSchema = baseSchema.partial().extend({
     removeVideo: z.enum(["true", "false"]).optional()
+}).strict().refine(data => Object.keys(data).length > 0, {
+    message: "No fields to update"
 })
 
 const getAllLessonsQuerySchema = z.object({
