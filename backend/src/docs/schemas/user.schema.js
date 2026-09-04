@@ -277,7 +277,7 @@ module.exports = {
 
             password: {
                 type: "string",
-                minLength: 5,
+                minLength: 8,
                 maxLength: 70,
                 example: "StrongPassword123"
             },
@@ -318,7 +318,7 @@ module.exports = {
 
             password: {
                 type: "string",
-                minLength: 5,
+                minLength: 8,
                 maxLength: 70,
                 example: "StrongPassword123"
             },
@@ -351,7 +351,7 @@ module.exports = {
 
             password: {
                 type: "string",
-                minLength: 5,
+                minLength: 8,
                 maxLength: 70,
                 example: "StrongPassword123"
             },
@@ -425,7 +425,7 @@ module.exports = {
         properties: {
             password: {
                 type: "string",
-                minLength: 5,
+                minLength: 8,
                 maxLength: 70,
                 example: "NewStrongPassword123"
             }

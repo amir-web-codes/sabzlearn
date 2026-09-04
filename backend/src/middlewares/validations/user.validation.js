@@ -1,22 +1,40 @@
 const { z } = require("zod");
 const { paginationFields, sortFields } = require("./common.validation")
 
+const formBoolean = z.preprocess((value) => {
+    if (value === undefined) return false;
+
+    if (typeof value === "boolean") {
+        return value;
+    }
+
+    if (value === "true") {
+        return true;
+    }
+
+    if (value === "false") {
+        return false;
+    }
+
+    return value;
+}, z.boolean());
+
 const baseSchema = z.object({
     username: z.string().trim().min(3).max(30),
     email: z.email().trim().toLowerCase().min(5).max(50),
-    password: z.string().min(5).max(70)
+    password: z.string().min(8).max(70)
 })
 
 
 const signUpSchema = baseSchema.extend({
-    rememberMe: z.boolean().default(false)
+    rememberMe: formBoolean
 })
 
 const loginSchema = baseSchema.pick({
     email: true,
     password: true
 }).extend({
-    rememberMe: z.boolean().default(false)
+    rememberMe: formBoolean
 })
 
 const changePasswordSchema = baseSchema.pick({
@@ -39,7 +57,7 @@ const banUserSchema = z.object({
 })
 
 const refreshTokenSchema = z.object({
-    rememberMe: z.boolean().default(false)
+    rememberMe: formBoolean
 })
 
 const changeRoleSchema = z.object({

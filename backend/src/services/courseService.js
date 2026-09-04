@@ -230,6 +230,17 @@ async function deleteCourse(slug, deletedById) {
             { session }
         )
 
+        await enrollmentModel.updateMany({
+            courseId: course._id,
+            status: "active",
+        },
+            {
+                $set: {
+                    status: "cancelled",
+                },
+            },
+            { session }
+        );
         await session.commitTransaction()
     } catch (err) {
         if (session.inTransaction()) {

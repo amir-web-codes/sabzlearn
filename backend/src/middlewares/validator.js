@@ -9,6 +9,9 @@ function validator(schema, source = "body") {
             throw err
         }
 
+        if (source === "query") {
+            return next()
+        }
         Object.assign(req[source], result.data)
         next()
     }
