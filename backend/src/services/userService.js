@@ -130,9 +130,9 @@ async function comparePasswords(password, dbPassword) {
 
 async function revokeUserToken(userId, deviceId) {
     if (!deviceId) {
-        await tokenModel.updateMany({ userId }, { revoked: true })
+        await tokenModel.updateMany({ userId }, { revoked: true, revokedAt: new Date() })
     } else {
-        await tokenModel.updateMany({ userId, deviceId }, { revoked: true })
+        await tokenModel.updateMany({ userId, deviceId }, { revoked: true, revokedAt: new Date() })
     }
     return
 }
@@ -153,6 +153,19 @@ async function banUser(user, banDays, reason = "no reason", userId) {
     } else {
         user.banExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * banDays)
     }
+
+    await tokenModel.updateMany(
+        {
+            userId: user._id,
+            revoked: false,
+        },
+        {
+            $set: {
+                revoked: true,
+                revokedAt: new Date()
+            },
+        }
+    );
 
     await user.save()
 }

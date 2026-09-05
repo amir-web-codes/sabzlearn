@@ -13,7 +13,7 @@ const getAllowedOrigins = () => {
         "http://127.0.0.1:3001",
     ]
 
-    const productionOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean)
+    const productionOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean)
 
     return nodeEnv === "development" ? developmentOrigins : productionOrigins
 }

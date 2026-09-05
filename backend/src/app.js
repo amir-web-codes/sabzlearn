@@ -3,8 +3,6 @@ require("dotenv").config()
 const express = require("express")
 const app = express()
 
-const path = require("path")
-
 
 const middlewares = require("./configs/middlewares")
 const { corsErrorHandler } = require("./configs/cors")

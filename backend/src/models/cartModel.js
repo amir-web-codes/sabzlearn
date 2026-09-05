@@ -1,5 +1,4 @@
 const mongoose = require("mongoose")
-const { number } = require("zod")
 
 const cartSchema = new mongoose.Schema({
     userId: {

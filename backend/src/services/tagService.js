@@ -7,7 +7,7 @@ const { generateUniqueSlug, generateSlug } = require("../utils/generateUniqueSlu
 const invalidatePattern = require("../utils/invalidatePattern")
 const { client } = require("../configs/redis")
 
-const { hasUnboundedParams, buildCacheKey, resolveTTL } = require("../utils/listCache")
+const { buildCacheKey, resolveTTL } = require("../utils/listCache")
 
 function escapeRegex(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")

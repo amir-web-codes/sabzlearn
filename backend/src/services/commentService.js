@@ -100,17 +100,25 @@ async function updateCommentById(id, { title, text, rating }) {
 }
 
 async function createComment(slug, userId, { title, text, rating }) {
-    const foundCourse = await courseService.findPublishedCourseBySlug(slug)
+    try {
+        const foundCourse = await courseService.findPublishedCourseBySlug(slug)
 
-    await commentModel.create({
-        title,
-        text,
-        authorId: userId,
-        courseId: foundCourse._id,
-        rating
-    })
+        await commentModel.create({
+            title,
+            text,
+            authorId: userId,
+            courseId: foundCourse._id,
+            rating
+        })
 
-    await updateRating(foundCourse._id)
+        await updateRating(foundCourse._id)
+    } catch (err) {
+        if (err.code === 11000) {
+            const err = new Error("you already have a comment for this course")
+            err.status = 409
+            throw err
+        }
+    }
 }
 
 module.exports = {

@@ -30,6 +30,11 @@ const commentSchema = new mongoose.Schema({
     }
 }, { timestamps: true })
 
+commentSchema.index(
+    { authorId: 1, courseId: 1 },
+    { unique: true }
+);
+
 const commentModel = mongoose.model("Comment", commentSchema)
 
 module.exports = commentModel

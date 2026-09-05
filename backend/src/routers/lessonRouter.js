@@ -26,7 +26,7 @@ router.post(
 
 router.route("/:slug/:id")
     .get(validateId, checkToken, checkUserBan, checkEnrollmentOrOwnership(false), lessonController.getLessonById)
-    .patch(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(false), videoUpload.single("video"), validator(lessonValidations.editSchema), lessonController.editLesson)
-    .delete(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfLessonAuthor(true), lessonController.deleteLesson)
+    .patch(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkEnrollmentOrOwnership(false), checkSelfs.checkSelfLessonAuthor(false), videoUpload.single("video"), validator(lessonValidations.editSchema), lessonController.editLesson)
+    .delete(validateId, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkEnrollmentOrOwnership(true), checkSelfs.checkSelfLessonAuthor(true), lessonController.deleteLesson)
 
 module.exports = router

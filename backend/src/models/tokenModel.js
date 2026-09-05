@@ -16,6 +16,10 @@ const tokenSchema = new mongoose.Schema({
         type: Boolean,
         required: true
     },
+    revokedAt: {
+        type: Date,
+        default: null
+    },
     deviceId: {
         type: String,
         required: true,

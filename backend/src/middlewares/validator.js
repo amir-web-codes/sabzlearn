@@ -12,7 +12,7 @@ function validator(schema, source = "body") {
         if (source === "query") {
             return next()
         }
-        Object.assign(req[source], result.data)
+        req[source] = result.data
         next()
     }
 }

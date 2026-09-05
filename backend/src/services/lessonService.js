@@ -1,5 +1,4 @@
 const lessonModel = require("../models/lessonModel")
-const courseModel = require("../models/courseModel")
 const { client } = require("../configs/redis")
 const invalidatePattern = require("../utils/invalidatePattern")
 const { buildCacheKey, resolveTTL } = require("../utils/listCache")

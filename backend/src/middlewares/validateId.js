@@ -1,4 +1,4 @@
-const { default: mongoose } = require("mongoose")
+const mongoose = require("mongoose")
 
 const validateId = (req, res, next) => {
     const id = req.params.id

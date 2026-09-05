@@ -71,7 +71,7 @@ module.exports = {
     },
 
     RefreshTokenForbidden: {
-        description: "POST /users/refresh-token failed before a new token could be issued.",
+        description: "POST /users/auth/refresh-token failed before a new token could be issued.",
         content: {
             "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
