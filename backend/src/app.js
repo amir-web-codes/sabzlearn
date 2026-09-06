@@ -1,43 +1,8 @@
-require("dotenv").config()
-
 const express = require("express")
-const app = express()
-
 
 const middlewares = require("./configs/middlewares")
 const { corsErrorHandler } = require("./configs/cors")
 const requestLogger = require("./middlewares/requestLogger")
-const logger = require("./utils/logger")
-middlewares(app)
-
-app.use(requestLogger)
-
-process.on("uncaughtException", (error) => {
-    logger.fatal({ error }, "uncaught exception")
-    console.log(error)
-    process.exit(1)
-})
-
-process.on("unhandledRejection", (error) => {
-    logger.fatal({ error }, "unhandled rejection")
-    console.log(error)
-    process.exit(1)
-})
-
-const { connectRedis } = require("./configs/redis")
-async function bootstrap() {
-    await require("./configs/db")()
-    await connectRedis()
-
-    const port = process.env.PORT || 7000
-
-    app.listen(port, () => {
-        console.log(`server is running on port: ${process.env.PORT}`)
-        logger.info({ port }, "server started successfully")
-    })
-}
-
-bootstrap()
 
 const userRouter = require("./routers/userRouter")
 const courseRouter = require("./routers/courseRouter")
@@ -47,6 +12,16 @@ const lessonRouter = require("./routers/lessonRouter")
 const tagRouter = require("./routers/tagRouter")
 const ticketRouter = require("./routers/ticketRouter")
 const cartRouter = require("./routers/cartRouter")
+
+const swaggerUI = require("swagger-ui-express")
+const swaggerSpec = require("./configs/swagger")
+
+const errorHandler = require("./middlewares/errorHandler")
+
+const app = express()
+
+middlewares(app)
+app.use(requestLogger)
 
 app.use("/users", userRouter)
 app.use("/courses", courseRouter)
@@ -66,9 +41,6 @@ app.get("/health", (req, res) => {
     })
 })
 
-const swaggerUI = require("swagger-ui-express")
-const swaggerSpec = require("./configs/swagger")
-
 app.use(
     "/api-docs",
     swaggerUI.serve,
@@ -76,14 +48,14 @@ app.use(
 )
 
 function notFound(req, res, next) {
-    const err = new Error(`route ${req.originalUrl} not found`)
-    err.status = 404
+    const error = new Error(`route ${req.originalUrl} not found`)
+    error.status = 404
 
-    next(err)
+    next(error)
 }
 
 app.use(notFound)
 
-const errorHandler = require("./middlewares/errorHandler")
-
 app.use(errorHandler)
+
+module.exports = app
