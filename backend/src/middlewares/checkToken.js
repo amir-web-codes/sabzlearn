@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken")
+const logger = require("../utils/logger")
 
 function checkToken(req, res, next) {
     const authHeader = req.headers.authorization
@@ -18,9 +19,31 @@ function checkToken(req, res, next) {
 
         next()
     } catch (err) {
-        res.status(401).json({
+
+        if (err instanceof jwt.TokenExpiredError) {
+            return res.status(401).json({
+                success: false,
+                message: "token has expired"
+            })
+
+        } else if (err instanceof jwt.NotBeforeError) {
+            return res.status(401).json({
+                success: false,
+                message: "token is not active yet"
+            })
+
+        } else if (err instanceof jwt.JsonWebTokenError) {
+            return res.status(401).json({
+                success: false,
+                message: "invalid token"
+            })
+        }
+
+        logger.error({ err }, "unexpected error while verifying JWT")
+
+        return res.status(500).json({
             success: false,
-            message: "invalid or expired token"
+            message: "internal server error"
         })
     }
 }
