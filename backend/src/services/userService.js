@@ -10,6 +10,7 @@ const { buildRatingSortPipeline } = require("../utils/commentRating")
 const { client } = require("../configs/redis")
 const { uploadImage, deleteFile } = require("./fileService")
 const { buildCacheKey, resolveTTL } = require("../utils/listCache")
+const logger = require("../utils/logger")
 
 async function findUserById(userId) {
     const data = await userModel.findById(userId).select("-password").populate("bannedBy", "username email")
@@ -266,8 +267,27 @@ async function refreshAccessToken(token, rememberMe, userAgent, deviceId) {
         if (err.status === 401) {
             throw err
         } else {
-            err = new Error("invalid or expired token")
-            err.status = 403
+            if (err instanceof jwt.TokenExpiredError) {
+                const err = new Error("token has expired")
+                err.status = 401
+                throw err
+
+            } else if (err instanceof jwt.NotBeforeError) {
+                const err = new Error("token is not active yet")
+                err.status = 401
+                throw err
+
+            } else if (err instanceof jwt.JsonWebTokenError) {
+                const err = new Error("invalid token")
+                err.status = 401
+                throw err
+
+            }
+
+            logger.error({ err }, "unexpected error while verifying JWT")
+
+            const err = new Error("internal server error")
+            err.status = 500
             throw err
         }
     }
@@ -309,12 +329,11 @@ async function findUserCourses(userId, page, limit, sort = {}) {
         ? JSON.parse(cached)
         : null
 
+    // eslint-disable-next-line no-useless-assignment
     let totalNumber = 0
 
     if (data) {
-        totalNumber = Number(
-            await client.get(`${key}:totalNumber`)
-        )
+        totalNumber = Number(await client.get(`${key}:totalNumber`))
 
         return {
             data,

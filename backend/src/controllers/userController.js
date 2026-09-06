@@ -139,7 +139,9 @@ async function logOut(req, res) {
 async function banUser(req, res) {
     const foundUser = await userService.findUserById(req.params.id)
 
-    const banDays = Number(req.body.banDays) ?? 0
+    const bodyBanDay = Number(req.body.banDays)
+
+    const banDays = Number.isFinite(bodyBanDay) ? bodyBanDay : 0
 
     await userService.banUser(foundUser, banDays, req.body.banReason, req.user.id)
 

@@ -138,18 +138,6 @@ async function updateCourseRating(id, comments) {
     await invalidatePattern("courses:*")
 }
 
-async function findEnrollment(courseId, userId) {
-    const foundEnrollment = await enrollmentModel.findOne({ courseId, userId })
-
-    if (!foundEnrollment) {
-        const err = new Error("user not registered in this course")
-        err.status = 404
-        throw err
-    }
-
-    return foundEnrollment
-}
-
 async function createCourse({ title, description, price, discountPercentage, level, language, status, category, tags }, userId) {
     const slug = await generateUniqueSlug(courseModel, title)
     const selectedPrice = price !== undefined ? Number(price) : 0
@@ -231,7 +219,7 @@ async function deleteCourse(slug, deletedById) {
         )
 
         await enrollmentModel.updateMany({
-            courseId: course._id,
+            courseId: deletedData._id,
             status: "active",
         },
             {
