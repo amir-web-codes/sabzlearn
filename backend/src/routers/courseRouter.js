@@ -43,12 +43,11 @@ router.get(
     "/:slug/get-related",
     checkToken,
     checkUserBan,
-    checkRoles(["admin", "teacher"]),
     courseController.getRelatedCourses
 )
 
 router.route("/:slug")
-    .get(limiters.courseLimiter, validator(courseValidations.getCourseDetailsQuerySchema, "query"), checkToken, courseController.getCourseBySlug)
+    .get(limiters.courseLimiter, validator(courseValidations.getCourseDetailsQuerySchema, "query"), checkTokenOptional, courseController.getCourseBySlug)
     .patch(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(false), validator(courseValidations.editSchema), courseController.editCourseDetails)
     .delete(limiters.courseLimiter, checkToken, checkUserBan, checkRoles(["admin", "teacher"]), checkSelfs.checkSelfCourseAuthor(true), courseController.deleteCourse)
 

@@ -22,7 +22,7 @@ async function getUserTickets(req, res) {
     res.json({
         success: true,
         message: "tickets fetched successfully",
-        data: data.length ? data : "no ticket found",
+        data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),

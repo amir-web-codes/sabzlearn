@@ -274,7 +274,7 @@ async function getUserCourses(req, res) {
     res.json({
         success: true,
         message: "courses fetched successfully",
-        data: students.length ? students : "no course found",
+        data: students,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
@@ -295,7 +295,7 @@ async function getUserComments(req, res) {
     res.json({
         success: true,
         message: "comments fetched successfully",
-        data: data.length ? data : "you don't have any comment",
+        data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),
@@ -373,7 +373,7 @@ async function getAllRequests(req, res) {
     res.json({
         success: true,
         message: "requests fetched successfully",
-        data: data.length ? data : "no request found",
+        data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),

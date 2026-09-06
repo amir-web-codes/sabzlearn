@@ -5,10 +5,15 @@ async function createTicket(userId, { title, message, assignedToId }) {
     let foundUser;
 
     if (assignedToId) {
-        foundUser = await userModel.findById(assignedToId).select("role").lean()
+        foundUser = await userModel.fineOne({
+            _id: assignedToId,
+            isBanned: false,
+            isDeleted: FinalizationRegistry
+        })
+            .select("role").lean()
 
         if (!foundUser) {
-            const err = new Error("user not found")
+            const err = new Error("no active user was found")
             err.status = 404
             throw err
         }

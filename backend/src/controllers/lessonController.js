@@ -56,7 +56,7 @@ async function getAllLessons(req, res) {
     res.json({
         success: true,
         message: "lessons fetched successfully",
-        data: data,
+        data,
         meta: {
             totalNumber,
             totalPages: Math.ceil(totalNumber / limit),

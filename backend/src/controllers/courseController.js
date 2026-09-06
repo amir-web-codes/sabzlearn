@@ -99,7 +99,7 @@ async function getCourseStudents(req, res) {
     res.json({
         success: true,
         message: "users fetched successfully",
-        data: students.length ? students : "no student found",
+        data: students,
         meta: {
             rating: req.course.rating,
             totalNumber,
@@ -121,7 +121,7 @@ async function getCourseComments(req, res) {
     res.json({
         success: true,
         message: "comments fetched successfully",
-        data: data.length ? data : "no comment found",
+        data,
         meta: {
             rating: req.course.rating,
             totalNumber,

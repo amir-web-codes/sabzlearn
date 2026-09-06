@@ -128,7 +128,7 @@ module.exports = {
             tags: ["Courses"],
             operationId: "getRelatedCourses",
             summary: "Get related Courses",
-            description: `Returns up to 15 published, non-deleted Courses related to the requested published Course.Authentication, ban checking, and an admin/teacher role are required. There is no ownership middleware on this route, so any non-banned admin/teacher may request related Courses for any published Course.The source Course itself is resolved with findPublishedCourseBySlug(); draft/archived/closed/deleted Courses therefore return 404. Relatedness scoring is +2 same category, +1 per shared tag, +2 same instructor, +1 same level. Only score > 0 survives. Results sort by score desc and rating.average desc and return a projection rather than full Course documents.`,
+            description: `Returns up to 15 published, non-deleted Courses related to the requested published Course.Authentication, ban checking. There is no ownership middleware on this route, so any non-banned user may request related Courses for any published Course.The source Course itself is resolved with findPublishedCourseBySlug(); draft/archived/closed/deleted Courses therefore return 404. Relatedness scoring is +2 same category, +1 per shared tag, +2 same instructor, +1 same level. Only score > 0 survives. Results sort by score desc and rating.average desc and return a projection rather than full Course documents.`,
             security: [
                 {
                     bearerAuth: []
@@ -167,7 +167,7 @@ module.exports = {
             tags: ["Courses"],
             operationId: "getCourseBySlug",
             summary: "Get published Course details",
-            description: `Returns detailed data for one published, non-deleted Course. Middleware order: Course limiter -> query validation -> bearer authentication -> controller. This route currently requires authentication even though it only returns published Courses, and it does not run checkUserBan. category and tags are populated with _id/name/slug; instructor remains an ObjectId. The response always includes relatedCourses. lessonsIncluded defaults to true. When lessonsIncluded=false, data.lessons is omitted entirely rather than returned as []. The backend still loads lesson previews to calculate meta.duration, so the duration remains available either way. Lesson previews contain only _id/title/order/duration and are sorted by order asc, then createdAt desc. Related Courses are limited to 15.`,
+            description: `Returns detailed data for one published, non-deleted Course. Middleware order: Course limiter -> query validation -> optional bearer-token validation -> controller. This route does not run checkUserBan. category and tags are populated with _id/name/slug; instructor remains an ObjectId. The response always includes relatedCourses. lessonsIncluded defaults to true. When lessonsIncluded=false, data.lessons is omitted entirely rather than returned as []. The backend still loads lesson previews to calculate meta.duration, so the duration remains available either way. Lesson previews contain only _id/title/order/duration and are sorted by order asc, then createdAt desc. Related Courses are limited to 15.`,
             security: [
                 {
                     bearerAuth: []
